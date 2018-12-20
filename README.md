@@ -15,7 +15,8 @@ After successfully configuration it will automatically download on `composer ins
 
 Following configurations are available:
 
-||name||type||required||description||
+|name|type|required|description|
+|---|---|---|---|
 |languages|array|x|The iso codes you want to download|
 |directory|string|x|The relative path to the `languages` directory|
 |excludes|array| |an optional array to exclude specific packages|
