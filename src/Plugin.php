@@ -3,6 +3,9 @@
 namespace Inpsyde\WpTranslationDownloader;
 
 use Composer\Composer;
+use Composer\DependencyResolver\Operation\InstallOperation;
+use Composer\DependencyResolver\Operation\UninstallOperation;
+use Composer\DependencyResolver\Operation\UpdateOperation;
 use Composer\EventDispatcher\EventSubscriberInterface;
 use Composer\Installer\PackageEvent;
 use Composer\IO\IOInterface;
@@ -64,21 +67,23 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
     {
         return [
             'post-package-install' => [
-                ['onCreate', 0],
+                ['onUpdate', 0],
             ],
             'post-package-update' => [
-                ['onCreate', 0],
+                ['onUpdate', 0],
             ],
             'post-package-uninstall' => [
-                ['onDelete', 0],
+                ['onUninstall', 0],
             ],
         ];
     }
 
-    public function onDelete(PackageEvent $event)
+    public function onUninstall(PackageEvent $event)
     {
+        /** @var UninstallOperation $operation */
+        $operation = $event->getOperation();
         /** @var PackageInterface $package */
-        $package = $event->getOperation()->getPackage();
+        $package = $operation->getPackage();
         $type = $package->getType();
         $name = $package->getName();
 
@@ -106,8 +111,12 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
      */
     public function onCreate(PackageEvent $event)
     {
+        /** @var InstallOperation|UpdateOperation $operation */
+        $operation = $event->getOperation();
         /** @var PackageInterface $package */
-        $package = $event->getOperation()->getPackage();
+        $package = ($operation instanceof InstallOperation)
+            ? $operation->getTargetPackage()
+            : $operation->getPackage();
         $type = $package->getType();
         $name = $package->getName();
 
