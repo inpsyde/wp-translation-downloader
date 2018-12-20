@@ -161,8 +161,9 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
                     if (unlink($file)) {
                         $this->io->write(
                             sprintf(
-                                "    - <info>[OK]</info> deleted %s language files.",
-                                $transPackage->name()
+                                "    - <info>[OK]</info> %s: deleted %s translation file.",
+                                $transPackage->name(),
+                                basename($file)
                             )
                         );
                     };
@@ -203,7 +204,7 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
 
                 $this->io->write(
                     sprintf(
-                        '    - <info>[OK]</info> Downloaded %s for version %s in %s.',
+                        '    - <info>[OK]</info> Downloaded translation files | plugin %s | version %s | language %s.',
                         $transPackage->name(),
                         $version,
                         $language
@@ -212,7 +213,7 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
             } else {
                 $this->io->writeError(
                     sprintf(
-                        '    - <error>[ERROR]</error> %s %s %s: Could not unzip file.</>',
+                        '    - <error>[ERROR]</error> %s %s %s: Could not unzip translation files.</>',
                         $transPackage->name(),
                         $version,
                         $language
