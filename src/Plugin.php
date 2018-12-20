@@ -3,16 +3,18 @@
 namespace Inpsyde\WpTranslationDownloader;
 
 use Composer\Composer;
+use Composer\EventDispatcher\EventSubscriberInterface;
 use Composer\Installer\PackageEvent;
 use Composer\IO\IOInterface;
 use Composer\Package\PackageInterface;
+use Composer\Plugin\PluginInterface;
 use Inpsyde\WpTranslationDownloader\Config\PluginConfiguration;
 use Inpsyde\WpTranslationDownloader\Package\CorePackage;
 use Inpsyde\WpTranslationDownloader\Package\PluginPackage;
 use Inpsyde\WpTranslationDownloader\Package\ThemePackage;
 use Inpsyde\WpTranslationDownloader\Package\TranslationPackageInterface;
 
-class Plugin
+final class Plugin implements PluginInterface, EventSubscriberInterface
 {
 
     /**
