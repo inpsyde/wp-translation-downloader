@@ -56,6 +56,8 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
         if ($this->config->isValid()) {
             $this->ensureDirectories($this->config->directories());
         }
+
+        $this->io->write("WP translation downloader");
     }
 
     /**
@@ -114,7 +116,7 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
         /** @var InstallOperation|UpdateOperation $operation */
         $operation = $event->getOperation();
         /** @var PackageInterface $package */
-        $package = ($operation instanceof InstallOperation)
+        $package = ($operation instanceof UpdateOperation)
             ? $operation->getTargetPackage()
             : $operation->getPackage();
         $type = $package->getType();
@@ -158,7 +160,14 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
             ];
             foreach ($files as $file) {
                 if (file_exists($file)) {
-                    unlink($file);
+                    if (unlink($file)) {
+                        $this->io->write(
+                            sprintf(
+                                "- <info>[OK]</info> deleted %s language files.",
+                                $transPackage->name()
+                            )
+                        );
+                    };
                 }
             }
         }
@@ -178,7 +187,7 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
             if (! copy($package, $zipFile)) {
                 $this->io->writeError(
                     sprintf(
-                        '   <fg=red>%s %s: Could not download and write "%s"</>',
+                        '<error>- [ERROR]</error> %s %s: Could not download and write "%s"</>',
                         $transPackage->name(),
                         $version,
                         $package
@@ -195,7 +204,7 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
 
                 $this->io->write(
                     sprintf(
-                        '   <fg=blue>Success:</> Downloaded %s for version %s in %s.',
+                        '<info>- [OK]</info> Downloaded %s for version %s in %s.',
                         $transPackage->name(),
                         $version,
                         $translation['language']
