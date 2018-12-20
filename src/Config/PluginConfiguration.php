@@ -42,7 +42,7 @@ final class PluginConfiguration
         $config = array_merge(self::DEFAULTS, $config);
 
         $absoluteDir = ($config['directory'] !== '')
-            ? dirname(__DIR__).'/'.$config['directory'].'/'
+            ? __DIR__.'/../../../../../'.$config['directory'].'/'
             : '';
 
         $dirs = [

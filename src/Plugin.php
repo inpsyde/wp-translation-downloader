@@ -56,8 +56,6 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
         if ($this->config->isValid()) {
             $this->ensureDirectories($this->config->directories());
         }
-
-        $this->io->write("WP translation downloader");
     }
 
     /**
@@ -111,7 +109,7 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
     /**
      * @param PackageEvent $event
      */
-    public function onCreate(PackageEvent $event)
+    public function onUpdate(PackageEvent $event)
     {
         /** @var InstallOperation|UpdateOperation $operation */
         $operation = $event->getOperation();
@@ -163,7 +161,7 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
                     if (unlink($file)) {
                         $this->io->write(
                             sprintf(
-                                "- <info>[OK]</info> deleted %s language files.",
+                                "    - <info>[OK]</info> deleted %s language files.",
                                 $transPackage->name()
                             )
                         );
@@ -181,13 +179,14 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
         $translations = $transPackage->translations($allowedLanguages);
         foreach ($translations as $translation) {
             $package = $translation['package'];
+            $language = $translation['language'];
             $version = $translation['version'];
             $zipFile = sys_get_temp_dir().'/'.$transPackage->name().'-'.basename($package);
 
             if (! copy($package, $zipFile)) {
                 $this->io->writeError(
                     sprintf(
-                        '<error>- [ERROR]</error> %s %s: Could not download and write "%s"</>',
+                        '    - <error>[ERROR]</error> %s %s: Could not download and write "%s"</>',
                         $transPackage->name(),
                         $version,
                         $package
@@ -204,10 +203,20 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
 
                 $this->io->write(
                     sprintf(
-                        '<info>- [OK]</info> Downloaded %s for version %s in %s.',
+                        '    - <info>[OK]</info> Downloaded %s for version %s in %s.',
                         $transPackage->name(),
                         $version,
-                        $translation['language']
+                        $language
+                    )
+                );
+            } else {
+                $this->io->writeError(
+                    sprintf(
+                        '    - <error>[ERROR]</error> %s %s %s: Could not unzip file.</>',
+                        $transPackage->name(),
+                        $version,
+                        $language
+
                     )
                 );
             }
