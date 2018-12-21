@@ -114,11 +114,6 @@ final class PluginConfiguration
             return '<fg=red>extra.language-downloader.languages has to be configured as non empty array in your composer.json</>';
         }
 
-        $dir = $this->directory();
-        if ($dir === '') {
-            return '<fg=red>extra.language-downloader.directory has to be configured as in your composer.json</>';
-        }
-
         return '';
     }
 }

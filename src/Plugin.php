@@ -43,12 +43,6 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
      */
     private $config;
 
-    const PACKAGES = [
-        TranslationPackageInterface::TYPE_CORE => CorePackage::class,
-        TranslationPackageInterface::TYPE_PLUGIN => PluginPackage::class,
-        TranslationPackageInterface::TYPE_THEME => ThemePackage::class,
-    ];
-
     /**
      * @param Composer $composer
      * @param IOInterface $io
