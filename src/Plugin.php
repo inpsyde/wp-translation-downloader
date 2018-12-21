@@ -6,11 +6,13 @@ use Composer\Composer;
 use Composer\DependencyResolver\Operation\InstallOperation;
 use Composer\DependencyResolver\Operation\UninstallOperation;
 use Composer\DependencyResolver\Operation\UpdateOperation;
+use Composer\Downloader\ZipDownloader;
 use Composer\EventDispatcher\EventSubscriberInterface;
 use Composer\Installer\PackageEvent;
 use Composer\IO\IOInterface;
 use Composer\Package\PackageInterface;
 use Composer\Plugin\PluginInterface;
+use Composer\Util\Filesystem;
 use Inpsyde\WpTranslationDownloader\Config\PluginConfiguration;
 use Inpsyde\WpTranslationDownloader\Package\CorePackage;
 use Inpsyde\WpTranslationDownloader\Package\PluginPackage;
@@ -31,6 +33,16 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
     private $composer;
 
     /**
+     * @var Filesystem
+     */
+    private $filesystem;
+
+    /**
+     * @var ZipDownloader
+     */
+    private $zipDownloader;
+
+    /**
      * @var PluginConfiguration
      */
     private $config;
@@ -42,19 +54,28 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
     ];
 
     /**
-     * Composer plugin activation.
-     *
      * @param Composer $composer
      * @param IOInterface $io
+     * @param Filesystem|null $filesystem
+     *
+     * @throws \RuntimeException
      */
-    public function activate(Composer $composer, IOInterface $io)
+    public function activate(Composer $composer, IOInterface $io, Filesystem $filesystem = null)
     {
         $this->composer = $composer;
         $this->io = $io;
         $this->config = PluginConfiguration::fromExtra($composer->getPackage()->getExtra());
+        $this->filesystem = $filesystem ?? new Filesystem();
+        $this->zipDownloader = new ZipDownloader($io, $composer->getConfig());
 
-        if ($this->config->isValid()) {
-            $this->ensureDirectories($this->config->directories());
+        $error = $this->config->isValid();
+        if ($error !== '') {
+            $this->io->writeError($error);
+
+            return;
+        }
+        foreach ($this->config->directories() as $directory) {
+            $this->filesystem->ensureDirectoryExists($directory);
         }
     }
 
@@ -196,12 +217,8 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
                 continue;
             }
 
-            $zip = new \ZipArchive;
-            $res = $zip->open($zipFile);
-            if ($res === true) {
-                $zip->extractTo($directory);
-                $zip->close();
-
+            try {
+                $this->zipDownloader->extract($zipFile, $directory);
                 $this->io->write(
                     sprintf(
                         '    - <info>[OK]</info> Downloaded translation files | plugin %s | version %s | language %s.',
@@ -210,19 +227,19 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
                         $language
                     )
                 );
-            } else {
+            } catch (\Throwable $exception) {
                 $this->io->writeError(
                     sprintf(
                         '    - <error>[ERROR]</error> %s %s %s: Could not unzip translation files.</>',
                         $transPackage->name(),
                         $version,
                         $language
-
                     )
                 );
+                $this->io->writeError($exception->getMessage());
             }
 
-            unlink($zipFile);
+            $this->filesystem->remove($zipFile);
         }
     }
 
