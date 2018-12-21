@@ -14,9 +14,9 @@ class TranslationPackageFactory
 {
 
     const PACKAGES = [
-        Package\TranslationPackageInterface::TYPE_CORE => Package\CorePackage::class,
-        Package\TranslationPackageInterface::TYPE_PLUGIN => Package\PluginPackage::class,
-        Package\TranslationPackageInterface::TYPE_THEME => Package\ThemePackage::class,
+        Package\TranslateablePackage::TYPE_CORE => Package\CorePackage::class,
+        Package\TranslateablePackage::TYPE_PLUGIN => Package\PluginPackage::class,
+        Package\TranslateablePackage::TYPE_THEME => Package\ThemePackage::class,
     ];
 
     /**
@@ -25,12 +25,12 @@ class TranslationPackageFactory
      *
      * @throws \InvalidArgumentException
      *
-     * @return null|Package\TranslationPackageInterface
+     * @return null|Package\TranslateablePackage
      */
     public static function create(
         OperationInterface $operation,
         PluginConfiguration $config
-    ): ?Package\TranslationPackageInterface {
+    ): ?Package\TranslateablePackage {
         /** @var PackageInterface $package */
         $package = ($operation instanceof UpdateOperation)
             ? $operation->getTargetPackage()
@@ -43,7 +43,7 @@ class TranslationPackageFactory
             return null;
         }
 
-        /** @var Package\TranslationPackageInterface $transPackage */
+        /** @var Package\TranslateablePackage $transPackage */
         $class = self::PACKAGES[$type];
 
         return new $class(

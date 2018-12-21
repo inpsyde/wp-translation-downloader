@@ -2,7 +2,7 @@
 
 namespace Inpsyde\WpTranslationDownloader\Config;
 
-use Inpsyde\WpTranslationDownloader\Package\TranslationPackageInterface;
+use Inpsyde\WpTranslationDownloader\Package\TranslateablePackage;
 
 final class PluginConfiguration
 {
@@ -33,9 +33,9 @@ final class PluginConfiguration
         }
 
         $dirs = [
-            TranslationPackageInterface::TYPE_CORE => $languageRoot,
-            TranslationPackageInterface::TYPE_PLUGIN => $languageRoot.'plugins/',
-            TranslationPackageInterface::TYPE_THEME => $languageRoot.'themes/',
+            TranslateablePackage::TYPE_CORE => $languageRoot,
+            TranslateablePackage::TYPE_PLUGIN => $languageRoot.'plugins/',
+            TranslateablePackage::TYPE_THEME => $languageRoot.'themes/',
         ];
 
         $config['directory'] = $languageRoot;

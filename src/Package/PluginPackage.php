@@ -2,7 +2,7 @@
 
 namespace Inpsyde\WpTranslationDownloader\Package;
 
-final class PluginPackage extends BaseTranslationPackage
+final class PluginPackage extends BasePackage
 {
 
     protected function prepareApiUrl(string $name, string $version): string

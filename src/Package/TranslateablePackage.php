@@ -2,7 +2,7 @@
 
 namespace Inpsyde\WpTranslationDownloader\Package;
 
-interface TranslationPackageInterface
+interface TranslateablePackage
 {
 
     const TYPE_CORE = 'wordpress-core';
@@ -20,6 +20,4 @@ interface TranslationPackageInterface
     public function directory(): string;
 
     public function translations(array $allowedLanguages = []): array;
-
-    public function hasTranslations(array $allowedLanguages = []): bool;
 }

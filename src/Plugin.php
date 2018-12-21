@@ -10,7 +10,7 @@ use Composer\IO\IOInterface;
 use Composer\Plugin\PluginInterface;
 use Composer\Util\Filesystem;
 use Inpsyde\WpTranslationDownloader\Config\PluginConfiguration;
-use Inpsyde\WpTranslationDownloader\Package\TranslationPackageInterface;
+use Inpsyde\WpTranslationDownloader\Package\TranslateablePackage;
 
 final class Plugin implements PluginInterface, EventSubscriberInterface
 {
@@ -63,16 +63,15 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
     /**
      * @param Composer $composer
      * @param IOInterface $io
-     * @param Filesystem|null $filesystem
      *
      * @throws \RuntimeException
      */
-    public function activate(Composer $composer, IOInterface $io, Filesystem $filesystem = null)
+    public function activate(Composer $composer, IOInterface $io)
     {
         $this->composer = $composer;
         $this->io = $io;
         $this->config = PluginConfiguration::fromExtra($composer->getPackage()->getExtra());
-        $this->filesystem = $filesystem ?? new Filesystem();
+        $this->filesystem = new Filesystem();
         $this->zipDownloader = new ZipDownloader($io, $composer->getConfig());
 
         $error = $this->config->isValid();
@@ -81,6 +80,7 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
 
             return;
         }
+
         foreach ($this->config->directories() as $directory) {
             $this->filesystem->ensureDirectoryExists($directory);
         }
@@ -89,19 +89,11 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
     public function onUninstall(PackageEvent $event)
     {
         $transPackage = TranslationPackageFactory::create($event->getOperation(), $this->config);
+
         if ($transPackage === null) {
             return;
         }
 
-        if (! $transPackage->hasTranslations($this->config->allowedLanguages())) {
-            return;
-        }
-
-        $this->deleteTranslations($transPackage);
-    }
-
-    private function deleteTranslations(TranslationPackageInterface $transPackage)
-    {
         $allowedLanguages = $this->config->allowedLanguages();
         $directory = $transPackage->directory();
 
@@ -131,6 +123,7 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
     public function onUpdate(PackageEvent $event)
     {
         $transPackage = TranslationPackageFactory::create($event->getOperation(), $this->config);
+
         if ($transPackage === null) {
             return;
         }
@@ -139,15 +132,6 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
             return;
         }
 
-        if (! $transPackage->hasTranslations($this->config->allowedLanguages())) {
-            return;
-        }
-
-        $this->downloadTranslations($transPackage);
-    }
-
-    private function downloadTranslations(TranslationPackageInterface $transPackage)
-    {
         $cacheDir = $this->composer->getConfig()->get('cache-dir');
         $allowedLanguages = $this->config->allowedLanguages();
         $directory = $transPackage->directory();

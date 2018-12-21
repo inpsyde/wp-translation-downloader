@@ -2,23 +2,65 @@
 
 namespace Inpsyde\WpTranslationDownloader\Package;
 
-abstract class BaseTranslationPackage implements TranslationPackageInterface
+abstract class BasePackage implements TranslateablePackage
 {
 
-    protected $languagesLoaded = false;
-
+    /**
+     * @see TranslationPackageInterface::TYPE_*
+     *
+     * @var string
+     */
     protected $type;
 
+    /**
+     * The name of the plugin/theme/core
+     *
+     * @var string
+     */
     protected $name;
 
+    /**
+     * The plugin/theme/core version to load translations.
+     *
+     * @var string
+     */
     protected $version;
 
+    /**
+     * The URL-Endpoint to load translations.
+     *
+     * @var string
+     */
     protected $apiUrl;
 
+    /**
+     * All translations from the API.
+     *
+     * @var array
+     */
     protected $translations = [];
 
+    /**
+     * @var string
+     */
     private $directory;
 
+    /**
+     * @param string $name
+     * @param string $version
+     *
+     * @return string
+     */
+    abstract protected function prepareApiUrl(string $name, string $version): string;
+
+    /**
+     * BasePackage constructor.
+     *
+     * @param string $name
+     * @param string $type
+     * @param string $version
+     * @param string $directory
+     */
     public function __construct(string $name, string $type, string $version, string $directory)
     {
         $this->type = $type;
@@ -40,8 +82,6 @@ abstract class BaseTranslationPackage implements TranslationPackageInterface
 
         return $pieces[1];
     }
-
-    abstract protected function prepareApiUrl(string $name, string $version): string;
 
     protected function loadTranslations(): array
     {
@@ -81,11 +121,6 @@ abstract class BaseTranslationPackage implements TranslationPackageInterface
     public function directory(): string
     {
         return $this->directory;
-    }
-
-    public function hasTranslations(array $allowedLanguages = []): bool
-    {
-        return count($this->translations($allowedLanguages)) > 0;
     }
 
     public function translations(array $allowedLanguages = []): array
