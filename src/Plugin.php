@@ -101,62 +101,22 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
 
     public function onUninstall(PackageEvent $event)
     {
-        /** @var UninstallOperation $operation */
-        $operation = $event->getOperation();
-        /** @var PackageInterface $package */
-        $package = $operation->getPackage();
-        $type = $package->getType();
-        $name = $package->getName();
+        $transPackage = TranslationPackageFactory::create($event->getOperation(), $this->config);
 
-        if (! isset(self::PACKAGES[$type])) {
+        if (! $transPackage->hasTranslations($this->config->allowedLanguages())) {
             return;
         }
-        if ($this->config->doExclude($name)) {
-            return;
-        }
-
-        /** @var TranslationPackageInterface $transPackage */
-        $class = self::PACKAGES[$type];
-        $transPackage = new $class(
-            $name,
-            $type,
-            $package->getPrettyVersion(),
-            $this->config->directory($type)
-        );
 
         $this->deleteTranslations($transPackage);
     }
 
-    /**
-     * @param PackageEvent $event
-     */
     public function onUpdate(PackageEvent $event)
     {
-        /** @var InstallOperation|UpdateOperation $operation */
-        $operation = $event->getOperation();
-        /** @var PackageInterface $package */
-        $package = ($operation instanceof UpdateOperation)
-            ? $operation->getTargetPackage()
-            : $operation->getPackage();
-        $type = $package->getType();
-        $name = $package->getName();
+        $transPackage = TranslationPackageFactory::create($event->getOperation(), $this->config);
 
-        if (! isset(self::PACKAGES[$type])) {
+        if ($this->config->doExclude($transPackage->name())) {
             return;
         }
-
-        if ($this->config->doExclude($name)) {
-            return;
-        }
-
-        /** @var TranslationPackageInterface $transPackage */
-        $class = self::PACKAGES[$type];
-        $transPackage = new $class(
-            $name,
-            $type,
-            $package->getPrettyVersion(),
-            $this->config->directory($type)
-        );
 
         if (! $transPackage->hasTranslations($this->config->allowedLanguages())) {
             return;
@@ -240,15 +200,6 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
             }
 
             $this->filesystem->remove($zipFile);
-        }
-    }
-
-    private function ensureDirectories(array $dirs)
-    {
-        foreach ($dirs as $dir) {
-            if (! file_exists($dir)) {
-                mkdir($dir, 0755, true);
-            }
         }
     }
 }
