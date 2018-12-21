@@ -99,7 +99,12 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
     {
         $transPackage = TranslationPackageFactory::create($event->getOperation(), $this->config);
 
-        if ($transPackage ===  null || ! $transPackage->hasTranslations($this->config->allowedLanguages())) {
+
+        if($transPackage ===  null ){
+            return;
+        }
+
+        if (! $transPackage->hasTranslations($this->config->allowedLanguages())) {
             return;
         }
 
@@ -110,7 +115,11 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
     {
         $transPackage = TranslationPackageFactory::create($event->getOperation(), $this->config);
 
-        if ($transPackage ===  null || $this->config->doExclude($transPackage->name())) {
+        if($transPackage ===  null ){
+            return;
+        }
+
+        if ($this->config->doExclude($transPackage->name())) {
             return;
         }
 
