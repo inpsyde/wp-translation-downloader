@@ -30,8 +30,6 @@ abstract class BaseTranslationPackage implements TranslationPackageInterface
         $this->translations = $this->loadTranslations();
     }
 
-    abstract protected function prepareApiUrl(string $name, string $version): string;
-
     protected function prepareName(string $packageName): string
     {
         $pieces = explode('/', $packageName);
@@ -41,6 +39,23 @@ abstract class BaseTranslationPackage implements TranslationPackageInterface
         }
 
         return $pieces[1];
+    }
+
+    abstract protected function prepareApiUrl(string $name, string $version): string;
+
+    protected function loadTranslations(): array
+    {
+        $result = @file_get_contents($this->apiUrl);
+        if (! $result) {
+            return [];
+        }
+
+        $result = json_decode($result, true);
+        if (! isset($result['translations']) || count($result['translations']) < 1) {
+            return [];
+        }
+
+        return $result['translations'];
     }
 
     public function type(): string
@@ -85,20 +100,5 @@ abstract class BaseTranslationPackage implements TranslationPackageInterface
                 return in_array($trans['language'], $allowedLanguages, true);
             }
         );
-    }
-
-    protected function loadTranslations(): array
-    {
-        $result = @file_get_contents($this->apiUrl);
-        if (! $result) {
-            return [];
-        }
-
-        $result = json_decode($result, true);
-        if (! isset($result['translations']) || count($result['translations']) < 1) {
-            return [];
-        }
-
-        return $result['translations'];
     }
 }

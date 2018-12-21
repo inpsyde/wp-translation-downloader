@@ -23,20 +23,6 @@ final class PluginConfiguration
      */
     private $config = [];
 
-    /**
-     * @param array $extra
-     *
-     * @return PluginConfiguration
-     */
-    public static function fromExtra(array $extra): self
-    {
-        if (! isset($extra[self::KEY])) {
-            return new static([]);
-        }
-
-        return new static($extra[self::KEY]);
-    }
-
     public function __construct(array $config)
     {
         $config = array_merge(self::DEFAULTS, $config);
@@ -74,9 +60,18 @@ final class PluginConfiguration
         return '/'.implode('|', $rules).'/';
     }
 
-    public function allowedLanguages(): array
+    /**
+     * @param array $extra
+     *
+     * @return PluginConfiguration
+     */
+    public static function fromExtra(array $extra): self
     {
-        return $this->config['languages'];
+        if (! isset($extra[self::KEY])) {
+            return new static([]);
+        }
+
+        return new static($extra[self::KEY]);
     }
 
     public function directory(string $packageType = 'wordpress-core'): string
@@ -93,11 +88,6 @@ final class PluginConfiguration
         return $this->config['directories'];
     }
 
-    public function excludes(): string
-    {
-        return $this->config['excludes'];
-    }
-
     public function doExclude(string $name): bool
     {
         $excludes = $this->excludes();
@@ -108,6 +98,11 @@ final class PluginConfiguration
         return preg_match($excludes, $name) === 1;
     }
 
+    public function excludes(): string
+    {
+        return $this->config['excludes'];
+    }
+
     public function isValid(): string
     {
         if (count($this->allowedLanguages()) < 1) {
@@ -115,5 +110,10 @@ final class PluginConfiguration
         }
 
         return '';
+    }
+
+    public function allowedLanguages(): array
+    {
+        return $this->config['languages'];
     }
 }

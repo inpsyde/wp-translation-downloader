@@ -31,7 +31,6 @@ class TranslationPackageFactory
         OperationInterface $operation,
         PluginConfiguration $config
     ): ?Package\TranslationPackageInterface {
-
         /** @var PackageInterface $package */
         $package = ($operation instanceof UpdateOperation)
             ? $operation->getTargetPackage()

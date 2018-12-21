@@ -10,9 +10,6 @@ use Composer\IO\IOInterface;
 use Composer\Plugin\PluginInterface;
 use Composer\Util\Filesystem;
 use Inpsyde\WpTranslationDownloader\Config\PluginConfiguration;
-use Inpsyde\WpTranslationDownloader\Package\CorePackage;
-use Inpsyde\WpTranslationDownloader\Package\PluginPackage;
-use Inpsyde\WpTranslationDownloader\Package\ThemePackage;
 use Inpsyde\WpTranslationDownloader\Package\TranslationPackageInterface;
 
 final class Plugin implements PluginInterface, EventSubscriberInterface
@@ -44,6 +41,26 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
     private $config;
 
     /**
+     * Subscribe to Composer events.
+     *
+     * @return array The events and callbacks.
+     */
+    public static function getSubscribedEvents()
+    {
+        return [
+            'post-package-install' => [
+                ['onUpdate', 0],
+            ],
+            'post-package-update' => [
+                ['onUpdate', 0],
+            ],
+            'post-package-uninstall' => [
+                ['onUninstall', 0],
+            ],
+        ];
+    }
+
+    /**
      * @param Composer $composer
      * @param IOInterface $io
      * @param Filesystem|null $filesystem
@@ -69,26 +86,6 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
         }
     }
 
-    /**
-     * Subscribe to Composer events.
-     *
-     * @return array The events and callbacks.
-     */
-    public static function getSubscribedEvents()
-    {
-        return [
-            'post-package-install' => [
-                ['onUpdate', 0],
-            ],
-            'post-package-update' => [
-                ['onUpdate', 0],
-            ],
-            'post-package-uninstall' => [
-                ['onUninstall', 0],
-            ],
-        ];
-    }
-
     public function onUninstall(PackageEvent $event)
     {
         $transPackage = TranslationPackageFactory::create($event->getOperation(), $this->config);
@@ -101,24 +98,6 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
         }
 
         $this->deleteTranslations($transPackage);
-    }
-
-    public function onUpdate(PackageEvent $event)
-    {
-        $transPackage = TranslationPackageFactory::create($event->getOperation(), $this->config);
-        if ($transPackage === null) {
-            return;
-        }
-
-        if ($this->config->doExclude($transPackage->name())) {
-            return;
-        }
-
-        if (! $transPackage->hasTranslations($this->config->allowedLanguages())) {
-            return;
-        }
-
-        $this->downloadTranslations($transPackage);
     }
 
     private function deleteTranslations(TranslationPackageInterface $transPackage)
@@ -147,6 +126,24 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
                 }
             }
         }
+    }
+
+    public function onUpdate(PackageEvent $event)
+    {
+        $transPackage = TranslationPackageFactory::create($event->getOperation(), $this->config);
+        if ($transPackage === null) {
+            return;
+        }
+
+        if ($this->config->doExclude($transPackage->name())) {
+            return;
+        }
+
+        if (! $transPackage->hasTranslations($this->config->allowedLanguages())) {
+            return;
+        }
+
+        $this->downloadTranslations($transPackage);
     }
 
     private function downloadTranslations(TranslationPackageInterface $transPackage)
