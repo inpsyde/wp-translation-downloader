@@ -25,12 +25,12 @@ class TranslationPackageFactory
      *
      * @throws \InvalidArgumentException
      *
-     * @return Package\TranslationPackageInterface
+     * @return null|Package\TranslationPackageInterface
      */
     public static function create(
         OperationInterface $operation,
         PluginConfiguration $config
-    ): Package\TranslationPackageInterface {
+    ): ?Package\TranslationPackageInterface {
         /** @var PackageInterface $package */
         $package = ($operation instanceof UpdateOperation)
             ? $operation->getTargetPackage()
@@ -40,7 +40,7 @@ class TranslationPackageFactory
         $name = $package->getName();
 
         if (! isset(self::PACKAGES[$type])) {
-            throw new \InvalidArgumentException(sprintf('Not supported package type %s', $type));
+            return null;
         }
 
         /** @var Package\TranslationPackageInterface $transPackage */
