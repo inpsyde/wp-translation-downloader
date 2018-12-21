@@ -3,14 +3,10 @@
 namespace Inpsyde\WpTranslationDownloader;
 
 use Composer\Composer;
-use Composer\DependencyResolver\Operation\InstallOperation;
-use Composer\DependencyResolver\Operation\UninstallOperation;
-use Composer\DependencyResolver\Operation\UpdateOperation;
 use Composer\Downloader\ZipDownloader;
 use Composer\EventDispatcher\EventSubscriberInterface;
 use Composer\Installer\PackageEvent;
 use Composer\IO\IOInterface;
-use Composer\Package\PackageInterface;
 use Composer\Plugin\PluginInterface;
 use Composer\Util\Filesystem;
 use Inpsyde\WpTranslationDownloader\Config\PluginConfiguration;
