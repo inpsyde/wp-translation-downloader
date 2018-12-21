@@ -10,7 +10,7 @@ use Composer\Package\PackageInterface;
 use Inpsyde\WpTranslationDownloader\Config\PluginConfiguration;
 use Inpsyde\WpTranslationDownloader\Package;
 
-class TranslationPackageFactory
+class TranslateablePackageFactory
 {
 
     const PACKAGES = [
@@ -31,14 +31,13 @@ class TranslationPackageFactory
         OperationInterface $operation,
         PluginConfiguration $config
     ): ?Package\TranslateablePackage {
+
         /** @var PackageInterface $package */
         $package = ($operation instanceof UpdateOperation)
             ? $operation->getTargetPackage()
             : $operation->getPackage();
 
         $type = $package->getType();
-        $name = $package->getName();
-
         if (! isset(self::PACKAGES[$type])) {
             return null;
         }
