@@ -98,9 +98,7 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
     public function onUninstall(PackageEvent $event)
     {
         $transPackage = TranslationPackageFactory::create($event->getOperation(), $this->config);
-
-
-        if($transPackage ===  null ){
+        if ($transPackage === null) {
             return;
         }
 
@@ -114,8 +112,7 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
     public function onUpdate(PackageEvent $event)
     {
         $transPackage = TranslationPackageFactory::create($event->getOperation(), $this->config);
-
-        if($transPackage ===  null ){
+        if ($transPackage === null) {
             return;
         }
 
