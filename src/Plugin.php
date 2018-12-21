@@ -107,16 +107,16 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
                 $directory.$transPackage->projectName().'-'.$language.'.po',
             ];
             foreach ($files as $file) {
-                if (file_exists($file)) {
-                    if (unlink($file)) {
-                        $this->io->write(
-                            sprintf(
-                                "    - <info>[OK]</info> %s: deleted %s translation file.",
-                                $transPackage->projectName(),
-                                basename($file)
-                            )
-                        );
-                    };
+                try {
+                    $this->filesystem->unlink($file);
+                    $this->io->write(
+                        sprintf(
+                            "    - <info>[OK]</info> %s: deleted %s translation file.",
+                            $transPackage->projectName(),
+                            basename($file)
+                        )
+                    );
+                } catch (\Throwable $exception) {
                 }
             }
         }
@@ -132,7 +132,8 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
         }
 
         if ($this->config->doExclude($transPackage->getName())) {
-            $this->io->write('exclude' . $transPackage->getName());
+            $this->io->write('exclude'.$transPackage->getName());
+
             return;
         }
 
