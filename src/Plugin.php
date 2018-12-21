@@ -7,6 +7,7 @@ use Composer\Downloader\ZipDownloader;
 use Composer\EventDispatcher\EventSubscriberInterface;
 use Composer\Installer\PackageEvent;
 use Composer\IO\IOInterface;
+use Composer\Package\PackageInterface;
 use Composer\Plugin\PluginInterface;
 use Composer\Util\Filesystem;
 use Inpsyde\WpTranslationDownloader\Config\PluginConfiguration;
@@ -88,6 +89,7 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
 
     public function onUninstall(PackageEvent $event)
     {
+        /** @var PackageInterface|TranslateablePackage $transPackage */
         $transPackage = TranslationPackageFactory::create($event->getOperation(), $this->config);
 
         if ($transPackage === null) {
@@ -95,14 +97,14 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
         }
 
         $allowedLanguages = $this->config->allowedLanguages();
-        $directory = $transPackage->directory();
-
+        $directory = $transPackage->languageDirectory();
         $translations = $transPackage->translations($allowedLanguages);
+
         foreach ($translations as $translation) {
             $language = $translation['language'];
             $files = [
-                $directory.$transPackage->name().'-'.$language.'.mo',
-                $directory.$transPackage->name().'-'.$language.'.po',
+                $directory.$transPackage->projectName().'-'.$language.'.mo',
+                $directory.$transPackage->projectName().'-'.$language.'.po',
             ];
             foreach ($files as $file) {
                 if (file_exists($file)) {
@@ -110,7 +112,7 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
                         $this->io->write(
                             sprintf(
                                 "    - <info>[OK]</info> %s: deleted %s translation file.",
-                                $transPackage->name(),
+                                $transPackage->projectName(),
                                 basename($file)
                             )
                         );
@@ -122,19 +124,21 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
 
     public function onUpdate(PackageEvent $event)
     {
+        /** @var PackageInterface|TranslateablePackage $transPackage */
         $transPackage = TranslationPackageFactory::create($event->getOperation(), $this->config);
 
         if ($transPackage === null) {
             return;
         }
 
-        if ($this->config->doExclude($transPackage->name())) {
+        if ($this->config->doExclude($transPackage->getName())) {
+            $this->io->write('exclude' . $transPackage->getName());
             return;
         }
 
         $cacheDir = $this->composer->getConfig()->get('cache-dir');
         $allowedLanguages = $this->config->allowedLanguages();
-        $directory = $transPackage->directory();
+        $directory = $transPackage->languageDirectory();
         $translations = $transPackage->translations($allowedLanguages);
 
         foreach ($translations as $translation) {
@@ -142,13 +146,13 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
             $language = $translation['language'];
             $version = $translation['version'];
 
-            $zipFile = $cacheDir.'/'.$transPackage->name().'-'.basename($package);
+            $zipFile = $cacheDir.'/'.$transPackage->projectName().'-'.basename($package);
 
             if (! copy($package, $zipFile)) {
                 $this->io->writeError(
                     sprintf(
                         '    - <error>[ERROR]</error> %s %s: Could not download and write "%s"</>',
-                        $transPackage->name(),
+                        $transPackage->projectName(),
                         $version,
                         $package
                     )
@@ -161,7 +165,7 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
                 $this->io->write(
                     sprintf(
                         '    - <info>[OK]</info> Downloaded translation files | plugin %s | version %s | language %s.',
-                        $transPackage->name(),
+                        $transPackage->projectName(),
                         $version,
                         $language
                     )
@@ -170,7 +174,7 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
                 $this->io->writeError(
                     sprintf(
                         '    - <error>[ERROR]</error> %s %s %s: Could not unzip translation files.</>',
-                        $transPackage->name(),
+                        $transPackage->projectName(),
                         $version,
                         $language
                     )

@@ -14,9 +14,9 @@ class TranslationPackageFactory
 {
 
     const PACKAGES = [
-        Package\TranslateablePackage::TYPE_CORE => Package\CorePackage::class,
-        Package\TranslateablePackage::TYPE_PLUGIN => Package\PluginPackage::class,
-        Package\TranslateablePackage::TYPE_THEME => Package\ThemePackage::class,
+        Package\TranslateablePackage::TYPE_CORE => Package\WpCorePackage::class,
+        Package\TranslateablePackage::TYPE_PLUGIN => Package\WpPluginPackage::class,
+        Package\TranslateablePackage::TYPE_THEME => Package\WpThemePackage::class,
     ];
 
     /**
@@ -46,11 +46,6 @@ class TranslationPackageFactory
         /** @var Package\TranslateablePackage $transPackage */
         $class = self::PACKAGES[$type];
 
-        return new $class(
-            $name,
-            $type,
-            $package->getPrettyVersion(),
-            $config->directory($type)
-        );
+        return new $class($package, $config->directory($type));
     }
 }

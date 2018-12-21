@@ -9,15 +9,33 @@ interface TranslateablePackage
     const TYPE_PLUGIN = 'wordpress-plugin';
     const TYPE_THEME = 'wordpress-theme';
 
-    public function name(): string;
+    /**
+     * The cleaned name of the project without vendor.
+     *
+     * @return string
+     */
+    public function projectName(): string;
 
-    public function type(): string;
-
-    public function version(): string;
-
+    /**
+     * The build URL to the api endpoint.
+     *
+     * @return string
+     */
     public function apiUrl(): string;
 
-    public function directory(): string;
+    /**
+     * Retrieve the path to the language directory.
+     *
+     * @return string
+     */
+    public function languageDirectory(): string;
 
+    /**
+     * Get all or filtered translations by allowed language(s).
+     *
+     * @param array $allowedLanguages
+     *
+     * @return array
+     */
     public function translations(array $allowedLanguages = []): array;
 }
