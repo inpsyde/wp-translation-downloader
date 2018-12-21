@@ -31,27 +31,28 @@ final class PluginConfiguration
     public static function fromExtra(array $extra): self
     {
         if (! isset($extra[self::KEY])) {
-            return new static();
+            return new static([]);
         }
 
         return new static($extra[self::KEY]);
     }
 
-    public function __construct(array $config = [])
+    public function __construct(array $config)
     {
         $config = array_merge(self::DEFAULTS, $config);
 
-        $absoluteDir = ($config['directory'] !== '')
-            ? __DIR__.'/../../../../../'.$config['directory'].'/'
-            : '';
+        $languageRoot = getcwd().'/';
+        if ($config['directory'] !== '') {
+            $languageRoot .= $config['directory'].'/';
+        }
 
         $dirs = [
-            TranslationPackageInterface::TYPE_CORE => $absoluteDir,
-            TranslationPackageInterface::TYPE_PLUGIN => $absoluteDir.'plugins/',
-            TranslationPackageInterface::TYPE_THEME => $absoluteDir.'themes/',
+            TranslationPackageInterface::TYPE_CORE => $languageRoot,
+            TranslationPackageInterface::TYPE_PLUGIN => $languageRoot.'plugins/',
+            TranslationPackageInterface::TYPE_THEME => $languageRoot.'themes/',
         ];
 
-        $config['directory'] = $absoluteDir;
+        $config['directory'] = $languageRoot;
         $config['directories'] = $dirs;
         $config['excludes'] = $this->prepareExcludes($config['excludes']);
         $this->config = $config;

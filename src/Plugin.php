@@ -157,15 +157,17 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
 
     private function downloadTranslations(TranslationPackageInterface $transPackage)
     {
+        $cacheDir = $this->composer->getConfig()->get('cache-dir');
         $allowedLanguages = $this->config->allowedLanguages();
         $directory = $transPackage->directory();
-
         $translations = $transPackage->translations($allowedLanguages);
+
         foreach ($translations as $translation) {
             $package = $translation['package'];
             $language = $translation['language'];
             $version = $translation['version'];
-            $zipFile = sys_get_temp_dir().'/'.$transPackage->name().'-'.basename($package);
+
+            $zipFile = $cacheDir.'/'.$transPackage->name().'-'.basename($package);
 
             if (! copy($package, $zipFile)) {
                 $this->io->writeError(
