@@ -132,7 +132,7 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
         }
 
         if ($this->config->doExclude($transPackage->getName())) {
-            $this->io->write('exclude'.$transPackage->getName());
+            $this->io->write('      [!] exclude '.$transPackage->getName());
 
             return;
         }
