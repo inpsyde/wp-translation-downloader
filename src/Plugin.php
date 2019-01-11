@@ -165,7 +165,7 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
                 $this->zipDownloader->extract($zipFile, $directory);
                 $this->io->write(
                     sprintf(
-                        '    - <info>[OK]</info> Downloaded translation files | plugin %s | version %s | language %s.',
+                        '    - <info>[OK]</info> Downloaded translation files | version %s | language %s.',
                         $transPackage->projectName(),
                         $version,
                         $language
