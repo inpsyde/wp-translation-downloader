@@ -166,7 +166,6 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
                 $this->io->write(
                     sprintf(
                         '    - <info>[OK]</info> Downloaded translation files | version %s | language %s.',
-                        $transPackage->projectName(),
                         $version,
                         $language
                     )
