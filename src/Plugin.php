@@ -2,6 +2,7 @@
 
 namespace Inpsyde\WpTranslationDownloader;
 
+use Composer\Cache;
 use Composer\Composer;
 use Composer\Downloader\ZipDownloader;
 use Composer\EventDispatcher\EventSubscriberInterface;
@@ -11,6 +12,7 @@ use Composer\Package\PackageInterface;
 use Composer\Plugin\PluginInterface;
 use Composer\Util\Filesystem;
 use Inpsyde\WpTranslationDownloader\Config\PluginConfiguration;
+use Inpsyde\WpTranslationDownloader\Downloader\TranslationDownloader;
 use Inpsyde\WpTranslationDownloader\Package\TranslateablePackage;
 
 final class Plugin implements PluginInterface, EventSubscriberInterface
@@ -32,14 +34,14 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
     private $filesystem;
 
     /**
-     * @var ZipDownloader
+     * @var TranslationDownloader
      */
-    private $zipDownloader;
+    private $translationDownloader;
 
     /**
      * @var PluginConfiguration
      */
-    private $config;
+    private $pluginConfig;
 
     /**
      * Subscribe to Composer events.
@@ -71,18 +73,24 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
     {
         $this->composer = $composer;
         $this->io = $io;
-        $this->config = PluginConfiguration::fromExtra($composer->getPackage()->getExtra());
+        $this->pluginConfig = PluginConfiguration::fromExtra($composer->getPackage()->getExtra());
         $this->filesystem = new Filesystem();
-        $this->zipDownloader = new ZipDownloader($io, $composer->getConfig());
+        $this->translationDownloader = new TranslationDownloader(
+            $io,
+            $this->composer->getConfig(),
+            new ZipDownloader($io, $composer->getConfig()),
+            $this->filesystem,
+            new Cache($this->io, $composer->getConfig()->get('cache-dir').'/translations')
+        );
 
-        $error = $this->config->isValid();
+        $error = $this->pluginConfig->isValid();
         if ($error !== '') {
             $this->io->writeError($error);
 
             return;
         }
 
-        foreach ($this->config->directories() as $directory) {
+        foreach ($this->pluginConfig->directories() as $directory) {
             $this->filesystem->ensureDirectoryExists($directory);
         }
     }
@@ -90,99 +98,32 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
     public function onUninstall(PackageEvent $event)
     {
         /** @var PackageInterface|TranslateablePackage $transPackage */
-        $transPackage = TranslateablePackageFactory::create($event->getOperation(), $this->config);
+        $transPackage = TranslateablePackageFactory::create($event->getOperation(), $this->pluginConfig);
 
         if ($transPackage === null) {
             return;
         }
 
-        $allowedLanguages = $this->config->allowedLanguages();
-        $directory = $transPackage->languageDirectory();
-        $translations = $transPackage->translations($allowedLanguages);
-
-        foreach ($translations as $translation) {
-            $language = $translation['language'];
-            $files = [
-                $directory.$transPackage->projectName().'-'.$language.'.mo',
-                $directory.$transPackage->projectName().'-'.$language.'.po',
-            ];
-            foreach ($files as $file) {
-                try {
-                    $this->filesystem->unlink($file);
-                    $this->io->write(
-                        sprintf(
-                            "    - <info>[OK]</info> %s: deleted %s translation file.",
-                            $transPackage->projectName(),
-                            basename($file)
-                        )
-                    );
-                } catch (\Throwable $exception) {
-                }
-            }
-        }
+        $allowedLanguages = $this->pluginConfig->allowedLanguages();
+        $this->translationDownloader->remove($transPackage, $allowedLanguages);
     }
 
     public function onUpdate(PackageEvent $event)
     {
         /** @var PackageInterface|TranslateablePackage $transPackage */
-        $transPackage = TranslateablePackageFactory::create($event->getOperation(), $this->config);
+        $transPackage = TranslateablePackageFactory::create($event->getOperation(), $this->pluginConfig);
 
         if ($transPackage === null) {
             return;
         }
 
-        if ($this->config->doExclude($transPackage->getName())) {
+        if ($this->pluginConfig->doExclude($transPackage->getName())) {
             $this->io->write('      [!] exclude '.$transPackage->getName());
 
             return;
         }
 
-        $cacheDir = $this->composer->getConfig()->get('cache-dir');
-        $allowedLanguages = $this->config->allowedLanguages();
-        $directory = $transPackage->languageDirectory();
-        $translations = $transPackage->translations($allowedLanguages);
-
-        foreach ($translations as $translation) {
-            $package = $translation['package'];
-            $language = $translation['language'];
-            $version = $translation['version'];
-
-            $zipFile = $cacheDir.'/'.$transPackage->projectName().'-'.basename($package);
-
-            if (! copy($package, $zipFile)) {
-                $this->io->writeError(
-                    sprintf(
-                        '    - <error>[ERROR]</error> %s %s: Could not download and write "%s"</>',
-                        $transPackage->projectName(),
-                        $version,
-                        $package
-                    )
-                );
-                continue;
-            }
-
-            try {
-                $this->zipDownloader->extract($zipFile, $directory);
-                $this->io->write(
-                    sprintf(
-                        '    - <info>[OK]</info> Downloaded translation files | version %s | language %s.',
-                        $version,
-                        $language
-                    )
-                );
-            } catch (\Throwable $exception) {
-                $this->io->writeError(
-                    sprintf(
-                        '    - <error>[ERROR]</error> %s %s %s: Could not unzip translation files.</>',
-                        $transPackage->projectName(),
-                        $version,
-                        $language
-                    )
-                );
-                $this->io->writeError($exception->getMessage());
-            }
-
-            $this->filesystem->remove($zipFile);
-        }
+        $allowedLanguages = $this->pluginConfig->allowedLanguages();
+        $this->translationDownloader->download($transPackage, $allowedLanguages);
     }
 }
