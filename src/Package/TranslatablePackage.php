@@ -2,7 +2,7 @@
 
 namespace Inpsyde\WpTranslationDownloader\Package;
 
-interface TranslateablePackage
+interface TranslatablePackage
 {
 
     const TYPE_CORE = 'wordpress-core';

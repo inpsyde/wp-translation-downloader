@@ -4,10 +4,10 @@ namespace Inpsyde\WpTranslationDownloader\Package;
 
 use Composer\Package\Package;
 
-final class WpCorePackage extends Package implements TranslateablePackage
+final class WpCorePackage extends Package implements TranslatablePackage
 {
 
-    use TranslateablePackageTrait;
+    use TranslatablePackageTrait;
 
     public function __construct(Package $package, string $directory)
     {

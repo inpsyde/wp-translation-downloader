@@ -10,13 +10,13 @@ use Composer\Package\PackageInterface;
 use Inpsyde\WpTranslationDownloader\Config\PluginConfiguration;
 use Inpsyde\WpTranslationDownloader\Package;
 
-class TranslateablePackageFactory
+class TranslatablePackageFactory
 {
 
     const PACKAGES = [
-        Package\TranslateablePackage::TYPE_CORE => Package\WpCorePackage::class,
-        Package\TranslateablePackage::TYPE_PLUGIN => Package\WpPluginPackage::class,
-        Package\TranslateablePackage::TYPE_THEME => Package\WpThemePackage::class,
+        Package\TranslatablePackage::TYPE_CORE => Package\WpCorePackage::class,
+        Package\TranslatablePackage::TYPE_PLUGIN => Package\WpPluginPackage::class,
+        Package\TranslatablePackage::TYPE_THEME => Package\WpThemePackage::class,
     ];
 
     /**
@@ -25,12 +25,12 @@ class TranslateablePackageFactory
      *
      * @throws \InvalidArgumentException
      *
-     * @return null|Package\TranslateablePackage
+     * @return null|Package\TranslatablePackage
      */
     public static function create(
         OperationInterface $operation,
         PluginConfiguration $config
-    ): ?Package\TranslateablePackage {
+    ): ?Package\TranslatablePackage {
 
         /** @var PackageInterface $package */
         $package = ($operation instanceof UpdateOperation)
@@ -42,7 +42,7 @@ class TranslateablePackageFactory
             return null;
         }
 
-        /** @var Package\TranslateablePackage $transPackage */
+        /** @var Package\TranslatablePackage $transPackage */
         $class = self::PACKAGES[$type];
 
         return new $class($package, $config->directory($type));

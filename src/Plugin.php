@@ -13,7 +13,7 @@ use Composer\Plugin\PluginInterface;
 use Composer\Util\Filesystem;
 use Inpsyde\WpTranslationDownloader\Config\PluginConfiguration;
 use Inpsyde\WpTranslationDownloader\Downloader\TranslationDownloader;
-use Inpsyde\WpTranslationDownloader\Package\TranslateablePackage;
+use Inpsyde\WpTranslationDownloader\Package\TranslatablePackage;
 
 final class Plugin implements PluginInterface, EventSubscriberInterface
 {
@@ -97,8 +97,8 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
 
     public function onUninstall(PackageEvent $event)
     {
-        /** @var PackageInterface|TranslateablePackage $transPackage */
-        $transPackage = TranslateablePackageFactory::create($event->getOperation(), $this->pluginConfig);
+        /** @var PackageInterface|TranslatablePackage $transPackage */
+        $transPackage = TranslatablePackageFactory::create($event->getOperation(), $this->pluginConfig);
 
         if ($transPackage === null) {
             return;
@@ -110,8 +110,8 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
 
     public function onUpdate(PackageEvent $event)
     {
-        /** @var PackageInterface|TranslateablePackage $transPackage */
-        $transPackage = TranslateablePackageFactory::create($event->getOperation(), $this->pluginConfig);
+        /** @var PackageInterface|TranslatablePackage $transPackage */
+        $transPackage = TranslatablePackageFactory::create($event->getOperation(), $this->pluginConfig);
 
         if ($transPackage === null) {
             return;

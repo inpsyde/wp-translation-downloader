@@ -7,7 +7,7 @@ use Composer\Config;
 use Composer\Downloader\ZipDownloader;
 use Composer\IO\IOInterface;
 use Composer\Util\Filesystem;
-use Inpsyde\WpTranslationDownloader\Package\TranslateablePackage;
+use Inpsyde\WpTranslationDownloader\Package\TranslatablePackage;
 
 class TranslationDownloader
 {
@@ -55,7 +55,7 @@ class TranslationDownloader
         }
     }
 
-    public function download(TranslateablePackage $transPackage, array $allowedLanguages)
+    public function download(TranslatablePackage $transPackage, array $allowedLanguages)
     {
         $directory = $transPackage->languageDirectory();
         $translations = $transPackage->translations($allowedLanguages);
@@ -118,7 +118,7 @@ class TranslationDownloader
         return true;
     }
 
-    public function remove(TranslateablePackage $transPackage, array $allowedLanguages)
+    public function remove(TranslatablePackage $transPackage, array $allowedLanguages)
     {
         $directory = $transPackage->languageDirectory();
         $translations = $transPackage->translations($allowedLanguages);

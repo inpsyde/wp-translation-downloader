@@ -3,9 +3,9 @@
 namespace Inpsyde\WpTranslationDownloader\Package;
 
 /**
- * @see TranslateablePackage
+ * @see TranslatablePackage
  */
-trait TranslateablePackageTrait
+trait TranslatablePackageTrait
 {
 
     private $translationLoaded = false;
@@ -28,7 +28,7 @@ trait TranslateablePackageTrait
     protected $languageDirectory;
 
     /**
-     * @see TranslateablePackage::apiUrl()
+     * @see TranslatablePackage::apiUrl()
      *
      * @return string
      */
@@ -57,7 +57,7 @@ trait TranslateablePackageTrait
     }
 
     /**
-     * @see TranslateablePackage::translations()
+     * @see TranslatablePackage::translations()
      *
      * @param array $allowedLanguages
      *
@@ -98,7 +98,7 @@ trait TranslateablePackageTrait
     }
 
     /**
-     * @see TranslateablePackage::projectName()
+     * @see TranslatablePackage::projectName()
      *
      * @return string
      */
@@ -108,7 +108,7 @@ trait TranslateablePackageTrait
     }
 
     /**
-     * @see TranslateablePackage::languageDirectory()
+     * @see TranslatablePackage::languageDirectory()
      *
      * @return string
      */
