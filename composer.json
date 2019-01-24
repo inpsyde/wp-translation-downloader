@@ -1,7 +1,6 @@
 {
     "name": "inpsyde/wp-translation-downloader",
     "description": "Composer plugin to download translations from wordpress.org API.",
-    "version": "0.1.0",
     "license": "MIT",
     "type": "composer-plugin",
     "authors": [
