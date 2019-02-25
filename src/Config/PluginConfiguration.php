@@ -106,7 +106,7 @@ final class PluginConfiguration
     public function isValid(): string
     {
         if (count($this->allowedLanguages()) < 1) {
-            return '<fg=red>extra.language-downloader.languages has to be configured as non empty array in your composer.json</>';
+            return '<fg=red>extra.wp-translation-downloader.languages has to be configured as non empty array in your composer.json</>';
         }
 
         return '';
