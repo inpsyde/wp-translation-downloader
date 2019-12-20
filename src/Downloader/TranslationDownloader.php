@@ -61,6 +61,14 @@ class TranslationDownloader
         $translations = $transPackage->translations($allowedLanguages);
         $projectName = $transPackage->projectName();
 
+        $this->io->write(
+            sprintf(
+                '  Found %d translations for %s ...', 
+                count($translations), 
+                $projectName
+            )
+        );
+
         foreach ($translations as $translation) {
             $package = $translation['package'];
             $language = $translation['language'];
@@ -96,8 +104,7 @@ class TranslationDownloader
                 $this->zipDownloader->extract($zipFile, $directory);
                 $this->io->write(
                     sprintf(
-                        '    - <info>[OK]</info> Installed translation files | plugin %s | version %s | language %s.',
-                        $projectName,
+                        '    - <info>[OK]</info> %s | %s.',
                         $version,
                         $language
                     )
@@ -105,8 +112,7 @@ class TranslationDownloader
             } catch (\Throwable $exception) {
                 $this->io->writeError(
                     sprintf(
-                        '    - <error>[ERROR]</error> %s %s %s: Could not unzip translation files.</>',
-                        $projectName,
+                        '    - <error>[ERROR]</error>Could not unzip translation files. %s | %s</>',
                         $version,
                         $language
                     )
