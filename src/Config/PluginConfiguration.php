@@ -37,7 +37,7 @@ final class PluginConfiguration
             TranslatablePackage::TYPE_CORE => $languageRoot,
             TranslatablePackage::TYPE_PLUGIN => $languageRoot.'plugins/',
             TranslatablePackage::TYPE_THEME => $languageRoot.'themes/',
-            TranslatablePackage::TYPE_LIBRARY => $languageRoot.'plugins/'
+            TranslatablePackage::TYPE_LIBRARY => $languageRoot.'library/'
         ];
 
         $config['directory'] = $languageRoot;
