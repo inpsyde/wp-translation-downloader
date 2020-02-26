@@ -8,6 +8,7 @@ interface TranslatablePackage
     const TYPE_CORE = 'wordpress-core';
     const TYPE_PLUGIN = 'wordpress-plugin';
     const TYPE_THEME = 'wordpress-theme';
+    const TYPE_LIBRARY = 'library';
 
     /**
      * The cleaned name of the project without vendor.

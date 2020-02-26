@@ -62,6 +62,11 @@ trait TranslatablePackageTrait
         }
         $this->translationLoaded = [];
 
+        $apiUrl = $this->apiUrl();
+        if ($apiUrl === '') {
+            return false;
+        }
+
         $result = @file_get_contents($this->apiUrl());
         if (! $result) {
             return false;

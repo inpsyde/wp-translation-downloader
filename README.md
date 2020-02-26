@@ -14,9 +14,6 @@ Composer plugin to download translations from the wordpress.org API or via self-
 composer require inpsyde/wp-translation-downloader
 ```
 
-## Usage
-After successful configuration, the `.po`/`.mo` files are automatically downloaded on `composer install`. Also, translation files are deleted when a package is removed on `composer install`.
-
 ## Configuration
 
 The following configurations are available:
@@ -31,12 +28,10 @@ The following configurations are available:
 **[!] Note:** You can use `*` as a placeholder to exclude multiple packages.
 **[!] Note 2:** You can use `*` as a placeholder to match an API for multiple packages.
 
-The configuration should be added to your `composer.json` in the `extra` property with the `wp-translation-downloader` key.
+The configuration should be added to your `composer.json` in the `extra` property with the `wp-translation-downloader` key..
 
-### Examples
-
-#### Default
-Following is the default configuration for wp-translation-downloader to download translations from WordPress.org API:
+### Default configuration
+Following is the default configuration for `inpsyde/wp-translation-downloader` to download translations from WordPress.org API:
 
 **composer.json**
 ```json
@@ -53,8 +48,8 @@ Following is the default configuration for wp-translation-downloader to download
 }
 ```
 
-#### Default - own configuration file
-You can, if you have a lot of configurations, move the whole wp-translation-downloader configuration to an own json-file and just provide the file path like this:
+### Default configuration - own configuration file
+You can, if you have a lot of configurations, move the whole `wp-translation-downloader`-configuration to an own json-file and just provide the file path like this:
 
 **composer.json**
 ```json
@@ -76,7 +71,7 @@ You can, if you have a lot of configurations, move the whole wp-translation-down
 }
 ```
 
-#### Exclude specific packages
+### Exclude specific packages
 To exclude specific packages, like _"I want to exclude all WordPress Plugins/Themes/Mu-Plugins from vendor `inpsyde`"_ you can use following:
 
 **composer.json**
@@ -116,7 +111,7 @@ This will map to following matrix:
 |`wpackagist-plugin/wordpress-seo`|wordpress-plugin|yes|
            
 
-#### Use external GlotPress API
+### Use external GlotPress API
 If you have for example private Plugins/Themes or you don't want to use the official translation for a Package, then you can use an own GlotPress installation.
 
 To use this, you can map same like the `exclude` one or multiple packages to a different Endpoint. You can add placeholders for the different package types:
@@ -204,6 +199,11 @@ The rule for `wpackagist-plugin/wordpress-seo` will not be executed, because the
     }
 }
 ```
+
+## Support for Composer type="library"
+The `inpsyde/wp-translation-downloader` also supports Composer `Package::getType() === 'library'`. By default, nothing will be done, but if configured via API for example to a self-hosted GlotPress - then those translation will be downloaded into `WP_LANG_DIR . '/plugins/'`.
+
+Those can be accessed in your library via: `load_plugin_textdomain( 'your-package', '/fallback-path/to-your-translation/' );`
 
 
 ## License
