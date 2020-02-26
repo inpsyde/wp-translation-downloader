@@ -13,7 +13,6 @@ final class WpCorePackage extends Package implements TranslatablePackage
     {
         parent::__construct($package->getName(), $package->getVersion(), $package->getPrettyVersion());
 
-
         $this->endpoint = $endpoint ?? 'https://api.wordpress.org/translations/core/1.0/?version=%1$s';
         $this->projectName = $this->prepareProjectName($this->getName());
         $this->languageDirectory = $directory;

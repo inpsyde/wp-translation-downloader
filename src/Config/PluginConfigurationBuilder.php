@@ -2,8 +2,8 @@
 
 namespace Inpsyde\WpTranslationDownloader\Config;
 
-use Composer\Json\JsonFile;
 use Composer\IO\IOInterface;
+use Composer\Json\JsonFile;
 
 final class PluginConfigurationBuilder
 {
@@ -28,15 +28,12 @@ final class PluginConfigurationBuilder
     public function build(array $extra = []): PluginConfiguration
     {
         if (! isset($extra[self::KEY])) {
-
-
-
             return new PluginConfiguration([]);
         }
 
         $config = $extra[self::KEY];
 
-        if(is_array($config)){
+        if (is_array($config)) {
             return new PluginConfiguration($config);
         }
 

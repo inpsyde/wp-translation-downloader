@@ -100,11 +100,6 @@ final class PluginConfiguration
         return $this->config['languages'];
     }
 
-    public function api(): array
-    {
-        return $this->config['api'];
-    }
-
     /**
      * Find a matching configured API Endpoint for the current Package
      *
@@ -122,6 +117,11 @@ final class PluginConfiguration
         }
 
         return null;
+    }
+
+    public function api(): array
+    {
+        return $this->config['api'];
     }
 
     /**

@@ -8,8 +8,6 @@ namespace Inpsyde\WpTranslationDownloader\Package;
 trait TranslatablePackageTrait
 {
 
-    private $translationLoaded = false;
-
     /**
      * All translations from the API.
      *
@@ -32,34 +30,7 @@ trait TranslatablePackageTrait
      */
     protected $endpoint;
 
-    /**
-     * @return string
-     * @see TranslatablePackage::apiUrl()
-     *
-     */
-    abstract function apiUrl(): string;
-
-    protected function loadTranslations(): bool
-    {
-        if ($this->translationLoaded) {
-            return false;
-        }
-        $this->translationLoaded = [];
-
-        $result = @file_get_contents($this->apiUrl());
-        if (! $result) {
-            return false;
-        }
-
-        $result = json_decode($result, true);
-        if (! isset($result['translations']) || count($result['translations']) < 1) {
-            return false;
-        }
-
-        $this->translations = $result['translations'];
-
-        return true;
-    }
+    private $translationLoaded = false;
 
     /**
      * @param array $allowedLanguages
@@ -84,23 +55,34 @@ trait TranslatablePackageTrait
         );
     }
 
-    /**
-     * Splits {vendor}/{projectName} and returns projectName.
-     *
-     * @param string $name
-     *
-     * @return string
-     */
-    protected function prepareProjectName(string $name): string
+    protected function loadTranslations(): bool
     {
-        $pieces = explode('/', $name);
+        if ($this->translationLoaded) {
+            return false;
+        }
+        $this->translationLoaded = [];
 
-        if (count($pieces) !== 2) {
-            return '';
+        $result = @file_get_contents($this->apiUrl());
+        if (! $result) {
+            return false;
         }
 
-        return $pieces[1];
+        $result = json_decode($result, true);
+        if (! isset($result['translations']) || count($result['translations']) < 1) {
+            return false;
+        }
+
+        $this->translations = $result['translations'];
+
+        return true;
     }
+
+    /**
+     * @return string
+     * @see TranslatablePackage::apiUrl()
+     *
+     */
+    abstract function apiUrl(): string;
 
     /**
      * @return string
@@ -120,5 +102,23 @@ trait TranslatablePackageTrait
     public function languageDirectory(): string
     {
         return $this->languageDirectory;
+    }
+
+    /**
+     * Splits {vendor}/{projectName} and returns projectName.
+     *
+     * @param string $name
+     *
+     * @return string
+     */
+    protected function prepareProjectName(string $name): string
+    {
+        $pieces = explode('/', $name);
+
+        if (count($pieces) !== 2) {
+            return '';
+        }
+
+        return $pieces[1];
     }
 }
