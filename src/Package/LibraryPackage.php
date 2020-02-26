@@ -22,6 +22,7 @@ final class LibraryPackage extends Package implements TranslatablePackage
     {
         return sprintf(
             $this->endpoint,
+            $this->projectName(),
             $this->getPrettyVersion()
         );
     }
