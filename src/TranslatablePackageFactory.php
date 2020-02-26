@@ -17,6 +17,7 @@ class TranslatablePackageFactory
         Package\TranslatablePackage::TYPE_CORE => Package\WpCorePackage::class,
         Package\TranslatablePackage::TYPE_PLUGIN => Package\WpPluginPackage::class,
         Package\TranslatablePackage::TYPE_THEME => Package\WpThemePackage::class,
+        Package\TranslatablePackage::TYPE_LIBRARY => Package\LibraryPackage::class,
     ];
 
     /**
