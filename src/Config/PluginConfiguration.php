@@ -7,7 +7,7 @@ use Inpsyde\WpTranslationDownloader\Package\TranslatablePackage;
 final class PluginConfiguration
 {
 
-    const KEY = 'wp-translation-downloader';
+    public const KEY = 'wp-translation-downloader';
     /**
      * @var array
      */
@@ -16,6 +16,7 @@ final class PluginConfiguration
         'languages' => [],
         'directory' => '',
         'directories' => [],
+        'api' => [],
     ];
 
     /**
@@ -41,6 +42,7 @@ final class PluginConfiguration
         $config['directory'] = $languageRoot;
         $config['directories'] = $dirs;
         $config['excludes'] = $this->prepareExcludes($config['excludes']);
+
         $this->config = $config;
     }
 
@@ -50,28 +52,9 @@ final class PluginConfiguration
             return '';
         }
 
-        $rules = array_map(
-            function (string $rule): string {
-                return '('.str_replace(['*', '/'], ['.+', '\/'], $rule).')';
-            },
-            $excludes
-        );
+        $rules = array_map([$this, 'prepareRegex'], $excludes);
 
         return '/'.implode('|', $rules).'/';
-    }
-
-    /**
-     * @param array $extra
-     *
-     * @return PluginConfiguration
-     */
-    public static function fromExtra(array $extra): self
-    {
-        if (! isset($extra[self::KEY])) {
-            return new static([]);
-        }
-
-        return new static($extra[self::KEY]);
     }
 
     public function directory(string $packageType = 'wordpress-core'): string
@@ -115,5 +98,43 @@ final class PluginConfiguration
     public function allowedLanguages(): array
     {
         return $this->config['languages'];
+    }
+
+    public function api(): array
+    {
+        return $this->config['api'];
+    }
+
+    /**
+     * Find a matching configured API Endpoint for the current Package
+     *
+     * @param string $packageName
+     *
+     * @return string|null
+     */
+    public function apiForPackage(string $packageName): ?string
+    {
+        foreach ($this->api() as $apiPackage => $endpoint) {
+            $pattern = '/'.$this->prepareRegex($apiPackage).'/';
+            if (preg_match($pattern, $packageName) === 1) {
+                return $endpoint;
+            };
+        }
+
+        return null;
+    }
+
+    /**
+     * Replaces from the configuration.json file the packageName with placeholder to valid regex.
+     *
+     * @param string $input
+     *
+     * @return string
+     * @example inpsyde/wp-*    =>  (inpsyde\/wp-.+)
+     *
+     */
+    private function prepareRegex(string $input): string
+    {
+        return '('.str_replace(['*', '/'], ['.+', '\/'], $input).')';
     }
 }

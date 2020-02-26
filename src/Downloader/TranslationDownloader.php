@@ -63,9 +63,10 @@ class TranslationDownloader
 
         $this->io->write(
             sprintf(
-                '  Found %d translations for %s ...', 
-                count($translations), 
-                $projectName
+                '  Found %d translations for %s on %s...',
+                count($translations),
+                $projectName,
+                $transPackage->apiUrl()
             )
         );
 
@@ -78,7 +79,8 @@ class TranslationDownloader
 
             // only download file if it not exist.
             if (file_exists($zipFile)) {
-                $this->io->isVerbose() && $this->io->write(
+                $this->io->isVerbose()
+                && $this->io->write(
                     sprintf(
                         '    - <info>Cache</info> %s %s: Using cached translation file %s</info> ',
                         $projectName,

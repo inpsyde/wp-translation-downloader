@@ -23,28 +23,31 @@ class TranslatablePackageFactory
      * @param UninstallOperation|UpdateOperation|InstallOperation|OperationInterface $operation
      * @param PluginConfiguration $config
      *
+     * @return null|Package\TranslatablePackage
      * @throws \InvalidArgumentException
      *
-     * @return null|Package\TranslatablePackage
      */
     public static function create(
         OperationInterface $operation,
         PluginConfiguration $config
     ): ?Package\TranslatablePackage {
-
         /** @var PackageInterface $package */
         $package = ($operation instanceof UpdateOperation)
             ? $operation->getTargetPackage()
             : $operation->getPackage();
 
         $type = $package->getType();
+
         if (! isset(self::PACKAGES[$type])) {
             return null;
         }
 
+        $directory = $config->directory($type);
+        $endpoint = $config->apiForPackage($package->getName());
+
         /** @var Package\TranslatablePackage $transPackage */
         $class = self::PACKAGES[$type];
 
-        return new $class($package, $config->directory($type));
+        return new $class($package, $directory, $endpoint);
     }
 }

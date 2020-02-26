@@ -28,9 +28,14 @@ trait TranslatablePackageTrait
     protected $languageDirectory;
 
     /**
+     * @var string
+     */
+    protected $endpoint;
+
+    /**
+     * @return string
      * @see TranslatablePackage::apiUrl()
      *
-     * @return string
      */
     abstract function apiUrl(): string;
 
@@ -57,11 +62,11 @@ trait TranslatablePackageTrait
     }
 
     /**
-     * @see TranslatablePackage::translations()
-     *
      * @param array $allowedLanguages
      *
      * @return array
+     * @see TranslatablePackage::translations()
+     *
      */
     public function translations(array $allowedLanguages = []): array
     {
@@ -98,9 +103,9 @@ trait TranslatablePackageTrait
     }
 
     /**
+     * @return string
      * @see TranslatablePackage::projectName()
      *
-     * @return string
      */
     public function projectName(): string
     {
@@ -108,9 +113,9 @@ trait TranslatablePackageTrait
     }
 
     /**
+     * @return string
      * @see TranslatablePackage::languageDirectory()
      *
-     * @return string
      */
     public function languageDirectory(): string
     {

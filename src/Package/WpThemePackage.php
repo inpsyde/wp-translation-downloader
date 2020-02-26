@@ -9,10 +9,11 @@ final class WpThemePackage extends Package implements TranslatablePackage
 
     use TranslatablePackageTrait;
 
-    public function __construct(Package $package, string $directory)
+    public function __construct(Package $package, string $directory, string $endpoint = null)
     {
         parent::__construct($package->getName(), $package->getVersion(), $package->getPrettyVersion());
 
+        $this->endpoint = $endpoint ?? 'https://api.wordpress.org/translations/themes/1.0/?slug=%1$s&version=%2$s';
         $this->projectName = $this->prepareProjectName($this->getName());
         $this->languageDirectory = $directory;
     }
@@ -20,7 +21,7 @@ final class WpThemePackage extends Package implements TranslatablePackage
     public function apiUrl(): string
     {
         return sprintf(
-            'https://api.wordpress.org/translations/themes/1.0/?slug=%1$s&version=%2$s',
+            $this->endpoint,
             $this->projectName(),
             $this->getPrettyVersion()
         );

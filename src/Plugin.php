@@ -12,6 +12,7 @@ use Composer\Package\PackageInterface;
 use Composer\Plugin\PluginInterface;
 use Composer\Util\Filesystem;
 use Inpsyde\WpTranslationDownloader\Config\PluginConfiguration;
+use Inpsyde\WpTranslationDownloader\Config\PluginConfigurationBuilder;
 use Inpsyde\WpTranslationDownloader\Downloader\TranslationDownloader;
 use Inpsyde\WpTranslationDownloader\Package\TranslatablePackage;
 
@@ -27,11 +28,6 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
      * @var Composer
      */
     private $composer;
-
-    /**
-     * @var Filesystem
-     */
-    private $filesystem;
 
     /**
      * @var TranslationDownloader
@@ -73,13 +69,19 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
     {
         $this->composer = $composer;
         $this->io = $io;
-        $this->pluginConfig = PluginConfiguration::fromExtra($composer->getPackage()->getExtra());
-        $this->filesystem = new Filesystem();
+
+        // initialize pluginConfig
+        $extra = $composer->getPackage()->getExtra();
+        $configBuilder = new PluginConfigurationBuilder($this->io);
+        $this->pluginConfig = $configBuilder->build($extra);
+
+        // initialize translationDownloader
+        $filesystem = new Filesystem();
         $this->translationDownloader = new TranslationDownloader(
             $io,
             $this->composer->getConfig(),
             new ZipDownloader($io, $composer->getConfig()),
-            $this->filesystem,
+            $filesystem,
             new Cache($this->io, $composer->getConfig()->get('cache-dir').'/translations')
         );
 
@@ -91,10 +93,15 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
         }
 
         foreach ($this->pluginConfig->directories() as $directory) {
-            $this->filesystem->ensureDirectoryExists($directory);
+            $filesystem->ensureDirectoryExists($directory);
         }
     }
 
+    /**
+     * @param PackageEvent $event
+     *
+     * @throws \InvalidArgumentException
+     */
     public function onUninstall(PackageEvent $event)
     {
         /** @var PackageInterface|TranslatablePackage $transPackage */
@@ -108,6 +115,11 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
         $this->translationDownloader->remove($transPackage, $allowedLanguages);
     }
 
+    /**
+     * @param PackageEvent $event
+     *
+     * @throws \InvalidArgumentException
+     */
     public function onUpdate(PackageEvent $event)
     {
         /** @var PackageInterface|TranslatablePackage $transPackage */

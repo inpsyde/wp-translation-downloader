@@ -6,7 +6,7 @@
 [![License](https://img.shields.io/packagist/l/inpsyde/wp-translation-downloader.svg)](https://packagist.org/packages/inpsyde/wp-translation-downloader)
 
 
-Composer plugin to download translations from the wordpress.org API.
+Composer plugin to download translations from the wordpress.org API or via self-hosted GlotPress.
 
 ## Installation
 
@@ -15,7 +15,8 @@ composer require inpsyde/wp-translation-downloader
 ```
 
 ## Usage
-After successful configuration, the `.po`/`.mo` files are automatically downloaded from the official wordpress.org API on `composer install`. Also, translation files are deleted when a package is removed on `composer install`.
+After successful configuration, the `.po`/`.mo` files are automatically downloaded on `composer install`. Also, translation files are deleted when a package is removed on `composer install`.
+
 ## Configuration
 
 The following configurations are available:
@@ -25,22 +26,185 @@ The following configurations are available:
 |languages|array|x|The iso codes you want to download|
 |directory|string|x|The relative path to the `languages` directory|
 |excludes|array| |An optional array for excluding certain packages|
+|api|array| |An optional array which maps the `packageName` to an API-Endpoint|
 
-*[!] Note:* You can use `*` as a placeholder to exclude multiple packages.
+**[!] Note:** You can use `*` as a placeholder to exclude multiple packages.
+**[!] Note 2:** You can use `*` as a placeholder to match an API for multiple packages.
 
 The configuration should be added to your `composer.json` in the `extra` property with the `wp-translation-downloader` key.
 
-**Example:**
+### Examples
 
+#### Default
+Following is the default configuration for wp-translation-downloader to download translations from WordPress.org API:
+
+**composer.json**
 ```json
-"wp-translation-downloader": {
+{
+    "name": "vendor/my-package",
+    "extra": {
+        "wp-translation-downloader": {
+            "languages": [
+                "de_DE"
+            ],
+            "directory": "public/wp-content/languages",
+        }
+    }
+}
+```
+
+#### Default - own configuration file
+You can, if you have a lot of configurations, move the whole wp-translation-downloader configuration to an own json-file and just provide the file path like this:
+
+**composer.json**
+```json
+{
+    "name": "vendor/my-package",
+    "extra": {
+        "wp-translation-downloader": "./wp-translation-downloader.json"
+    }
+}
+```
+
+**wp-translation-downloader.json**
+```json
+{
     "languages": [
         "de_DE"
     ],
     "directory": "public/wp-content/languages",
-    "excludes": ["inpsyde/*"]
 }
 ```
+
+#### Exclude specific packages
+To exclude specific packages, like _"I want to exclude all WordPress Plugins/Themes/Mu-Plugins from vendor `inpsyde`"_ you can use following:
+
+**composer.json**
+```json
+{
+    "name": "vendor/my-package",
+    "require": {
+        "inpsyde/wp-translation-downloader": "~0.1",
+        "johnpbloch/wordpress": "5.3.*@stable",
+        "inpsyde/google-tag-manager": "1.0",
+        "wpackagist-plugin/wordpress-seo": "13.0",
+    },
+    "extra": {
+        "wp-translation-downloader": "./wp-translation-downloader.json"
+    }
+}
+```
+
+**wp-translation-downloader.json**
+```json
+{
+    "languages": [
+        "de_DE"
+    ],
+    "excludes": ["inpsyde/*"],
+    "directory": "public/wp-content/languages"
+}
+```
+
+This will map to following matrix:
+
+|package|type|downloaded|
+|---|---|---|
+|`johnpbloch/wordpress`|wordpress-core|yes|
+|`inpsyde/wp-translation-downloader`|composer-plugin|skipped - not matching packageType|
+|`inpsyde/google-tag-manager`|wordpress-plugin|no - matching with "exclude"|
+|`wpackagist-plugin/wordpress-seo`|wordpress-plugin|yes|
+           
+
+#### Use external GlotPress API
+If you have for example private Plugins/Themes or you don't want to use the official translation for a Package, then you can use an own GlotPress installation.
+
+To use this, you can map same like the `exclude` one or multiple packages to a different Endpoint. You can add placeholders for the different package types:
+
+**wordpress-plugin:**
+
+Default: `https://api.wordpress.org/translations/plugins/1.0/?slug=%1$s&version=%2$s`
+
+- `%1$s` - "projectName"
+- `%2$s` - "version"
+
+**wordpress-theme:**
+
+Default: `https://api.wordpress.org/translations/themes/1.0/?slug=%1$s&version=%2$s`
+
+- `%1$s` - "projectName"
+- `%2$s` - "version"
+
+**wordpress-core:**
+
+Default: `https://api.wordpress.org/translations/core/1.0/?version=%1$s`
+
+- `%1$s` - "version"
+
+The example for replacing those looks like following:
+
+**composer.json**
+```json
+{
+    "name": "vendor/my-package",
+    "require": {
+        "inpsyde/wp-translation-downloader": "~0.1",
+        "johnpbloch/wordpress": "5.3.*@stable",
+        "wpackagist-plugin/wordpress-seo": "13.0",
+        "wpackagist-theme/twentytwenty": "1.1"
+    },
+    "extra": {
+        "wp-translation-downloader": "./wp-translation-downloader.json"
+    }
+}
+```
+
+**wp-translation-downloader.json**
+```json
+{
+    "languages": [
+        "de_DE"
+    ],
+    "directory": "public/wp-content/languages",
+    "api": {
+        "johnpbloch/wordpress": "https://my-glotpress-instance.tld/core/%1$s",
+        "wpackagist-plugin/*": "https://my-glotpress-instance.tld/plugins/%1$s?version=%2$s",
+        "wpackagist-theme/*": "https://my-glotpress-instance.tld/theme/%1$s?version=%2$s",
+    }
+}
+```
+
+This will map to following matrix:
+
+|package|API Url|
+|---|---|
+|`johnpbloch/wordpress`|`https://my-glotpress-instance.tld/core/5.3`|
+|`inpsyde/wp-translation-downloader`|skipped - not matching packageType|
+|`wpackagist-plugin/wordpress-seo`|`https://my-glotpress-instance.tld/plugins/wordpress-seo?version=13.0`|
+|`wpackagist-theme/twentytwenty`|`https://my-glotpress-instance.tld/theme/twentytwenty?version=1.1`|
+
+**[!]Note:** Be aware, the "api"-list checks for the first matching result from top to bottom. This means, that you're in charge for the order. If you want to have a more specific match, then you need to move it on top:
+
+```json
+{
+    "api": {
+        "wpackagist-plugin/*": "https://my-glotpress-instance.tld/plugins/%1$s?version=%2$s",
+        "wpackagist-plugin/wordpress-seo": "https://someting-different.tld/..."
+    }
+}
+```
+
+The rule for `wpackagist-plugin/wordpress-seo` will not be executed, because the `wpackagist-plugin/*`-rule matches first. You need to have following order:
+
+```json
+{
+    "api": {
+        "wpackagist-plugin/wordpress-seo": "https://someting-different.tld/...",        
+        "wpackagist-plugin/*": "https://my-glotpress-instance.tld/plugins/%1$s?version=%2$s"
+    }
+}
+```
+
 
 ## License
 
