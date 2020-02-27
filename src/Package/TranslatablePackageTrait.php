@@ -2,6 +2,8 @@
 
 namespace Inpsyde\WpTranslationDownloader\Package;
 
+use Inpsyde\WpTranslationDownloader\PackageNameResolver;
+
 /**
  * @see TranslatablePackage
  */
@@ -30,6 +32,9 @@ trait TranslatablePackageTrait
      */
     protected $endpoint;
 
+    /**
+     * @var bool
+     */
     private $translationLoaded = false;
 
     /**
@@ -49,7 +54,7 @@ trait TranslatablePackageTrait
 
         return array_filter(
             $this->translations,
-            function (array $trans) use ($allowedLanguages) {
+            function (array $trans) use ($allowedLanguages): bool {
                 return in_array($trans['language'], $allowedLanguages, true);
             }
         );
@@ -62,12 +67,12 @@ trait TranslatablePackageTrait
         }
         $this->translationLoaded = [];
 
-        $apiUrl = $this->apiUrl();
+        $apiUrl = $this->apiEndpoint();
         if ($apiUrl === '') {
             return false;
         }
 
-        $result = @file_get_contents($this->apiUrl());
+        $result = @file_get_contents($this->apiEndpoint());
         if (! $result) {
             return false;
         }
@@ -84,10 +89,13 @@ trait TranslatablePackageTrait
 
     /**
      * @return string
-     * @see TranslatablePackage::apiUrl()
+     * @see TranslatablePackage::apiEndpoint()
      *
      */
-    abstract function apiUrl(): string;
+    public function apiEndpoint(): string
+    {
+        return $this->endpoint;
+    }
 
     /**
      * @return string
@@ -96,6 +104,11 @@ trait TranslatablePackageTrait
      */
     public function projectName(): string
     {
+        if (! $this->projectName) {
+            [$vendorName, $projectName] = PackageNameResolver::resolve($this->getName());
+            $this->projectName = $projectName;
+        }
+
         return $this->projectName;
     }
 
@@ -107,23 +120,5 @@ trait TranslatablePackageTrait
     public function languageDirectory(): string
     {
         return $this->languageDirectory;
-    }
-
-    /**
-     * Splits {vendor}/{projectName} and returns projectName.
-     *
-     * @param string $name
-     *
-     * @return string
-     */
-    protected function prepareProjectName(string $name): string
-    {
-        $pieces = explode('/', $name);
-
-        if (count($pieces) !== 2) {
-            return '';
-        }
-
-        return $pieces[1];
     }
 }

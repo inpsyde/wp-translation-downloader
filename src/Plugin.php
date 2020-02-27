@@ -25,11 +25,6 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
     private $io;
 
     /**
-     * @var Composer
-     */
-    private $composer;
-
-    /**
      * @var TranslationDownloader
      */
     private $translationDownloader;
@@ -40,9 +35,17 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
     private $pluginConfig;
 
     /**
+     * @var TranslatablePackageFactory
+     */
+    private $translatablePackageFactory;
+
+    /**
      * Subscribe to Composer events.
      *
      * @return array The events and callbacks.
+     *
+     * phpcs:disable Inpsyde.CodeQuality.NoAccessors.NoGetter
+     * phpcs:disable Inpsyde.CodeQuality.ReturnTypeDeclaration.NoReturnType
      */
     public static function getSubscribedEvents()
     {
@@ -67,19 +70,24 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
      */
     public function activate(Composer $composer, IOInterface $io)
     {
-        $this->composer = $composer;
         $this->io = $io;
 
-        // initialize pluginConfig
+        // initialize PluginConfiguration
         $extra = $composer->getPackage()->getExtra();
         $configBuilder = new PluginConfigurationBuilder($this->io);
         $this->pluginConfig = $configBuilder->build($extra);
 
-        // initialize translationDownloader
+        // initialize TranslatablePackageFactory
+        $this->translatablePackageFactory = new TranslatablePackageFactory(
+            $this->pluginConfig,
+            new ApiEndpointResolver($this->pluginConfig)
+        );
+
+        // initialize TranslationDownloader
         $filesystem = new Filesystem();
         $this->translationDownloader = new TranslationDownloader(
             $io,
-            $this->composer->getConfig(),
+            $composer->getConfig(),
             new ZipDownloader($io, $composer->getConfig()),
             $filesystem,
             new Cache($this->io, $composer->getConfig()->get('cache-dir').'/translations')
@@ -105,7 +113,7 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
     public function onUninstall(PackageEvent $event)
     {
         /** @var PackageInterface|TranslatablePackage $transPackage */
-        $transPackage = TranslatablePackageFactory::create($event->getOperation(), $this->pluginConfig);
+        $transPackage = $this->translatablePackageFactory->createFromOperation($event->getOperation());
 
         if ($transPackage === null) {
             return;
@@ -123,7 +131,8 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
     public function onUpdate(PackageEvent $event)
     {
         /** @var PackageInterface|TranslatablePackage $transPackage */
-        $transPackage = TranslatablePackageFactory::create($event->getOperation(), $this->pluginConfig);
+
+        $transPackage = $this->translatablePackageFactory->createFromOperation($event->getOperation());
 
         if ($transPackage === null) {
             return;

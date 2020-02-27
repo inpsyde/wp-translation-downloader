@@ -2,6 +2,7 @@
 
 namespace Inpsyde\WpTranslationDownloader\Config;
 
+use Inpsyde\WpTranslationDownloader\Package;
 use Inpsyde\WpTranslationDownloader\Package\TranslatablePackage;
 
 final class PluginConfiguration
@@ -11,12 +12,31 @@ final class PluginConfiguration
     /**
      * @var array
      */
+    public const SUPPORTED_PACKAGES = [
+        Package\TranslatablePackage::TYPE_CORE => Package\WpCorePackage::class,
+        Package\TranslatablePackage::TYPE_PLUGIN => Package\WpPluginPackage::class,
+        Package\TranslatablePackage::TYPE_THEME => Package\WpThemePackage::class,
+        Package\TranslatablePackage::TYPE_LIBRARY => Package\LibraryPackage::class,
+    ];
+    public const API_BY_NAME = 'names';
+    public const API_BY_TYPE = 'types';
+    /**
+     * @var array
+     */
     const DEFAULTS = [
         'excludes' => [],
         'languages' => [],
         'directory' => '',
         'directories' => [],
-        'api' => [],
+        'api' => [
+            self::API_BY_NAME => [],
+            self::API_BY_TYPE => [
+                // phpcs:disable Inpsyde.CodeQuality.LineLength.TooLong
+                Package\TranslatablePackage::TYPE_CORE => 'https://api.wordpress.org/translations/core/1.0/?version=%packageVersion%',
+                Package\TranslatablePackage::TYPE_PLUGIN => 'https://api.wordpress.org/translations/plugins/1.0/?slug=%projectName%&version=%packageVersion%',
+                Package\TranslatablePackage::TYPE_THEME => 'https://api.wordpress.org/translations/themes/1.0/?slug=%projectName%&version=%packageVersion%',
+            ],
+        ],
     ];
 
     /**
@@ -26,7 +46,7 @@ final class PluginConfiguration
 
     public function __construct(array $config)
     {
-        $config = array_merge(self::DEFAULTS, $config);
+        $config = array_replace_recursive(self::DEFAULTS, $config);
 
         $languageRoot = getcwd().'/';
         if ($config['directory'] !== '') {
@@ -37,7 +57,7 @@ final class PluginConfiguration
             TranslatablePackage::TYPE_CORE => $languageRoot,
             TranslatablePackage::TYPE_PLUGIN => $languageRoot.'plugins/',
             TranslatablePackage::TYPE_THEME => $languageRoot.'themes/',
-            TranslatablePackage::TYPE_LIBRARY => $languageRoot.'library/'
+            TranslatablePackage::TYPE_LIBRARY => $languageRoot.'library/',
         ];
 
         $config['directory'] = $languageRoot;
@@ -47,6 +67,11 @@ final class PluginConfiguration
         $this->config = $config;
     }
 
+    /**
+     * @param array $excludes
+     *
+     * @return string
+     */
     private function prepareExcludes(array $excludes): string
     {
         if (count($excludes) < 1) {
@@ -58,6 +83,11 @@ final class PluginConfiguration
         return '/'.implode('|', $rules).'/';
     }
 
+    /**
+     * @param string $packageType
+     *
+     * @return string
+     */
     public function directory(string $packageType = 'wordpress-core'): string
     {
         if (! isset($this->config['directories'][$packageType])) {
@@ -67,11 +97,19 @@ final class PluginConfiguration
         return $this->config['directories'][$packageType];
     }
 
+    /**
+     * @return array
+     */
     public function directories(): array
     {
         return $this->config['directories'];
     }
 
+    /**
+     * @param string $name
+     *
+     * @return bool
+     */
     public function doExclude(string $name): bool
     {
         $excludes = $this->excludes();
@@ -82,47 +120,63 @@ final class PluginConfiguration
         return preg_match($excludes, $name) === 1;
     }
 
+    /**
+     * @return string
+     */
     public function excludes(): string
     {
         return $this->config['excludes'];
     }
 
+    /**
+     * @return string
+     */
     public function isValid(): string
     {
         if (count($this->allowedLanguages()) < 1) {
+            // phpcs:disable Inpsyde.CodeQuality.LineLength.TooLong
             return '<fg=red>extra.wp-translation-downloader.languages has to be configured as non empty array in your composer.json</>';
         }
 
         return '';
     }
 
+    /**
+     * @return array
+     */
     public function allowedLanguages(): array
     {
         return $this->config['languages'];
     }
 
     /**
-     * Find a matching configured API Endpoint for the current Package
+     * @param string $packageType
      *
-     * @param string $packageName
-     *
-     * @return string|null
+     * @return bool
      */
-    public function apiForPackage(string $packageName): ?string
+    public function isPackageTypeSupported(string $packageType): bool
     {
-        foreach ($this->api() as $apiPackage => $endpoint) {
-            $pattern = '/'.$this->prepareRegex($apiPackage).'/';
-            if (preg_match($pattern, $packageName) === 1) {
-                return $endpoint;
-            };
-        }
+        return isset(self::SUPPORTED_PACKAGES[$packageType]);
+    }
 
-        return null;
+    /**
+     * @param string $packType
+     *
+     * @return string
+     */
+    public function packageTypeClass(string $packType): string
+    {
+        return self::SUPPORTED_PACKAGES[$packType];
     }
 
     public function api(): array
     {
         return $this->config['api'];
+    }
+
+    public function apiBy(string $type): array
+    {
+        return $this->config['api'][$type] ?? [];
     }
 
     /**
@@ -134,7 +188,7 @@ final class PluginConfiguration
      * @example inpsyde/wp-*    =>  (inpsyde\/wp-.+)
      *
      */
-    private function prepareRegex(string $input): string
+    public function prepareRegex(string $input): string
     {
         return '('.str_replace(['*', '/'], ['.+', '\/'], $input).')';
     }

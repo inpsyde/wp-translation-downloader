@@ -13,40 +13,69 @@ use Inpsyde\WpTranslationDownloader\Package;
 class TranslatablePackageFactory
 {
 
-    const PACKAGES = [
-        Package\TranslatablePackage::TYPE_CORE => Package\WpCorePackage::class,
-        Package\TranslatablePackage::TYPE_PLUGIN => Package\WpPluginPackage::class,
-        Package\TranslatablePackage::TYPE_THEME => Package\WpThemePackage::class,
-    ];
+    /**
+     * @var PluginConfiguration
+     */
+    protected $pluginConfiguration;
+
+    /**
+     * @var ApiEndpointResolver
+     */
+    protected $apiEndpointResolver;
+
+    /**
+     * TranslatablePackageFactory constructor.
+     *
+     * @param PluginConfiguration $pluginConfiguration
+     * @param ApiEndpointResolver $apiEndpointResolver
+     */
+    public function __construct(
+        PluginConfiguration $pluginConfiguration,
+        ApiEndpointResolver $apiEndpointResolver
+    ) {
+
+        $this->pluginConfiguration = $pluginConfiguration;
+        $this->apiEndpointResolver = $apiEndpointResolver;
+    }
 
     /**
      * @param UninstallOperation|UpdateOperation|InstallOperation|OperationInterface $operation
-     * @param PluginConfiguration $config
      *
      * @return null|Package\TranslatablePackage
      * @throws \InvalidArgumentException
-     *
      */
-    public static function create(
-        OperationInterface $operation,
-        PluginConfiguration $config
-    ): ?Package\TranslatablePackage {
+    public function createFromOperation(OperationInterface $operation): ?Package\TranslatablePackage
+    {
         /** @var PackageInterface $package */
         $package = ($operation instanceof UpdateOperation)
             ? $operation->getTargetPackage()
             : $operation->getPackage();
 
+        return $this->create($package);
+    }
+
+    /**
+     * @param PackageInterface $package
+     *
+     * @return Package\TranslatablePackage|null
+     */
+    public function create(PackageInterface $package): ?Package\TranslatablePackage
+    {
         $type = $package->getType();
 
-        if (! isset(self::PACKAGES[$type])) {
+        if (! $this->pluginConfiguration->isPackageTypeSupported($type)) {
             return null;
         }
 
-        $directory = $config->directory($type);
-        $endpoint = $config->apiForPackage($package->getName());
-
         /** @var Package\TranslatablePackage $transPackage */
-        $class = self::PACKAGES[$type];
+        $class = $this->pluginConfiguration->packageTypeClass($type);
+
+        $directory = $this->pluginConfiguration->directory($type);
+
+        $endpoint = $this->apiEndpointResolver->resolve($package);
+        if ($endpoint === null) {
+            return null;
+        }
 
         return new $class($package, $directory, $endpoint);
     }

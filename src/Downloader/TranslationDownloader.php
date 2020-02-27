@@ -44,6 +44,7 @@ class TranslationDownloader
         Filesystem $filesystem,
         Cache $cache
     ) {
+
         $this->io = $io;
         $this->config = $config;
         $this->zipDownloader = $zipDownloader;
@@ -55,6 +56,14 @@ class TranslationDownloader
         }
     }
 
+    /**
+     * @param TranslatablePackage $transPackage
+     * @param array $allowedLanguages
+     *
+     * @return bool
+     *
+     * phpcs:disable
+     */
     public function download(TranslatablePackage $transPackage, array $allowedLanguages)
     {
         $directory = $transPackage->languageDirectory();
@@ -66,7 +75,7 @@ class TranslationDownloader
                 '  Found %d translations for %s on %s...',
                 count($translations),
                 $projectName,
-                $transPackage->apiUrl()
+                $transPackage->apiEndpoint()
             )
         );
 
@@ -78,31 +87,31 @@ class TranslationDownloader
             $zipFile = $this->cache->getRoot().$fileName;
 
             // only download file if it not exist.
-            if (file_exists($zipFile)) {
-                $this->io->isVerbose()
-                && $this->io->write(
+            file_exists($zipFile)
+            && $this->io->isVerbose()
+            && $this->io->write(
+                sprintf(
+                    '    - <info>Cache</info> %s %s: Using cached translation file %s</info> ',
+                    $projectName,
+                    $version,
+                    $zipFile
+                )
+            );
+
+            if (! file_exists($zipFile) && ! copy($package, $zipFile)) {
+                $this->io->writeError(
                     sprintf(
-                        '    - <info>Cache</info> %s %s: Using cached translation file %s</info> ',
+                        '    - <error>[ERROR]</error> %s %s: Could not download and write "%s"</>',
                         $projectName,
                         $version,
-                        $zipFile
+                        $package
                     )
                 );
-            } else {
-                if (! copy($package, $zipFile)) {
-                    $this->io->writeError(
-                        sprintf(
-                            '    - <error>[ERROR]</error> %s %s: Could not download and write "%s"</>',
-                            $projectName,
-                            $version,
-                            $package
-                        )
-                    );
-                    continue;
-                }
+                continue;
             }
 
             try {
+                // phpcs:disable NeutronStandard.Extract.DisallowExtract.Extract
                 $this->zipDownloader->extract($zipFile, $directory);
                 $this->io->write(
                     sprintf(
@@ -126,8 +135,11 @@ class TranslationDownloader
         return true;
     }
 
-    public function remove(TranslatablePackage $transPackage, array $allowedLanguages)
-    {
+    public
+    function remove(
+        TranslatablePackage $transPackage,
+        array $allowedLanguages
+    ) {
         $directory = $transPackage->languageDirectory();
         $translations = $transPackage->translations($allowedLanguages);
 
@@ -148,8 +160,11 @@ class TranslationDownloader
                         )
                     );
                 } catch (\Throwable $exception) {
+                    $this->io->writeError($exception->getMessage());
                 }
             }
         }
+
+        return true;
     }
 }

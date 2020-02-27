@@ -9,20 +9,11 @@ final class LibraryPackage extends Package implements TranslatablePackage
 
     use TranslatablePackageTrait;
 
-    public function __construct(Package $package, string $directory, string $endpoint = null)
+    public function __construct(Package $package, string $directory, string $endpoint)
     {
         parent::__construct($package->getName(), $package->getVersion(), $package->getPrettyVersion());
 
-        $this->endpoint = $endpoint ?? '';
-        $this->projectName = $this->prepareProjectName($this->getName());
+        $this->endpoint = $endpoint;
         $this->languageDirectory = $directory;
-    }
-
-    public function apiUrl(): string
-    {
-        return sprintf(
-            $this->endpoint,
-            $this->getPrettyVersion()
-        );
     }
 }

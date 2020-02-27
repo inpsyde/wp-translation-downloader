@@ -116,25 +116,13 @@ If you have for example private Plugins/Themes or you don't want to use the offi
 
 To use this, you can map same like the `exclude` one or multiple packages to a different Endpoint. You can add placeholders for the different package types:
 
-**wordpress-plugin:**
-
-Default: `https://api.wordpress.org/translations/plugins/1.0/?slug=%1$s&version=%2$s`
-
-- `%1$s` - "projectName"
-- `%2$s` - "version"
-
-**wordpress-theme:**
-
-Default: `https://api.wordpress.org/translations/themes/1.0/?slug=%1$s&version=%2$s`
-
-- `%1$s` - "projectName"
-- `%2$s` - "version"
-
-**wordpress-core:**
-
-Default: `https://api.wordpress.org/translations/core/1.0/?version=%1$s`
-
-- `%1$s` - "version"
+|placeholder|description|
+|---|---|
+|`%projectName%` | the name without vendor - Example: "wordpress-seo" |
+|`%vendorName%` | Example: "wpackagist-plugin" |
+|`%packageName%` | full name of the package - Example: "wpackagist-plugin/wordpress-seo" |
+|`%packageType%` | type of the package - Example: "wordpress-plugin" |
+|`%packageVersion`| version of the package - Example: "13.0" |
 
 The example for replacing those looks like following:
 
@@ -162,10 +150,13 @@ The example for replacing those looks like following:
     ],
     "directory": "public/wp-content/languages",
     "api": {
-        "johnpbloch/wordpress": "https://my-glotpress-instance.tld/core/%1$s",
-        "wpackagist-plugin/*": "https://my-glotpress-instance.tld/plugins/%1$s?version=%2$s",
-        "wpackagist-theme/*": "https://my-glotpress-instance.tld/theme/%1$s?version=%2$s",
-    }
+        "names": {
+            "johnpbloch/wordpress": "https://my-glotpress-instance.tld/core/%packageVersion%",
+            "wpackagist-plugin/*": "https://my-glotpress-instance.tld/plugins/%projectName%?version=%packageVersion%"
+        },
+        "types": {
+            "wordpress-theme": "https://my-glotpress-instance.tld/theme/%projectName%?version=%packageVersion%"
+        }
 }
 ```
 
@@ -178,25 +169,31 @@ This will map to following matrix:
 |`wpackagist-plugin/wordpress-seo`|`https://my-glotpress-instance.tld/plugins/wordpress-seo?version=13.0`|
 |`wpackagist-theme/twentytwenty`|`https://my-glotpress-instance.tld/theme/twentytwenty?version=1.1`|
 
-**[!]Note:** Be aware, the "api"-list checks for the first matching result from top to bottom. This means, that you're in charge for the order. If you want to have a more specific match, then you need to move it on top:
+**[!]** Be aware, the "api"-list checks for the first matching result from top to bottom. If you want to have a more specific match, then you need to move it on top:
 
 ```json
 {
     "api": {
-        "wpackagist-plugin/*": "https://my-glotpress-instance.tld/plugins/%1$s?version=%2$s",
-        "wpackagist-plugin/wordpress-seo": "https://someting-different.tld/..."
-    }
+        "names": {
+            "wpackagist-plugin/*": "https://my-glotpress-instance.tld/plugins/%1$s?version=%2$s",
+            "wpackagist-plugin/wordpress-seo": "https://someting-different.tld/..."
+        }
+    },
 }
 ```
 
 The rule for `wpackagist-plugin/wordpress-seo` will not be executed, because the `wpackagist-plugin/*`-rule matches first. You need to have following order:
 
+Also the matching "names" will be checked first. Afterwards it will be checked if there is a matching "types".
+
 ```json
 {
     "api": {
-        "wpackagist-plugin/wordpress-seo": "https://someting-different.tld/...",        
-        "wpackagist-plugin/*": "https://my-glotpress-instance.tld/plugins/%1$s?version=%2$s"
-    }
+        "names": {,
+            "wpackagist-plugin/wordpress-seo": "https://someting-different.tld/...",        
+            "wpackagist-plugin/*": "https://my-glotpress-instance.tld/plugins/%1$s?version=%2$s"
+        }
+    },
 }
 ```
 

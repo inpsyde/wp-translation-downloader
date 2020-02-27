@@ -22,7 +22,7 @@ interface TranslatablePackage
      *
      * @return string
      */
-    public function apiUrl(): string;
+    public function apiEndpoint(): string;
 
     /**
      * Retrieve the path to the language directory.
