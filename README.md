@@ -170,7 +170,9 @@ This will map to following matrix:
 |`wpackagist-plugin/wordpress-seo`|`https://my-glotpress-instance.tld/plugins/wordpress-seo?version=13.0`|
 |`wpackagist-theme/twentytwenty`|`https://my-glotpress-instance.tld/theme/twentytwenty?version=1.1`|
 
-**[!]** Be aware, the "api"-list checks for the first matching result from top to bottom. If you want to have a more specific match, then you need to move it on top:
+**[!]** Be aware:
+1. The "api"-list checks for the first matching result from top to bottom.
+2. The matching "names" will be checked first. Afterwards it will be checked if there is a matching "types".
 
 ```json
 {
@@ -185,8 +187,6 @@ This will map to following matrix:
 
 The rule for `wpackagist-plugin/wordpress-seo` will not be executed, because the `wpackagist-plugin/*`-rule matches first. You need to have following order:
 
-Also the matching "names" will be checked first. Afterwards it will be checked if there is a matching "types".
-
 ```json
 {
     "api": {
@@ -197,6 +197,8 @@ Also the matching "names" will be checked first. Afterwards it will be checked i
     },
 }
 ```
+
+
 
 ## Support for Composer type="library"
 The `inpsyde/wp-translation-downloader` also supports Composer `Package::getType() === 'library'`. By default, nothing will be done, but if configured via API for example to a self-hosted GlotPress - then those translation will be downloaded into `WP_LANG_DIR . '/library/'`.
