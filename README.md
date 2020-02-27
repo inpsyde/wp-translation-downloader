@@ -122,7 +122,7 @@ To use this, you can map same like the `exclude` one or multiple packages to a d
 |`%vendorName%` | Example: "wpackagist-plugin" |
 |`%packageName%` | full name of the package - Example: "wpackagist-plugin/wordpress-seo" |
 |`%packageType%` | type of the package - Example: "wordpress-plugin" |
-|`%packageVersion`| version of the package - Example: "13.0" |
+|`%packageVersion%`| version of the package - Example: "13.0" |
 
 The example for replacing those looks like following:
 
