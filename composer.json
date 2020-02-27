@@ -31,10 +31,10 @@
     },
     "scripts": {
         "cs": "@php ./vendor/squizlabs/php_codesniffer/bin/phpcs",
-        "unit": "@php ./vendor/bin/phpunit",
+        "tests": "@php ./vendor/phpunit/phpunit/phpunit",
         "qa": [
             "@cs",
-            "@unit"
+            "@tests"
         ]
     }
 }
