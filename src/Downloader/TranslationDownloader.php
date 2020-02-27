@@ -135,11 +135,8 @@ class TranslationDownloader
         return true;
     }
 
-    public
-    function remove(
-        TranslatablePackage $transPackage,
-        array $allowedLanguages
-    ) {
+    public function remove(TranslatablePackage $transPackage, array $allowedLanguages)
+    {
         $directory = $transPackage->languageDirectory();
         $translations = $transPackage->translations($allowedLanguages);
 
