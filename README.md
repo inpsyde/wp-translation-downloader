@@ -23,7 +23,8 @@ The following configurations are available:
 |languages|array|x|The iso codes you want to download|
 |directory|string|x|The relative path to the `languages` directory|
 |excludes|array| |An optional array for excluding certain packages|
-|api|array| |An optional array which maps the `packageName` to an API-Endpoint|
+|api.names|array| |An optional array which maps the `packageName` to an API-Endpoint|
+|api.types|array| |An optional array which maps the `packageType` to an API-Endpoint|
 
 **[!] Note:** You can use `*` as a placeholder to exclude multiple packages.
 **[!] Note 2:** You can use `*` as a placeholder to match an API for multiple packages.
