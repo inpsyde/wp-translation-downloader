@@ -190,7 +190,7 @@ Also the matching "names" will be checked first. Afterwards it will be checked i
 ```json
 {
     "api": {
-        "names": {,
+        "names": {
             "wpackagist-plugin/wordpress-seo": "https://someting-different.tld/...",        
             "wpackagist-plugin/*": "https://my-glotpress-instance.tld/plugins/%1$s?version=%2$s"
         }
