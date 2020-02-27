@@ -39,8 +39,8 @@ class ApiEndpointResolverTest extends TestCase
 
     public function provideData()
     {
+        // Testing default API
         yield [
-            // default API
             [],
             [
                 [
@@ -57,5 +57,74 @@ class ApiEndpointResolverTest extends TestCase
                 ],
             ],
         ];
+
+        // Testing a custom API for a matching "name"
+        yield [
+            [
+                'api' => [
+                    PluginConfiguration::API_BY_NAME => [
+                        'inpsyde/*' => 'https://inpsyde.com/%projectName%',
+                    ],
+                ],
+            ],
+            [
+                [
+                    'name' => 'inpsyde/google-tag-manager',
+                    'version' => '1.0',
+                    'type' => TranslatablePackage::TYPE_PLUGIN,
+                    'expectedEndpoint' => 'https://inpsyde.com/google-tag-manager',
+                ],
+            ],
+        ];
+
+        yield [
+            [
+                'api' => [
+                    PluginConfiguration::API_BY_TYPE => [
+                        TranslatablePackage::TYPE_PLUGIN => 'https://inpsyde.com/%packageType%/%vendorName%/%projectName%',
+                    ],
+                ],
+            ],
+            [
+                [
+                    'name' => 'inpsyde/google-tag-manager',
+                    'version' => '1.0',
+                    'type' => TranslatablePackage::TYPE_PLUGIN,
+                    'expectedEndpoint' => "https://inpsyde.com/"
+                        .TranslatablePackage::TYPE_PLUGIN
+                        ."/inpsyde/google-tag-manager",
+                ],
+            ],
+        ];
+    }
+
+    public function testReplacingPlaceholders()
+    {
+        $api = [
+            'api' => [
+                PluginConfiguration::API_BY_NAME => [
+                    '*' => '%vendorName%-%projectName%-%packageName%-%packageType%-%packageVersion%',
+                ],
+            ],
+        ];
+
+        $expectedVendor = 'inpsyde';
+        $expectedProjectName = 'google-tag-manager';
+        $expectedPackageName = 'inpsyde/google-tag-manager';
+        $expectedType = TranslatablePackage::TYPE_PLUGIN;
+        $expectedVersion = '1.0';
+
+        $expected = "{$expectedVendor}-{$expectedProjectName}-{$expectedPackageName}-{$expectedType}-{$expectedVersion}";
+
+        $packageStub = \Mockery::mock(PackageInterface::class);
+        $packageStub->expects('getName')->andReturn($expectedPackageName);
+        $packageStub->expects('getType')->andReturn($expectedType);
+        $packageStub->expects('getPrettyVersion')->andReturn($expectedVersion);
+
+        $pluginConfiguration = new PluginConfiguration($api);
+
+        $testee = new ApiEndpointResolver($pluginConfiguration);
+
+        static::assertSame($expected, $testee->resolve($packageStub));
     }
 }
