@@ -203,14 +203,24 @@ The rule for `wpackagist-plugin/wordpress-seo` will not be executed, because the
 ## Support for Composer type="library"
 The `inpsyde/wp-translation-downloader` also supports Composer `Package::getType() === 'library'`. By default, nothing will be done, but if configured via API for example to a self-hosted GlotPress - then those translation will be downloaded into `WP_LANG_DIR . '/library/'`.
 
-Those can be accessed in your library via: 
+To access the translations, with fallback, in your library you can bring in some helper function like this: 
 
 ```php
 <?php
-load_textdomain( 
-    'your-package', 
-    sprintf(WP_LANG_DIR . '/library/your-package-%s.mo', determine_locale())
-);
+namespace Acme;
+
+function loadLibraryTextDomain(string $domain, string $libraryLangPath): bool
+{
+    $locale = apply_filters('library_locale', determine_locale(), $domain);
+    $moFile = "{$domain}-{$locale}.mo";
+
+    // Try to load from the languages directory first.
+    if (load_textdomain($domain, WP_LANG_DIR . "/library/{$moFile}")) {
+        return true;
+    }
+
+    return (bool)load_textdomain($domain, trailingslashit($libraryLangPath) . $moFile);
+}
 ```
 
 
