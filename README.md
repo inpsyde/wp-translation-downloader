@@ -54,7 +54,7 @@ For this it's necessary to use the configuration `"extra.wp-translation-download
 ```json
 {
     "extra": {
-        "wp-translation-downloader": "../wp-translation-downloader.json"
+        "wp-translation-downloader": "./wp-translation-downloader.json"
     }
 }
 ```
