@@ -2,11 +2,10 @@
 
 [![Version](https://img.shields.io/packagist/v/inpsyde/wp-translation-downloader.svg)](https://packagist.org/packages/inpsyde/wp-translation-downloader)
 [![Status](https://img.shields.io/badge/status-active-brightgreen.svg)](https://github.com/inpsyde/wp-translation-downloader)
-[![Downloads](https://img.shields.io/packagist/dt/inpsydewp-translation-downloader.svg)](https://packagist.org/packages/inpsyde/wp-translation-downloader)
+[![Downloads](https://img.shields.io/packagist/dt/inpsyde/wp-translation-downloader.svg)](https://packagist.org/packages/inpsyde/wp-translation-downloader)
 [![License](https://img.shields.io/packagist/l/inpsyde/wp-translation-downloader.svg)](https://packagist.org/packages/inpsyde/wp-translation-downloader)
 
-
-Composer plugin to download translations from the wordpress.org API or via self-hosted GlotPress.
+Composer plugin to download translations from the WordPress.org API or from a custom GlotPress installation.
 
 ## Installation
 
@@ -16,25 +15,22 @@ composer require inpsyde/wp-translation-downloader
 
 ## Configuration
 
-The following configurations are available:
+The following configuration properties are available:
 
 |name|type|required|description|
 |---|---|---|---|
-|languages|array|x|The iso codes you want to download|
-|directory|string|x|The relative path to the `languages` directory|
-|excludes|array| |An optional array for excluding certain packages|
-|api.names|array| |An optional array which maps the `packageName` to an API-Endpoint|
-|api.types|array| |An optional array which maps the `packageType` to an API-Endpoint|
+|`languages`|`array`|x|The iso codes you want to download|
+|`directory`|`string`|x|The relative path to the `languages` directory|
+|`excludes`|`array`| |Array of excluded package names|
+|`api.names`|`array`| |Array of package names mapped to a GlotPress API endpoint|
+|`api.types`|`array`| |Array of package types mapped to a GlotPress API endpoint|
 
-**[!] Note:** You can use `*` as a placeholder to exclude multiple packages.
-**[!] Note 2:** You can use `*` as a placeholder to match an API for multiple packages.
+**[!] Note:** You can use `*` as wildcard in the `exclude`, `api.names` and `api.types` properties.
 
-The configuration should be added to your `composer.json` in the `extra` property with the `wp-translation-downloader` key..
+The configuration object has to be placed in `composer.json` in the `extra.wp-translation-downloader` property.
 
-### Default configuration
-Following is the default configuration for `inpsyde/wp-translation-downloader` to download translations from WordPress.org API:
-
-**composer.json**
+### Configuration in `composer.json`
+Following is the minimum configuration to download translations from the WordPress.org API:
 ```json
 {
     "name": "vendor/my-package",
@@ -43,39 +39,37 @@ Following is the default configuration for `inpsyde/wp-translation-downloader` t
             "languages": [
                 "de_DE"
             ],
-            "directory": "public/wp-content/languages",
+            "directory": "public/wp-content/languages"
         }
     }
 }
 ```
 
-### Default configuration - own configuration file
-You can, if you have a lot of configurations, move the whole `wp-translation-downloader`-configuration to an own json-file and just provide the file path like this:
+### Configuration in custom file
+For better readability and portability, it is also possible use a different file which contains only the WP Translation Downloader configuration (everything that would go in the `extra.wp-translation-downloader` object).
 
-**composer.json**
+One use case could be to reuse the same configuration for many websites that are located in the same parent folder.
+
+For this it's necessary to use the configuration `"extra.wp-translation-downloader"` in `composer.json` to set the path of the custom file. The path must be relative to the folder containing `composer.json`:
 ```json
 {
-    "name": "vendor/my-package",
     "extra": {
-        "wp-translation-downloader": "./wp-translation-downloader.json"
+        "wp-translation-downloader": "../wp-translation-downloader.json"
     }
 }
 ```
 
-**wp-translation-downloader.json**
+This also allows you to load the configuration file from a custom Composer package and make it available to WP Translation Manager by pointing to the file in the vendor folder:
 ```json
 {
-    "languages": [
-        "de_DE"
-    ],
-    "directory": "public/wp-content/languages",
+    "extra": {
+        "wp-translation-downloader": "./vendor/my-company/wp-translation-downloader-shared/config.json"
+    }
 }
 ```
 
 ### Exclude specific packages
-To exclude specific packages, like _"I want to exclude all WordPress Plugins/Themes/Mu-Plugins from vendor `inpsyde`"_ you can use following:
-
-**composer.json**
+To exclude specific packages you can use the following configuration:
 ```json
 {
     "name": "vendor/my-package",
@@ -83,51 +77,47 @@ To exclude specific packages, like _"I want to exclude all WordPress Plugins/The
         "inpsyde/wp-translation-downloader": "~0.1",
         "johnpbloch/wordpress": "5.3.*@stable",
         "inpsyde/google-tag-manager": "1.0",
-        "wpackagist-plugin/wordpress-seo": "13.0",
+        "wpackagist-plugin/wordpress-seo": "13.0"
     },
     "extra": {
-        "wp-translation-downloader": "./wp-translation-downloader.json"
+        "wp-translation-downloader": {
+            "languages": [
+                "de_DE"
+            ],
+            "excludes": [
+                "inpsyde/*"
+            ],
+            "directory": "public/wp-content/languages"
+        }
     }
 }
 ```
 
-**wp-translation-downloader.json**
-```json
-{
-    "languages": [
-        "de_DE"
-    ],
-    "excludes": ["inpsyde/*"],
-    "directory": "public/wp-content/languages"
-}
-```
-
-This will map to following matrix:
+This will map to the following matrix:
 
 |package|type|downloaded|
 |---|---|---|
-|`johnpbloch/wordpress`|wordpress-core|yes|
-|`inpsyde/wp-translation-downloader`|composer-plugin|skipped - not matching packageType|
-|`inpsyde/google-tag-manager`|wordpress-plugin|no - matching with "exclude"|
-|`wpackagist-plugin/wordpress-seo`|wordpress-plugin|yes|
+|`johnpbloch/wordpress`|`wordpress-core`|yes|
+|`inpsyde/wp-translation-downloader`|`composer-plugin`|no - not matching package type|
+|`inpsyde/google-tag-manager`|`wordpress-plugin`|no - matching with `"exclude"`|
+|`wpackagist-plugin/wordpress-seo`|`wordpress-plugin`|yes|
            
 
-### Use external GlotPress API
-If you have for example private Plugins/Themes or you don't want to use the official translation for a Package, then you can use an own GlotPress installation.
+### Custom GlotPress installations
+WP Translation Downloader supports custom [GlotPress](https://github.com/GlotPress/GlotPress-WP) installations if you want to install e.g. private plugins or themes or if you don't want to use the official translation for a package.
 
-To use this, you can map same like the `exclude` one or multiple packages to a different Endpoint. You can add placeholders for the different package types:
+The GlotPress APIs are mapped to package names or package types via the `"api.names"` and `"api.types"` objects.
+The following placeholders are provided for this:
 
 |placeholder|description|
 |---|---|
-|`%projectName%` | the name without vendor - Example: "wordpress-seo" |
-|`%vendorName%` | Example: "wpackagist-plugin" |
-|`%packageName%` | full name of the package - Example: "wpackagist-plugin/wordpress-seo" |
-|`%packageType%` | type of the package - Example: "wordpress-plugin" |
-|`%packageVersion%`| version of the package - Example: "13.0" |
+|`%projectName%` | project name, e.g. `"wordpress-seo"` |
+|`%vendorName%` | vendor name, e.g. `"wpackagist-plugin"` |
+|`%packageName%` | full package name, e.g. `"wpackagist-plugin/wordpress-seo"` |
+|`%packageType%` | package type, e.g. `"wordpress-plugin"` |
+|`%packageVersion%`| package version, e.g. `"13.0"` |
 
-The example for replacing those looks like following:
-
-**composer.json**
+Example `composer.json` file:
 ```json
 {
     "name": "vendor/my-package",
@@ -138,73 +128,64 @@ The example for replacing those looks like following:
         "wpackagist-theme/twentytwenty": "1.1"
     },
     "extra": {
-        "wp-translation-downloader": "./wp-translation-downloader.json"
+        "wp-translation-downloader": {
+            "languages": [
+                "de_DE"
+            ],
+            "directory": "public/wp-content/languages",
+            "api": {
+                "names": {
+                    "johnpbloch/wordpress": "https://my-glotpress-instance.tld/core/%packageVersion%",
+                    "wpackagist-plugin/*": "https://my-glotpress-instance.tld/plugins/%projectName%?version=%packageVersion%"
+                },
+                "types": {
+                    "wordpress-theme": "https://my-glotpress-instance.tld/theme/%projectName%?version=%packageVersion%"
+                }
+            }
+        }
     }
 }
 ```
 
-**wp-translation-downloader.json**
-```json
-{
-    "languages": [
-        "de_DE"
-    ],
-    "directory": "public/wp-content/languages",
-    "api": {
-        "names": {
-            "johnpbloch/wordpress": "https://my-glotpress-instance.tld/core/%packageVersion%",
-            "wpackagist-plugin/*": "https://my-glotpress-instance.tld/plugins/%projectName%?version=%packageVersion%"
-        },
-        "types": {
-            "wordpress-theme": "https://my-glotpress-instance.tld/theme/%projectName%?version=%packageVersion%"
-        }
-}
-```
+This will map to the following matrix:
 
-This will map to following matrix:
-
-|package|API Url|
+|package|API url|
 |---|---|
 |`johnpbloch/wordpress`|`https://my-glotpress-instance.tld/core/5.3`|
-|`inpsyde/wp-translation-downloader`|skipped - not matching packageType|
+|`inpsyde/wp-translation-downloader`|skipped - not matching `packageType`|
 |`wpackagist-plugin/wordpress-seo`|`https://my-glotpress-instance.tld/plugins/wordpress-seo?version=13.0`|
 |`wpackagist-theme/twentytwenty`|`https://my-glotpress-instance.tld/theme/twentytwenty?version=1.1`|
 
-**[!]** Be aware:
-1. The "api"-list checks for the first matching result from top to bottom.
-2. The matching "names" will be checked first. Afterwards it will be checked if there is a matching "types".
-
+**[!] Notes:**
+1. The `"api"` list checks from top to bottom for the first matching result
+2. Package names will be checked first. Then it is checked whether there is a matching package type:
 ```json
 {
     "api": {
         "names": {
             "wpackagist-plugin/*": "https://my-glotpress-instance.tld/plugins/%1$s?version=%2$s",
-            "wpackagist-plugin/wordpress-seo": "https://someting-different.tld/..."
+            "wpackagist-plugin/wordpress-seo": "https://someting-different.tld/…"
         }
     },
 }
 ```
 
-The rule for `wpackagist-plugin/wordpress-seo` will not be executed, because the `wpackagist-plugin/*`-rule matches first. You need to have following order:
-
+The rule for `wpackagist-plugin/wordpress-seo` won't match because the `wpackagist-plugin/*` rule matches first. You'll need to have following order:
 ```json
 {
     "api": {
         "names": {
-            "wpackagist-plugin/wordpress-seo": "https://someting-different.tld/...",        
+            "wpackagist-plugin/wordpress-seo": "https://someting-different.tld/…",        
             "wpackagist-plugin/*": "https://my-glotpress-instance.tld/plugins/%1$s?version=%2$s"
         }
     },
 }
 ```
 
+## Support for Composer type `library`
+WP Translation Downloader also supports Composer packages of type `library`. Translation files will be downloaded to `WP_LANG_DIR . '/library/'`. To enable it, you have to set the `"api.types"` object accordingly (see above).
 
-
-## Support for Composer type="library"
-The `inpsyde/wp-translation-downloader` also supports Composer `Package::getType() === 'library'`. By default, nothing will be done, but if configured via API for example to a self-hosted GlotPress - then those translation will be downloaded into `WP_LANG_DIR . '/library/'`.
-
-To access the translations, with fallback, in your library you can bring in some helper function like this: 
-
+To access the translations in your library, including a fallback, you can add a helper function like this:
 ```php
 <?php
 namespace Acme;
@@ -223,7 +204,6 @@ function loadLibraryTextDomain(string $domain, string $libraryLangPath): bool
 }
 ```
 
-
 ## License
 
-Copyright (c) Inpsyde GmbH.
+Copyright (c) Inpsyde GmbH
