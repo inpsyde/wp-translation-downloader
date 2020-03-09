@@ -5,7 +5,7 @@
 [![Downloads](https://img.shields.io/packagist/dt/inpsyde/wp-translation-downloader.svg)](https://packagist.org/packages/inpsyde/wp-translation-downloader)
 [![License](https://img.shields.io/packagist/l/inpsyde/wp-translation-downloader.svg)](https://packagist.org/packages/inpsyde/wp-translation-downloader)
 
-Composer plugin to download translations from the WordPress.org API or from a custom GlotPress installation.
+Composer plugin to download translations from the WordPress.org API or from custom GlotPress installations.
 
 ## Installation
 
@@ -46,7 +46,7 @@ Following is the minimum configuration to download translations from the WordPre
 ```
 
 ### Configuration in custom file
-For better readability and portability, it is also possible use a different file which contains only the WP Translation Downloader configuration (everything that would go in the `extra.wp-translation-downloader` object).
+For better readability and portability, it is also possible to use a different file which contains only the WP Translation Downloader configuration (everything that would go in the `extra.wp-translation-downloader` object).
 
 One use case could be to reuse the same configuration for many websites that are located in the same parent folder.
 
