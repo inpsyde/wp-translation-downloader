@@ -4,28 +4,14 @@ namespace Inpsyde\WpTranslationDownloader\Config;
 
 use Composer\IO\IOInterface;
 use Composer\Json\JsonFile;
+use Inpsyde\WpTranslationDownloader\Io;
 
 final class PluginConfigurationBuilder
 {
 
     const KEY = 'wp-translation-downloader';
 
-    /**
-     * @var IOInterface
-     */
-    private $io;
-
-    /**
-     * PluginConfigurationBuilder constructor.
-     *
-     * @param IOInterface $io
-     */
-    public function __construct(IOInterface $io)
-    {
-        $this->io = $io;
-    }
-
-    public function build(array $extra = []): PluginConfiguration
+    public static function build(array $extra = []): PluginConfiguration
     {
         if (! isset($extra[self::KEY])) {
             return new PluginConfiguration([]);

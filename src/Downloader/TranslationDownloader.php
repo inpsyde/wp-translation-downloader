@@ -5,15 +5,15 @@ namespace Inpsyde\WpTranslationDownloader\Downloader;
 use Composer\Cache;
 use Composer\Config;
 use Composer\Downloader\ZipDownloader;
-use Composer\IO\IOInterface;
 use Composer\Util\Filesystem;
+use Inpsyde\WpTranslationDownloader\Io;
 use Inpsyde\WpTranslationDownloader\Package\TranslatablePackage;
 
 class TranslationDownloader
 {
 
     /**
-     * @var IOInterface
+     * @var Io
      */
     private $io;
 
@@ -38,7 +38,7 @@ class TranslationDownloader
     private $cache;
 
     public function __construct(
-        IOInterface $io,
+        Io $io,
         Config $config,
         ZipDownloader $zipDownloader,
         Filesystem $filesystem,
@@ -72,9 +72,15 @@ class TranslationDownloader
 
         $this->io->write(
             sprintf(
-                '  Found %d translations for %s on %s...',
+                '  <info>%2$s:</info> found %1$d translations',
                 count($translations),
-                $projectName,
+                $projectName
+            )
+        );
+
+        $this->io->writeOnVerbose(
+            sprintf(
+                '  - Endpoint: %s',
                 $transPackage->apiEndpoint()
             )
         );
@@ -88,20 +94,17 @@ class TranslationDownloader
 
             // only download file if it not exist.
             file_exists($zipFile)
-            && $this->io->isVerbose()
-            && $this->io->write(
+            && $this->io->writeOnVerbose(
                 sprintf(
-                    '    - <info>Cache</info> %s %s: Using cached translation file %s</info> ',
-                    $projectName,
-                    $version,
+                    '    <info>[CACHED]</info> %s</info> ',
                     $zipFile
                 )
             );
 
             if (! file_exists($zipFile) && ! copy($package, $zipFile)) {
-                $this->io->writeError(
+                $this->io->error(
                     sprintf(
-                        '    - <error>[ERROR]</error> %s %s: Could not download and write "%s"</>',
+                        '%s %s: Could not download and write "%s"</>',
                         $projectName,
                         $version,
                         $package
@@ -115,20 +118,20 @@ class TranslationDownloader
                 $this->zipDownloader->extract($zipFile, $directory);
                 $this->io->write(
                     sprintf(
-                        '    - <info>[OK]</info> %s | %s.',
+                        '    <info>✓</info> %s | %s',
                         $version,
                         $language
                     )
                 );
             } catch (\Throwable $exception) {
-                $this->io->writeError(
+                $this->io->write(
                     sprintf(
-                        '    - <error>[ERROR]</error>Could not unzip translation files. %s | %s</>',
+                        '    <fg=red>✗</> %s | %s</>',
                         $version,
                         $language
                     )
                 );
-                $this->io->writeError($exception->getMessage());
+                $this->io->error($exception->getMessage());
             }
         }
 
@@ -157,7 +160,7 @@ class TranslationDownloader
                         )
                     );
                 } catch (\Throwable $exception) {
-                    $this->io->writeError($exception->getMessage());
+                    $this->io->error($exception->getMessage());
                 }
             }
         }

@@ -9,19 +9,27 @@ use Composer\EventDispatcher\EventSubscriberInterface;
 use Composer\Installer\PackageEvent;
 use Composer\IO\IOInterface;
 use Composer\Package\PackageInterface;
+use Composer\Plugin\Capability\CommandProvider;
+use Composer\Plugin\Capable;
 use Composer\Plugin\PluginInterface;
 use Composer\Script\Event;
 use Composer\Util\Filesystem;
+use Inpsyde\WpTranslationDownloader\Command\CleanUpCommand;
+use Inpsyde\WpTranslationDownloader\Command\DownloadCommand;
 use Inpsyde\WpTranslationDownloader\Config\PluginConfiguration;
 use Inpsyde\WpTranslationDownloader\Config\PluginConfigurationBuilder;
 use Inpsyde\WpTranslationDownloader\Downloader\TranslationDownloader;
 use Inpsyde\WpTranslationDownloader\Package\TranslatablePackage;
 
-final class Plugin implements PluginInterface, EventSubscriberInterface
+final class Plugin implements
+    PluginInterface,
+    EventSubscriberInterface,
+    Capable,
+    CommandProvider
 {
 
     /**
-     * @var IOInterface
+     * @var Io
      */
     private $io;
 
@@ -39,6 +47,11 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
      * @var TranslatablePackageFactory
      */
     private $translatablePackageFactory;
+
+    /**
+     * @var Filesystem
+     */
+    private $filesystem;
 
     /**
      * Subscribe to Composer events.
@@ -64,6 +77,25 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
     }
 
     /**
+     * @return array
+     */
+    public function getCapabilities(): array
+    {
+        return [CommandProvider::class => __CLASS__];
+    }
+
+    /**
+     * @return array
+     */
+    public function getCommands(): array
+    {
+        return [
+            new DownloadCommand(),
+            new CleanUpCommand(),
+        ];
+    }
+
+    /**
      * @param Composer $composer
      * @param IOInterface $io
      *
@@ -71,12 +103,18 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
      */
     public function activate(Composer $composer, IOInterface $io)
     {
-        $this->io = $io;
+        $this->io = new Io($io);
+
+        /** @var Cache $cache */
+        $cache = new Cache($io, $composer->getConfig()->get('cache-dir').'/translations');
+        /** @var ZipDownloader $zipDownloader */
+        $zipDownloader = new ZipDownloader($io, $composer->getConfig());
+
+        /** @var Filesystem $filesystem */
+        $this->filesystem = new Filesystem();
 
         // initialize PluginConfiguration
-        $extra = $composer->getPackage()->getExtra();
-        $configBuilder = new PluginConfigurationBuilder($this->io);
-        $this->pluginConfig = $configBuilder->build($extra);
+        $this->pluginConfig = PluginConfigurationBuilder::build($composer->getPackage()->getExtra());
 
         // initialize TranslatablePackageFactory
         $this->translatablePackageFactory = new TranslatablePackageFactory(
@@ -85,25 +123,22 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
         );
 
         // initialize TranslationDownloader
-        $filesystem = new Filesystem();
         $this->translationDownloader = new TranslationDownloader(
-            $io,
+            $this->io,
             $composer->getConfig(),
-            new ZipDownloader($io, $composer->getConfig()),
-            $filesystem,
-            new Cache($this->io, $composer->getConfig()->get('cache-dir').'/translations')
+            $zipDownloader,
+            $this->filesystem,
+            $cache
         );
 
         $error = $this->pluginConfig->isValid();
         if ($error !== '') {
-            $this->io->writeError($error);
+            $this->io->error($error);
 
             return;
         }
 
-        foreach ($this->pluginConfig->directories() as $directory) {
-            $filesystem->ensureDirectoryExists($directory);
-        }
+        $this->ensureDirectories();
     }
 
     /**
@@ -114,19 +149,14 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
      */
     public function onPostInstallAndUpdate(Event $event)
     {
+        if (! $this->pluginConfig->autorun()) {
+            return;
+        }
+
         $packages = $event->getComposer()->getRepositoryManager()
             ->getLocalRepository()->getPackages();
-        $allowedLanguages = $this->pluginConfig->allowedLanguages();
 
-        $this->logo();
-
-        foreach ($packages as $package) {
-            $transPackage = $this->translatablePackageFactory->create($package);
-            if ($transPackage === null) {
-                continue;
-            }
-            $this->translationDownloader->download($transPackage, $allowedLanguages);
-        }
+        $this->updatePackages($packages);
     }
 
     /**
@@ -162,7 +192,6 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
     public function onPackageUpdate(PackageEvent $event)
     {
         /** @var PackageInterface|TranslatablePackage $transPackage */
-
         $transPackage = $this->translatablePackageFactory->createFromOperation($event->getOperation());
 
         if ($transPackage === null) {
@@ -180,19 +209,48 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
     }
 
     /**
+     * @param array $packages
+     */
+    public function doUpdatePackages(array $packages)
+    {
+        $this->io->logo();
+
+        $allowedLanguages = $this->pluginConfig->allowedLanguages();
+
+        foreach ($packages as $package) {
+            $transPackage = $this->translatablePackageFactory->create($package);
+            if ($transPackage === null) {
+                continue;
+            }
+            $this->translationDownloader->download($transPackage, $allowedLanguages);
+        }
+    }
+
+    /**
      * @return void
      */
-    protected function logo(): void
+    public function doCleanUpDirectories()
     {
-        // phpcs:disable
-        $logo = <<<LOGO
-    <fg=white;bg=green>                        </>
-    <fg=white;bg=green>        Inpsyde         </>
-    <fg=white;bg=green>                        </>
-    <fg=magenta>WP Translation Downloader</>
-LOGO;
-        // phpcs:enable
+        $this->io->logo();
+        $this->io->write('Starting to empty the directories...');
+        foreach ($this->pluginConfig->directories() as $directory) {
+            try {
+                $this->filesystem->emptyDirectory($directory);
+                $this->io->write(sprintf('  <info>✓</info> %s', $directory));
+            } catch (\Throwable $exception) {
+                $this->io->write(sprintf('  <fg=red>✗</> %s</>', $directory));
+                $this->io->error($exception->getMessage());
+            }
+        }
+    }
 
-        $this->io->write("\n{$logo}\n");
+    /**
+     * @throws \RuntimeException
+     */
+    private function ensureDirectories()
+    {
+        foreach ($this->pluginConfig->directories() as $directory) {
+            $this->filesystem->ensureDirectoryExists($directory);
+        }
     }
 }

@@ -1,0 +1,55 @@
+<?php declare(strict_types=1); # -*- coding: utf-8 -*-
+
+namespace Inpsyde\WpTranslationDownloader\Command;
+
+use Composer\Command\BaseCommand;
+use Composer\Composer;
+use Composer\IO\IOInterface;
+use Inpsyde\WpTranslationDownloader\Plugin;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\OutputInterface;
+
+class CleanUpCommand extends BaseCommand
+{
+
+    use ErrorFormatterTrait;
+
+    /**
+     * @throws \Symfony\Component\Console\Exception\InvalidArgumentException
+     */
+    protected function configure()
+    {
+        $this
+            ->setName('wp-translation-downloader:clean-up')
+            ->setDescription('Empties all language folders.');
+    }
+
+    /**
+     * @param InputInterface $input
+     * @param OutputInterface $output
+     *
+     * @return int
+     *
+     * phpcs:disable Inpsyde.CodeQuality.ReturnTypeDeclaration
+     */
+    protected function execute(InputInterface $input, OutputInterface $output)
+    {
+        try {
+            /** @var Composer $composer */
+            $composer = $this->getComposer(true, false);
+
+            /** @var IOInterface $io */
+            $io = $this->getIO();
+
+            $plugin = new Plugin();
+            $plugin->activate($composer, $io);
+            $plugin->doCleanUpDirectories();
+
+            return 0;
+        } catch (\Throwable $throwable) {
+            $this->writeError($output, $throwable->getMessage());
+
+            return 1;
+        }
+    }
+}
