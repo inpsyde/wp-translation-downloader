@@ -10,6 +10,7 @@ use Composer\Installer\PackageEvent;
 use Composer\IO\IOInterface;
 use Composer\Package\PackageInterface;
 use Composer\Plugin\PluginInterface;
+use Composer\Script\Event;
 use Composer\Util\Filesystem;
 use Inpsyde\WpTranslationDownloader\Config\PluginConfiguration;
 use Inpsyde\WpTranslationDownloader\Config\PluginConfigurationBuilder;
@@ -50,14 +51,14 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
     public static function getSubscribedEvents()
     {
         return [
-            'post-package-install' => [
-                ['onUpdate', 0],
+            "post-install-cmd" => [
+                ['onPostInstallAndUpdate', 0],
             ],
-            'post-package-update' => [
-                ['onUpdate', 0],
+            "post-update-cmd" => [
+                ['onPostInstallAndUpdate', 0],
             ],
             'post-package-uninstall' => [
-                ['onUninstall', 0],
+                ['onPackageUninstall', 0],
             ],
         ];
     }
@@ -106,11 +107,36 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
     }
 
     /**
+     * @param Event $event
+     *
+     * @event post-update-cmd
+     * @event post-install-cmd
+     */
+    public function onPostInstallAndUpdate(Event $event)
+    {
+        $packages = $event->getComposer()->getRepositoryManager()
+            ->getLocalRepository()->getPackages();
+        $allowedLanguages = $this->pluginConfig->allowedLanguages();
+
+        $this->logo();
+
+        foreach ($packages as $package) {
+            $transPackage = $this->translatablePackageFactory->create($package);
+            if ($transPackage === null) {
+                continue;
+            }
+            $this->translationDownloader->download($transPackage, $allowedLanguages);
+        }
+    }
+
+    /**
      * @param PackageEvent $event
      *
      * @throws \InvalidArgumentException
+     *
+     * @event post-package-uninstall
      */
-    public function onUninstall(PackageEvent $event)
+    public function onPackageUninstall(PackageEvent $event)
     {
         /** @var PackageInterface|TranslatablePackage $transPackage */
         $transPackage = $this->translatablePackageFactory->createFromOperation($event->getOperation());
@@ -127,8 +153,13 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
      * @param PackageEvent $event
      *
      * @throws \InvalidArgumentException
+     *
+     * @event post-package-install
+     * @event post-package-update
+     *
+     * @deprecated this action will be removed in future.
      */
-    public function onUpdate(PackageEvent $event)
+    public function onPackageUpdate(PackageEvent $event)
     {
         /** @var PackageInterface|TranslatablePackage $transPackage */
 
@@ -146,5 +177,22 @@ final class Plugin implements PluginInterface, EventSubscriberInterface
 
         $allowedLanguages = $this->pluginConfig->allowedLanguages();
         $this->translationDownloader->download($transPackage, $allowedLanguages);
+    }
+
+    /**
+     * @return void
+     */
+    protected function logo(): void
+    {
+        // phpcs:disable
+        $logo = <<<LOGO
+    <fg=white;bg=green>                        </>
+    <fg=white;bg=green>        Inpsyde         </>
+    <fg=white;bg=green>                        </>
+    <fg=magenta>WP Translation Downloader</>
+LOGO;
+        // phpcs:enable
+
+        $this->io->write("\n{$logo}\n");
     }
 }
