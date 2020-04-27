@@ -3,13 +3,14 @@
 namespace Inpsyde\WpTranslationDownloader\Package;
 
 use Composer\Package\Package;
+use Composer\Package\PackageInterface;
 
 final class WpCorePackage extends Package implements TranslatablePackage
 {
 
     use TranslatablePackageTrait;
 
-    public function __construct(Package $package, string $directory, string $endpoint)
+    public function __construct(PackageInterface $package, string $directory, string $endpoint)
     {
         parent::__construct($package->getName(), $package->getVersion(), $package->getPrettyVersion());
 
