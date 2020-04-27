@@ -19,7 +19,7 @@ The following configuration properties are available:
 
 |name|type|required|description|
 |---|---|---|---|
-|`autorun`|`bool`| |By default `true`. If `false`, the Plugin will not run on install/update command|
+|`auto-run`|`bool`| |By default `true`. If `false`, the Plugin will not run on install/update command|
 |`languages`|`array`|x|The iso codes you want to download|
 |`directory`|`string`|x|The relative path to the `languages` directory|
 |`excludes`|`array`| |Array of excluded package names|

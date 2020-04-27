@@ -20,6 +20,7 @@ class PluginConfigurationTest extends TestCase
         static::assertEmpty($testee->apiBy(PluginConfiguration::API_BY_NAME));
         static::assertNotEmpty($testee->apiBy(PluginConfiguration::API_BY_TYPE));
         static::assertNotEmpty($testee->isValid());
+        static::assertTrue($testee->autorun());
     }
 
     /**

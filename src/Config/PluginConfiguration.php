@@ -24,7 +24,7 @@ final class PluginConfiguration
      * @var array
      */
     const DEFAULTS = [
-        'autorun' => true,
+        'auto-run' => true,
         'excludes' => [],
         'languages' => [],
         'directory' => '',
@@ -61,7 +61,7 @@ final class PluginConfiguration
             TranslatablePackage::TYPE_LIBRARY => $languageRoot.'library/',
         ];
 
-        $config['autorun'] = (bool) ($config['autorun'] ?? true);
+        $config['auto-run'] = (bool) ($config['auto-run'] ?? true);
         $config['directory'] = $languageRoot;
         $config['directories'] = $dirs;
         $config['excludes'] = $this->prepareExcludes($config['excludes']);
@@ -200,6 +200,6 @@ final class PluginConfiguration
      */
     public function autorun(): bool
     {
-        return $this->config['autorun'];
+        return $this->config['auto-run'];
     }
 }
