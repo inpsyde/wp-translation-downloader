@@ -126,7 +126,7 @@ class TranslationDownloader
             } catch (\Throwable $exception) {
                 $this->io->write(
                     sprintf(
-                        '    <fg=red>✗</> %s | %s</>',
+                        '    <fg=red>✗</> %s | %s',
                         $version,
                         $language
                     )

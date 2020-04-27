@@ -209,7 +209,7 @@ final class Plugin implements
                 $this->filesystem->emptyDirectory($directory);
                 $this->io->write(sprintf('  <info>✓</info> %s', $directory));
             } catch (\Throwable $exception) {
-                $this->io->write(sprintf('  <fg=red>✗</> %s</>', $directory));
+                $this->io->write(sprintf('  <fg=red>✗</> %s', $directory));
                 $this->io->error($exception->getMessage());
             }
         }
