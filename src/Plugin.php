@@ -156,7 +156,7 @@ final class Plugin implements
         $packages = $event->getComposer()->getRepositoryManager()
             ->getLocalRepository()->getPackages();
 
-        $this->updatePackages($packages);
+        $this->doUpdatePackages($packages);
     }
 
     /**
@@ -177,35 +177,6 @@ final class Plugin implements
 
         $allowedLanguages = $this->pluginConfig->allowedLanguages();
         $this->translationDownloader->remove($transPackage, $allowedLanguages);
-    }
-
-    /**
-     * @param PackageEvent $event
-     *
-     * @throws \InvalidArgumentException
-     *
-     * @event post-package-install
-     * @event post-package-update
-     *
-     * @deprecated this action will be removed in future.
-     */
-    public function onPackageUpdate(PackageEvent $event)
-    {
-        /** @var PackageInterface|TranslatablePackage $transPackage */
-        $transPackage = $this->translatablePackageFactory->createFromOperation($event->getOperation());
-
-        if ($transPackage === null) {
-            return;
-        }
-
-        if ($this->pluginConfig->doExclude($transPackage->getName())) {
-            $this->io->write('      [!] exclude '.$transPackage->getName());
-
-            return;
-        }
-
-        $allowedLanguages = $this->pluginConfig->allowedLanguages();
-        $this->translationDownloader->download($transPackage, $allowedLanguages);
     }
 
     /**
