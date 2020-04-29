@@ -180,11 +180,15 @@ final class Plugin implements
     }
 
     /**
-     * @param array $packages
+     * @param PackageInterface[] $packages
      */
     public function doUpdatePackages(array $packages)
     {
         $this->io->logo();
+
+        if(count($packages) < 1){
+            $this->io->error('No packages found to process.');
+        }
 
         $allowedLanguages = $this->pluginConfig->allowedLanguages();
 

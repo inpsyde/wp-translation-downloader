@@ -8,10 +8,13 @@ use Composer\IO\IOInterface;
 use Composer\Package\PackageInterface;
 use Inpsyde\WpTranslationDownloader\Plugin;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class DownloadCommand extends BaseCommand
 {
+
+    public const OPTION_PACKAGES = 'packages';
 
     use ErrorFormatterTrait;
 
@@ -22,7 +25,13 @@ class DownloadCommand extends BaseCommand
     {
         $this
             ->setName('wp-translation-downloader:download')
-            ->setDescription('Downloads for all packages languages.');
+            ->setDescription('Downloads for all packages languages.')
+            ->addOption(
+                self::OPTION_PACKAGES,
+                null,
+                InputOption::VALUE_OPTIONAL,
+                'Define a one or multiple comma seperated packages to download.'
+            );
     }
 
     /**
@@ -42,9 +51,20 @@ class DownloadCommand extends BaseCommand
             /** @var IOInterface $io */
             $io = $this->getIO();
 
+            $packagesToProcess = $this->optionPackagesToProcess($input);
+
             /** @var PackageInterface[] $packages */
             $packages = $composer->getRepositoryManager()
                 ->getLocalRepository()->getPackages();
+
+            if (count($packagesToProcess) > 0) {
+                $packages = array_filter(
+                    $packages,
+                    function (PackageInterface $package) use ($packagesToProcess): bool {
+                        return in_array($package->getName(), $packagesToProcess);
+                    }
+                );
+            }
 
             $plugin = new Plugin();
             $plugin->activate($composer, $io);
@@ -56,5 +76,21 @@ class DownloadCommand extends BaseCommand
 
             return 1;
         }
+    }
+
+    /**
+     * @param InputInterface $input
+     *
+     * @return array
+     * @throws \Symfony\Component\Console\Exception\InvalidArgumentException
+     */
+    private function optionPackagesToProcess(InputInterface $input): array
+    {
+        $packageNames = (string) $input->getOption(self::OPTION_PACKAGES);
+        $packagesToProcess = explode(',', $packageNames);
+        $packagesToProcess = array_unique($packagesToProcess);
+        $packagesToProcess = array_filter($packagesToProcess);
+
+        return $packagesToProcess;
     }
 }

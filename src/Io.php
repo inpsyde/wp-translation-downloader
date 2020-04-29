@@ -58,7 +58,7 @@ class Io
     public function error(string ...$messages)
     {
         foreach ($messages as $message) {
-            $this->io->writeError("<error>[ERROR]</error> {$message}");
+            $this->io->write("<error>[ERROR]</error> {$message}");
         }
     }
 
