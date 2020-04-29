@@ -186,7 +186,7 @@ final class Plugin implements
     {
         $this->io->logo();
 
-        if(count($packages) < 1){
+        if (count($packages) < 1) {
             $this->io->error('No packages found to process.');
         }
 

@@ -15,7 +15,6 @@ class DownloadCommand extends BaseCommand
 {
 
     public const OPTION_PACKAGES = 'packages';
-
     use ErrorFormatterTrait;
 
     /**
@@ -53,19 +52,7 @@ class DownloadCommand extends BaseCommand
 
             $packagesToProcess = $this->optionPackagesToProcess($input);
 
-            /** @var PackageInterface[] $packages */
-            $packages = $composer->getRepositoryManager()
-                ->getLocalRepository()->getPackages();
-
-            if (count($packagesToProcess) > 0) {
-                $packages = array_filter(
-                    $packages,
-                    function (PackageInterface $package) use ($packagesToProcess): bool {
-                        return in_array($package->getName(), $packagesToProcess);
-                    }
-                );
-            }
-
+            $packages = $this->resolvePackages($packagesToProcess);
             $plugin = new Plugin();
             $plugin->activate($composer, $io);
             $plugin->doUpdatePackages($packages);
@@ -92,5 +79,26 @@ class DownloadCommand extends BaseCommand
         $packagesToProcess = array_filter($packagesToProcess);
 
         return $packagesToProcess;
+    }
+
+    private function resolvePackages(array $packagesToProcess): array
+    {
+        /** @var Composer $composer */
+        $composer = $this->getComposer(true, false);
+
+        /** @var PackageInterface[] $packages */
+        $packages = $composer->getRepositoryManager()
+            ->getLocalRepository()->getPackages();
+
+        if (count($packagesToProcess) > 0) {
+            $packages = array_filter(
+                $packages,
+                function (PackageInterface $package) use ($packagesToProcess): bool {
+                    return in_array($package->getName(), $packagesToProcess, true);
+                }
+            );
+        }
+
+        return $packages;
     }
 }
