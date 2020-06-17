@@ -209,8 +209,8 @@ function loadLibraryTextDomain(string $domain, string $libraryLangPath): bool
 
 |command|description|
 |---|---|
-|`composer wp-translation-downloader:download`|Downloads for packages the translations.|
-|`composer wp-translation-downloader:clean-up`|Removes all files from langauges directories.|
+|`composer wp-translation-downloader:download [--packages=...]`|Downloads for all listed packages the translations.|
+|`composer wp-translation-downloader:clean-up`|Removes all files from languages directories.|
 
 
 ## License
