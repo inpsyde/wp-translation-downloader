@@ -138,30 +138,23 @@ class TranslationDownloader
         return true;
     }
 
-    public function remove(TranslatablePackage $transPackage, array $allowedLanguages)
+    public function remove(TranslatablePackage $transPackage)
     {
         $directory = $transPackage->languageDirectory();
-        $translations = $transPackage->translations($allowedLanguages);
+        $basePath = rtrim($directory, '/').'/'.$transPackage->projectName();
 
-        foreach ($translations as $translation) {
-            $language = $translation['language'];
-            $files = [
-                $directory.$transPackage->projectName().'-'.$language.'.mo',
-                $directory.$transPackage->projectName().'-'.$language.'.po',
-            ];
-            foreach ($files as $file) {
-                try {
-                    $this->filesystem->unlink($file);
-                    $this->io->write(
-                        sprintf(
-                            "    - <info>[OK]</info> %s: deleted %s translation file.",
-                            $transPackage->projectName(),
-                            basename($file)
-                        )
-                    );
-                } catch (\Throwable $exception) {
-                    $this->io->error($exception->getMessage());
-                }
+        foreach (glob("{$basePath}-*.{po,mo}", GLOB_BRACE) as $file) {
+            try {
+                $this->filesystem->unlink($file);
+                $this->io->write(
+                    sprintf(
+                        "    - <info>[OK]</info> %s: deleted %s translation file.",
+                        $transPackage->projectName(),
+                        basename($file)
+                    )
+                );
+            } catch (\Throwable $exception) {
+                $this->io->error($exception->getMessage());
             }
         }
 
