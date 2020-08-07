@@ -168,15 +168,11 @@ final class Plugin implements
      */
     public function onPackageUninstall(PackageEvent $event)
     {
-        /** @var PackageInterface|TranslatablePackage $transPackage */
+        /** @var PackageInterface|TranslatablePackage|null $transPackage */
         $transPackage = $this->translatablePackageFactory->createFromOperation($event->getOperation());
-
-        if ($transPackage === null) {
-            return;
+        if ($transPackage) {
+            $this->translationDownloader->remove($transPackage);
         }
-
-        $allowedLanguages = $this->pluginConfig->allowedLanguages();
-        $this->translationDownloader->remove($transPackage, $allowedLanguages);
     }
 
     /**
