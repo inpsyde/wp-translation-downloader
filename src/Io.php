@@ -40,7 +40,7 @@ class Io
     public function info(string ...$messages)
     {
         foreach ($messages as $message) {
-            $this->write(..."<info>{$message}</info>");
+            $this->write("<info>{$message}</info>");
         }
     }
 
