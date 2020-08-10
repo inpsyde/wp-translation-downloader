@@ -143,6 +143,7 @@ final class Plugin implements
     public function onPostInstallAndUpdate(Event $event)
     {
         if (! $this->pluginConfig->autorun()) {
+            // phpcs:disable Inpsyde.CodeQuality.LineLength.TooLong
             $this->io->infoOnVerbose('Configuration "auto-run" is set to "false". You need to run wp-translation-downloader manually.');
 
             return;
