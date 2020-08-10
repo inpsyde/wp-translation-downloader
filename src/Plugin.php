@@ -131,13 +131,6 @@ final class Plugin implements
             $cache
         );
 
-        $error = $this->pluginConfig->isValid();
-        if ($error !== '') {
-            $this->io->error($error);
-
-            return;
-        }
-
         $this->ensureDirectories();
     }
 
@@ -150,6 +143,8 @@ final class Plugin implements
     public function onPostInstallAndUpdate(Event $event)
     {
         if (! $this->pluginConfig->autorun()) {
+            $this->io->infoOnVerbose('Configuration "auto-run" is set to "false". You need to run wp-translation-downloader manually.');
+
             return;
         }
 
@@ -157,6 +152,37 @@ final class Plugin implements
             ->getLocalRepository()->getPackages();
 
         $this->doUpdatePackages($packages);
+    }
+
+    /**
+     * @param PackageInterface[] $packages
+     */
+    public function doUpdatePackages(array $packages)
+    {
+        $this->io->logo();
+
+        $error = $this->pluginConfig->isValid();
+        if ($error !== '') {
+            $this->io->error($error);
+
+            return;
+        }
+
+        if (count($packages) < 1) {
+            $this->io->error('No packages found to process.');
+
+            return;
+        }
+
+        $allowedLanguages = $this->pluginConfig->allowedLanguages();
+
+        foreach ($packages as $package) {
+            $transPackage = $this->translatablePackageFactory->create($package);
+            if ($transPackage === null) {
+                continue;
+            }
+            $this->translationDownloader->download($transPackage, $allowedLanguages);
+        }
     }
 
     /**
@@ -172,28 +198,6 @@ final class Plugin implements
         $transPackage = $this->translatablePackageFactory->createFromOperation($event->getOperation());
         if ($transPackage) {
             $this->translationDownloader->remove($transPackage);
-        }
-    }
-
-    /**
-     * @param PackageInterface[] $packages
-     */
-    public function doUpdatePackages(array $packages)
-    {
-        $this->io->logo();
-
-        if (count($packages) < 1) {
-            $this->io->error('No packages found to process.');
-        }
-
-        $allowedLanguages = $this->pluginConfig->allowedLanguages();
-
-        foreach ($packages as $package) {
-            $transPackage = $this->translatablePackageFactory->create($package);
-            if ($transPackage === null) {
-                continue;
-            }
-            $this->translationDownloader->download($transPackage, $allowedLanguages);
         }
     }
 
@@ -231,13 +235,18 @@ final class Plugin implements
     {
     }
 
-    /**
-     * @throws \RuntimeException
-     */
-    private function ensureDirectories()
+    private function ensureDirectories(): bool
     {
-        foreach ($this->pluginConfig->directories() as $directory) {
-            $this->filesystem->ensureDirectoryExists($directory);
+        try {
+            foreach ($this->pluginConfig->directories() as $directory) {
+                $this->filesystem->ensureDirectoryExists($directory);
+            }
+
+            return true;
+        } catch (\Throwable $exception) {
+            $this->io->error($exception->getMessage());
+
+            return false;
         }
     }
 }

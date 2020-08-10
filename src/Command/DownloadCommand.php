@@ -51,8 +51,8 @@ class DownloadCommand extends BaseCommand
             $io = $this->getIO();
 
             $packagesToProcess = $this->optionPackagesToProcess($input);
-
             $packages = $this->resolvePackages($packagesToProcess);
+
             $plugin = new Plugin();
             $plugin->activate($composer, $io);
             $plugin->doUpdatePackages($packages);
@@ -66,14 +66,19 @@ class DownloadCommand extends BaseCommand
     }
 
     /**
+     * Formats input arg to an array of packages.
+     *
      * @param InputInterface $input
      *
      * @return array
      * @throws \Symfony\Component\Console\Exception\InvalidArgumentException
+     * @example package1,package2,package3 => ["package1", "package2", "package3"]
+     *
      */
     private function optionPackagesToProcess(InputInterface $input): array
     {
         $packageNames = (string) $input->getOption(self::OPTION_PACKAGES);
+
         $packagesToProcess = explode(',', $packageNames);
         $packagesToProcess = array_unique($packagesToProcess);
         $packagesToProcess = array_filter($packagesToProcess);
@@ -81,6 +86,14 @@ class DownloadCommand extends BaseCommand
         return $packagesToProcess;
     }
 
+    /**
+     * Searches for packages in composer.json by a given list of packageNames.
+     *
+     * @param array $packagesToProcess
+     *
+     * @return PackageInterface[]
+     * @throws \RuntimeException
+     */
     private function resolvePackages(array $packagesToProcess): array
     {
         /** @var Composer $composer */
