@@ -4,6 +4,7 @@ namespace Inpsyde\WpTranslationDownloader;
 
 use Composer\Cache;
 use Composer\Composer;
+use Composer\Config;
 use Composer\Downloader\ZipDownloader;
 use Composer\EventDispatcher\EventSubscriberInterface;
 use Composer\Installer\PackageEvent;
@@ -14,6 +15,7 @@ use Composer\Plugin\Capable;
 use Composer\Plugin\PluginInterface;
 use Composer\Script\Event;
 use Composer\Util\Filesystem;
+use Composer\Util\RemoteFilesystem;
 use Inpsyde\WpTranslationDownloader\Command\CleanUpCommand;
 use Inpsyde\WpTranslationDownloader\Command\DownloadCommand;
 use Inpsyde\WpTranslationDownloader\Config\PluginConfiguration;
@@ -103,12 +105,14 @@ final class Plugin implements
      */
     public function activate(Composer $composer, IOInterface $io)
     {
+        /** @var IOInterface io */
         $this->io = new Io($io);
+
+        /** @var Config $config */
+        $config = $composer->getConfig();
 
         /** @var Cache $cache */
         $cache = new Cache($io, $composer->getConfig()->get('cache-dir').'/translations');
-        /** @var ZipDownloader $zipDownloader */
-        $zipDownloader = new ZipDownloader($io, $composer->getConfig());
 
         /** @var Filesystem $filesystem */
         $this->filesystem = new Filesystem();
@@ -125,11 +129,15 @@ final class Plugin implements
         // initialize TranslationDownloader
         $this->translationDownloader = new TranslationDownloader(
             $this->io,
-            $composer->getConfig(),
-            $zipDownloader,
+            new ZipDownloader($io, $config),
             $this->filesystem,
-            $cache
+            new RemoteFilesystem($io, $config),
+            $cache->getRoot()
         );
+
+        if ($cache->gcIsNecessary()) {
+            $cache->gc($config->get('cache-files-ttl'), $config->get('cache-files-maxsize'));
+        }
 
         $this->ensureDirectories();
     }

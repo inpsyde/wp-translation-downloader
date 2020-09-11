@@ -2,10 +2,10 @@
 
 namespace Inpsyde\WpTranslationDownloader\Downloader;
 
-use Composer\Cache;
 use Composer\Config;
 use Composer\Downloader\ZipDownloader;
 use Composer\Util\Filesystem;
+use Composer\Util\RemoteFilesystem;
 use Inpsyde\WpTranslationDownloader\Io;
 use Inpsyde\WpTranslationDownloader\Package\TranslatablePackage;
 
@@ -25,7 +25,7 @@ class TranslationDownloader
     /**
      * @var ZipDownloader
      */
-    private $zipDownloader;
+    private $unzipper;
 
     /**
      * @var Filesystem
@@ -33,27 +33,37 @@ class TranslationDownloader
     private $filesystem;
 
     /**
-     * @var Cache
+     * @var string
      */
-    private $cache;
+    private $cacheRoot;
 
+    /**
+     * @var RemoteFilesystem
+     */
+    private $remoteFilesystem;
+
+    /**
+     * TranslationDownloader constructor.
+     *
+     * @param Io $io
+     * @param ZipDownloader $unzipper
+     * @param Filesystem $filesystem
+     * @param RemoteFilesystem $remoteFilesystem
+     * @param string $cacheRoot
+     */
     public function __construct(
         Io $io,
-        Config $config,
-        ZipDownloader $zipDownloader,
+        ZipDownloader $unzipper,
         Filesystem $filesystem,
-        Cache $cache
+        RemoteFilesystem $remoteFilesystem,
+        string $cacheRoot
     ) {
 
         $this->io = $io;
-        $this->config = $config;
-        $this->zipDownloader = $zipDownloader;
+        $this->unzipper = $unzipper;
         $this->filesystem = $filesystem;
-        $this->cache = $cache;
-
-        if ($this->cache->gcIsNecessary()) {
-            $this->cache->gc($config->get('cache-files-ttl'), $config->get('cache-files-maxsize'));
-        }
+        $this->cacheRoot = $cacheRoot;
+        $this->remoteFilesystem = $remoteFilesystem;
     }
 
     /**
@@ -86,36 +96,23 @@ class TranslationDownloader
         );
 
         foreach ($translations as $translation) {
-            $package = $translation['package'];
-            $language = $translation['language'];
-            $version = $translation['version'];
-            $fileName = $projectName.'-'.$version.'-'.basename($package);
-            $zipFile = $this->cache->getRoot().$fileName;
-
-            // only download file if it not exist.
-            file_exists($zipFile)
-            && $this->io->writeOnVerbose(
-                sprintf(
-                    '    <info>[CACHED]</info> %s</info> ',
-                    $zipFile
-                )
-            );
-
-            if (! file_exists($zipFile) && ! copy($package, $zipFile)) {
-                $this->io->error(
-                    sprintf(
-                        '%s %s: Could not download and write "%s"</>',
-                        $projectName,
-                        $version,
-                        $package
-                    )
-                );
-                continue;
-            }
-
             try {
+                $packageUrl = $translation['package'];
+                $language = $translation['language'];
+                $version = $translation['version'];
+                $fileName = sprintf(
+                    '%1$s-%2$s-%3$s.%4$s',
+                    $projectName,
+                    $language,
+                    $version,
+                    pathinfo($packageUrl, PATHINFO_EXTENSION)
+                );
+                $zipFile = $this->cacheRoot.$fileName;
+
+                $this->downloadZipFile($zipFile, $packageUrl);
+
                 // phpcs:disable NeutronStandard.Extract.DisallowExtract.Extract
-                $this->zipDownloader->extract($zipFile, $directory);
+                $this->unzipper->extract($zipFile, $directory);
                 $this->io->write(
                     sprintf(
                         '    <info>✓</info> %s | %s',
@@ -136,6 +133,31 @@ class TranslationDownloader
         }
 
         return true;
+    }
+
+    /**
+     * @param string $zipFile
+     * @param $packageUrl
+     *
+     * @return bool
+     */
+    private function downloadZipFile(string $zipFile, $packageUrl): bool
+    {
+        if (file_exists($zipFile)) {
+            $this->io->writeOnVerbose(
+                sprintf(
+                    '    <info>[CACHED]</info> %s</info> ',
+                    $zipFile
+                )
+            );
+
+            return false;
+        }
+
+        $origin = RemoteFilesystem::getOrigin($packageUrl);
+        $result = $this->remoteFilesystem->copy($origin, $packageUrl, $zipFile, false);
+
+        return ! ! $result;
     }
 
     public function remove(TranslatablePackage $transPackage)
