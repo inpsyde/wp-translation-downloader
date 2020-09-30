@@ -171,6 +171,7 @@ class TranslationDownloader
             ->ignoreUnreadableDirs()
             ->ignoreVCS(true)
             ->ignoreDotFiles(true)
+            ->depth('== 0')
             ->files()
             ->filter(static function (SplFileInfo $info) use ($pattern): bool {
                 return (bool)preg_match($pattern, $info->getFilename());
