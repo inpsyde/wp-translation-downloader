@@ -8,6 +8,8 @@ use Composer\Util\Filesystem;
 use Composer\Util\RemoteFilesystem;
 use Inpsyde\WpTranslationDownloader\Io;
 use Inpsyde\WpTranslationDownloader\Package\TranslatablePackage;
+use Symfony\Component\Finder\Finder;
+use Symfony\Component\Finder\SplFileInfo;
 
 class TranslationDownloader
 {
@@ -162,17 +164,27 @@ class TranslationDownloader
 
     public function remove(TranslatablePackage $transPackage)
     {
-        $directory = $transPackage->languageDirectory();
-        $basePath = rtrim($directory, '/').'/'.$transPackage->projectName();
+        $pattern = sprintf("~^%s-.+?\.(?:po|mo|json)$~i", $transPackage->projectName());
 
-        foreach (glob("{$basePath}-*.{po,mo}", GLOB_BRACE) as $file) {
+        $files = Finder::create()
+            ->in($transPackage->languageDirectory())
+            ->ignoreUnreadableDirs()
+            ->ignoreVCS(true)
+            ->ignoreDotFiles(true)
+            ->depth('== 0')
+            ->files()
+            ->filter(static function (SplFileInfo $info) use ($pattern): bool {
+                return (bool)preg_match($pattern, $info->getFilename());
+            });
+
+        foreach ($files as $file) {
             try {
-                $this->filesystem->unlink($file);
+                $this->filesystem->unlink($file->getPathname());
                 $this->io->write(
                     sprintf(
                         "    - <info>[OK]</info> %s: deleted %s translation file.",
                         $transPackage->projectName(),
-                        basename($file)
+                        $file->getBasename()
                     )
                 );
             } catch (\Throwable $exception) {
