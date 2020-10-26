@@ -1,7 +1,7 @@
 <?php
 
 /*
- * This file is part of the Assets package.
+ * This file is part of the WP Translation Downloader package.
  *
  * (c) Inpsyde GmbH
  *
@@ -32,6 +32,7 @@ use Inpsyde\WpTranslationDownloader\Config\PluginConfiguration;
 use Inpsyde\WpTranslationDownloader\Config\PluginConfigurationBuilder;
 use Inpsyde\WpTranslationDownloader\Util\Downloader;
 use Inpsyde\WpTranslationDownloader\Package\TranslatablePackage;
+use Inpsyde\WpTranslationDownloader\Util\Remover;
 use Inpsyde\WpTranslationDownloader\Util\Unzipper;
 
 final class Plugin implements
@@ -49,7 +50,12 @@ final class Plugin implements
     /**
      * @var Downloader
      */
-    private $translationDownloader;
+    private $downloader;
+
+    /**
+     * @var Remover
+     */
+    private $remover;
 
     /**
      * @var PluginConfiguration
@@ -135,12 +141,16 @@ final class Plugin implements
             new ApiEndpointResolver($this->pluginConfig)
         );
 
-        $this->translationDownloader = new Downloader(
+        $this->downloader = new Downloader(
             $this->io,
             new Unzipper($io),
             $this->filesystem,
             new RemoteFilesystem($io, $config),
             $cache->getRoot()
+        );
+        $this->remover = new Remover(
+            $this->io,
+            $this->filesystem
         );
 
         if ($cache->gcIsNecessary()) {
@@ -200,7 +210,7 @@ final class Plugin implements
             if ($transPackage === null) {
                 continue;
             }
-            $this->translationDownloader->download($transPackage, $allowedLanguages);
+            $this->downloader->download($transPackage, $allowedLanguages);
         }
     }
 
@@ -216,7 +226,7 @@ final class Plugin implements
         /** @var PackageInterface|TranslatablePackage|null $transPackage */
         $transPackage = $this->translatablePackageFactory->createFromOperation($event->getOperation());
         if ($transPackage) {
-            $this->translationDownloader->remove($transPackage);
+            $this->remover->remove($transPackage);
         }
     }
 
