@@ -128,16 +128,13 @@ final class Plugin implements
         /** @var Filesystem $filesystem */
         $this->filesystem = new Filesystem();
 
-        // initialize PluginConfiguration
         $this->pluginConfig = PluginConfigurationBuilder::build($composer->getPackage()->getExtra());
 
-        // initialize TranslatablePackageFactory
         $this->translatablePackageFactory = new TranslatablePackageFactory(
             $this->pluginConfig,
             new ApiEndpointResolver($this->pluginConfig)
         );
 
-        // initialize TranslationDownloader
         $this->translationDownloader = new Downloader(
             $this->io,
             new Unzipper($io),
