@@ -1,4 +1,15 @@
-<?php declare(strict_types=1); # -*- coding: utf-8 -*-
+<?php
+
+/*
+ * This file is part of the Assets package.
+ *
+ * (c) Inpsyde GmbH
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+declare(strict_types=1);
 
 namespace Inpsyde\WpTranslationDownloader;
 
@@ -33,7 +44,7 @@ class ApiEndpointResolver
 
         $apiEndpoint = null;
         foreach ($endpointsByName as $apiPackage => $endpoint) {
-            $pattern = '/'.$this->pluginConfiguration->prepareRegex($apiPackage).'/';
+            $pattern = '/' . $this->pluginConfiguration->prepareRegex($apiPackage) . '/';
             if (preg_match($pattern, $packageName) === 1) {
                 $apiEndpoint = $endpoint;
                 break;

@@ -1,15 +1,24 @@
-<?php declare(strict_types=1); # -*- coding: utf-8 -*-
+<?php
+
+/*
+ * This file is part of the Assets package.
+ *
+ * (c) Inpsyde GmbH
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+declare(strict_types=1);
 
 namespace Inpsyde\WpTranslationDownloader\Config;
 
-use Composer\IO\IOInterface;
 use Composer\Json\JsonFile;
-use Inpsyde\WpTranslationDownloader\Io;
 
 final class PluginConfigurationBuilder
 {
 
-    const KEY = 'wp-translation-downloader';
+    public const KEY = 'wp-translation-downloader';
 
     public static function build(array $extra = []): PluginConfiguration
     {

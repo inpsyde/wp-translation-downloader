@@ -1,6 +1,6 @@
 name: Testing
 
-on: [push]
+on: [ push ]
 
 jobs:
   build:
@@ -16,5 +16,8 @@ jobs:
       - name: Install dependencies
         run: composer install --prefer-dist --no-progress --no-suggest
 
-      - name: Run QA Scripts
-        run: composer qa
+      - name: Run PHPCS
+        run: composer cs
+
+      - name: Run PHPUnit
+        run: composer tests

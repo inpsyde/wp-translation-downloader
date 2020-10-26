@@ -12,12 +12,11 @@
     "require": {
         "php": ">=7.1",
         "composer/installers": "^1.6",
-        "composer-plugin-api": "^1.0 || ^2.0"
+        "composer-plugin-api": "^2.0"
     },
     "require-dev": {
-        "composer/composer": "^1.0",
-        "squizlabs/php_codesniffer": "^3",
-        "inpsyde/php-coding-standards": "^0.13",
+        "composer/composer": "^2.0",
+        "inpsyde/php-coding-standards": "^1.0.0-RC.1",
         "phpunit/phpunit": "^8",
         "brain/monkey": "^2"
     },
@@ -31,10 +30,6 @@
     },
     "scripts": {
         "cs": "@php ./vendor/squizlabs/php_codesniffer/bin/phpcs",
-        "tests": "@php ./vendor/phpunit/phpunit/phpunit",
-        "qa": [
-            "@cs",
-            "@tests"
-        ]
+        "tests": "@php ./vendor/phpunit/phpunit/phpunit"
     }
 }

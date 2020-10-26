@@ -1,11 +1,21 @@
-<?php declare(strict_types=1); # -*- coding: utf-8 -*-
+<?php
+
+/*
+ * This file is part of the Assets package.
+ *
+ * (c) Inpsyde GmbH
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+declare(strict_types=1);
 
 namespace Inpsyde\WpTranslationDownloader;
 
 use Composer\Cache;
 use Composer\Composer;
 use Composer\Config;
-use Composer\Downloader\ZipDownloader;
 use Composer\EventDispatcher\EventSubscriberInterface;
 use Composer\Installer\PackageEvent;
 use Composer\IO\IOInterface;
@@ -20,8 +30,9 @@ use Inpsyde\WpTranslationDownloader\Command\CleanUpCommand;
 use Inpsyde\WpTranslationDownloader\Command\DownloadCommand;
 use Inpsyde\WpTranslationDownloader\Config\PluginConfiguration;
 use Inpsyde\WpTranslationDownloader\Config\PluginConfigurationBuilder;
-use Inpsyde\WpTranslationDownloader\Downloader\TranslationDownloader;
+use Inpsyde\WpTranslationDownloader\Util\Downloader;
 use Inpsyde\WpTranslationDownloader\Package\TranslatablePackage;
+use Inpsyde\WpTranslationDownloader\Util\Unzipper;
 
 final class Plugin implements
     PluginInterface,
@@ -36,7 +47,7 @@ final class Plugin implements
     private $io;
 
     /**
-     * @var TranslationDownloader
+     * @var Downloader
      */
     private $translationDownloader;
 
@@ -112,7 +123,7 @@ final class Plugin implements
         $config = $composer->getConfig();
 
         /** @var Cache $cache */
-        $cache = new Cache($io, $composer->getConfig()->get('cache-dir').'/translations');
+        $cache = new Cache($io, $composer->getConfig()->get('cache-dir') . '/translations');
 
         /** @var Filesystem $filesystem */
         $this->filesystem = new Filesystem();
@@ -127,9 +138,9 @@ final class Plugin implements
         );
 
         // initialize TranslationDownloader
-        $this->translationDownloader = new TranslationDownloader(
+        $this->translationDownloader = new Downloader(
             $this->io,
-            new ZipDownloader($io, $config),
+            new Unzipper($io),
             $this->filesystem,
             new RemoteFilesystem($io, $config),
             $cache->getRoot()
@@ -152,7 +163,9 @@ final class Plugin implements
     {
         if (! $this->pluginConfig->autorun()) {
             // phpcs:disable Inpsyde.CodeQuality.LineLength.TooLong
-            $this->io->infoOnVerbose('Configuration "auto-run" is set to "false". You need to run wp-translation-downloader manually.');
+            $this->io->infoOnVerbose(
+                'Configuration "auto-run" is set to "false". You need to run wp-translation-downloader manually.'
+            );
 
             return;
         }

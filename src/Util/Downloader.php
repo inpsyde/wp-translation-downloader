@@ -1,8 +1,18 @@
-<?php declare(strict_types=1); # -*- coding: utf-8 -*-
+<?php
 
-namespace Inpsyde\WpTranslationDownloader\Downloader;
+/*
+ * This file is part of the Assets package.
+ *
+ * (c) Inpsyde GmbH
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
 
-use Composer\Config;
+declare(strict_types=1);
+
+namespace Inpsyde\WpTranslationDownloader\Util;
+
 use Composer\Downloader\ZipDownloader;
 use Composer\Util\Filesystem;
 use Composer\Util\RemoteFilesystem;
@@ -11,18 +21,13 @@ use Inpsyde\WpTranslationDownloader\Package\TranslatablePackage;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Finder\SplFileInfo;
 
-class TranslationDownloader
+class Downloader
 {
 
     /**
      * @var Io
      */
     private $io;
-
-    /**
-     * @var Config
-     */
-    private $config;
 
     /**
      * @var ZipDownloader
@@ -48,14 +53,14 @@ class TranslationDownloader
      * TranslationDownloader constructor.
      *
      * @param Io $io
-     * @param ZipDownloader $unzipper
+     * @param Unzipper $unzipper
      * @param Filesystem $filesystem
      * @param RemoteFilesystem $remoteFilesystem
      * @param string $cacheRoot
      */
     public function __construct(
         Io $io,
-        ZipDownloader $unzipper,
+        Unzipper $unzipper,
         Filesystem $filesystem,
         RemoteFilesystem $remoteFilesystem,
         string $cacheRoot
@@ -173,9 +178,11 @@ class TranslationDownloader
             ->ignoreDotFiles(true)
             ->depth('== 0')
             ->files()
-            ->filter(static function (SplFileInfo $info) use ($pattern): bool {
-                return (bool)preg_match($pattern, $info->getFilename());
-            });
+            ->filter(
+                static function (SplFileInfo $info) use ($pattern): bool {
+                    return (bool) preg_match($pattern, $info->getFilename());
+                }
+            );
 
         foreach ($files as $file) {
             try {

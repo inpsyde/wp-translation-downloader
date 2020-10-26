@@ -1,4 +1,15 @@
-<?php declare(strict_types=1); # -*- coding: utf-8 -*-
+<?php
+
+/*
+ * This file is part of the Assets package.
+ *
+ * (c) Inpsyde GmbH
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+declare(strict_types=1);
 
 namespace Inpsyde\WpTranslationDownloader\Command;
 
@@ -13,9 +24,9 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 class DownloadCommand extends BaseCommand
 {
+    use ErrorFormatterTrait;
 
     public const OPTION_PACKAGES = 'packages';
-    use ErrorFormatterTrait;
 
     /**
      * @return void
@@ -106,7 +117,7 @@ class DownloadCommand extends BaseCommand
         if (count($packagesToProcess) > 0) {
             $packages = array_filter(
                 $packages,
-                function (PackageInterface $package) use ($packagesToProcess): bool {
+                static function (PackageInterface $package) use ($packagesToProcess): bool {
                     return in_array($package->getName(), $packagesToProcess, true);
                 }
             );
