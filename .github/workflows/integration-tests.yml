@@ -14,8 +14,10 @@ jobs:
     steps:
       - uses: actions/checkout@v1
 
-      - name: Composer version
-        run: composer --version
+      - name: Composer v2
+        run: |
+          sudo composer self-update --2
+          composer --version
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
