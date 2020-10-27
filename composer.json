@@ -26,6 +26,9 @@
             "Inpsyde\\WpTranslationDownloader\\": "src/"
         }
     },
+    "conflict": {
+        "composer/composer": ">=2.0"
+    },
     "extra": {
         "class": "Inpsyde\\WpTranslationDownloader\\Plugin"
     },
