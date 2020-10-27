@@ -9,7 +9,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v1
-      - uses: php-actions/composer@v2
+
+      - name: Composer version
+        run: composer --version
 
       - name: Validate composer.json
         run: composer validate
