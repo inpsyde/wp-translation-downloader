@@ -13,14 +13,12 @@ jobs:
 
     steps:
       - uses: actions/checkout@v1
+      - uses: php-actions/composer@v2
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php-versions }}
-
-      - name: Composer v2
-        run: composer self-update --2
 
       - name: Install dependencies
         run: composer install --prefer-dist --no-progress --no-suggest

@@ -9,9 +9,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v1
-
-      - name: Composer v2
-        run: composer self-update --2
+      - uses: php-actions/composer@v2
 
       - name: Validate composer.json
         run: composer validate
