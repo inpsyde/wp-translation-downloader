@@ -25,11 +25,18 @@
             "Inpsyde\\WpTranslationDownloader\\": "src/"
         }
     },
+    "autoload-dev": {
+        "psr-4": {
+            "Inpsyde\\WpTranslationDownloader\\Tests\\": "tests/"
+        }
+    },
     "extra": {
         "class": "Inpsyde\\WpTranslationDownloader\\Plugin"
     },
     "scripts": {
         "cs": "@php ./vendor/squizlabs/php_codesniffer/bin/phpcs",
-        "tests": "@php ./vendor/phpunit/phpunit/phpunit"
+        "tests": "@php ./vendor/phpunit/phpunit/phpunit",
+        "tests:unit": "@php ./vendor/phpunit/phpunit/phpunit --testsuite Unit",
+        "tests:integration": "@php ./vendor/phpunit/phpunit/phpunit --testsuite Integration"
     }
 }

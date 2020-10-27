@@ -1,7 +1,7 @@
 <?php
 
 /*
- * This file is part of the Assets package.
+ * This file is part of the WP Translation Downloader package.
  *
  * (c) Inpsyde GmbH
  *

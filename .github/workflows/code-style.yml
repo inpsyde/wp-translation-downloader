@@ -1,4 +1,4 @@
-name: Testing
+name: Code Style
 
 on: [ push ]
 
@@ -10,6 +10,9 @@ jobs:
     steps:
       - uses: actions/checkout@v1
 
+      - name: Composer v2
+        run: composer self-update --2
+
       - name: Validate composer.json
         run: composer validate
 
@@ -18,6 +21,3 @@ jobs:
 
       - name: Run PHPCS
         run: composer cs
-
-      - name: Run PHPUnit
-        run: composer tests
