@@ -30,8 +30,9 @@ class ConfigureationJsonFileTest extends AbstractIntegrationTestCase
      */
     public function testConfigurationJsonFile(): void
     {
-        $testDirectory = $this->setupTestCase('configuration-json-file');
+        [$testDirectory, $output] = $this->setupTestCase('configuration-json-file');
 
+        static::assertStringContainsString('wordpress-core: found 1 translations', $output);
         static::assertFileExists($testDirectory.'languages');
         static::assertFileExists($testDirectory.'languages/de_DE.mo');
     }

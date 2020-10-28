@@ -29,8 +29,9 @@ class DefaultConfigurationTest extends AbstractIntegrationTestCase
      */
     public function testDefaultConfigurationTest(): void
     {
-        $testDirectory = $this->setupTestCase('default-configuration');
+        [$testDirectory, $output] = $this->setupTestCase('default-configuration');
 
+        static::assertStringContainsString('wordpress-core: found 1 translations', $output);
         static::assertFileExists($testDirectory.'languages');
         // default folders
         static::assertFileExists($testDirectory.'languages/library');

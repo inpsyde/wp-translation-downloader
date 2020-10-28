@@ -38,7 +38,10 @@ abstract class AbstractIntegrationTestCase extends TestCase
         $this->fixturesDir = realpath(__DIR__.'/../fixtures');
     }
 
-    protected function setupTestCase(string $testCase): string
+    /**
+     * @param array
+     */
+    protected function setupTestCase(string $testCase): array
     {
         $testDirectory = $this->fixturesDir.'/'.$testCase.'/';
         $process = new Process(
@@ -68,6 +71,6 @@ abstract class AbstractIntegrationTestCase extends TestCase
         // check, if composer installation did not fail.
         static::assertFileExists($testDirectory.'composer.lock');
 
-        return $testDirectory;
+        return [$testDirectory, $process->getOutput()];
     }
 }

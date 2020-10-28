@@ -32,8 +32,9 @@ class AutoRunDisabledTest extends AbstractIntegrationTestCase
      */
     public function testAutoRunDisabled(): void
     {
-        $testDirectory = $this->setupTestCase('disable-autorun');
+        [$testDirectory, $output] = $this->setupTestCase('disable-autorun');
 
+        static::assertEmpty($output);
         static::assertFileExists($testDirectory.'languages');
         // No files should be downloaded
         static::assertFileNotExists($testDirectory.'languages/de_DE.mo');

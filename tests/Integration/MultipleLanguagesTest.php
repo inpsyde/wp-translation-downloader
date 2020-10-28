@@ -30,8 +30,9 @@ class MultipleLanguagesTest extends AbstractIntegrationTestCase
      */
     public function testMultipleLanguages(): void
     {
-        $testDirectory = $this->setupTestCase('multiple-languages');
+        [$testDirectory, $output] = $this->setupTestCase('multiple-languages');
 
+        static::assertStringContainsString('wordpress-core: found 2 translations', $output);
         static::assertFileExists($testDirectory.'languages');
         static::assertFileExists($testDirectory.'languages/de_DE.mo');
         static::assertFileExists($testDirectory.'languages/en_GB.mo');
