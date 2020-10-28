@@ -26,11 +26,6 @@ class CommandsTest extends AbstractIntegrationTestCase
 {
 
     /**
-     * @var string
-     */
-    private $testDirectory;
-
-    /**
      * @test
      *
      * @return string   The test directory path.
