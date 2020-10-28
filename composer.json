@@ -38,6 +38,6 @@
         "cs": "@php ./vendor/squizlabs/php_codesniffer/bin/phpcs",
         "tests": "@php ./vendor/phpunit/phpunit/phpunit",
         "tests:unit": "@php ./vendor/phpunit/phpunit/phpunit --testsuite Unit",
-        "behat": "@php ./vendor/bin/behat -V"
+        "behat": "@php ./vendor/bin/behat"
     }
 }
