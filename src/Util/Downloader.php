@@ -33,11 +33,6 @@ class Downloader
     private $unzipper;
 
     /**
-     * @var Filesystem
-     */
-    private $filesystem;
-
-    /**
      * @var string
      */
     private $cacheRoot;
@@ -52,21 +47,18 @@ class Downloader
      *
      * @param Io $io
      * @param Unzipper $unzipper
-     * @param Filesystem $filesystem
      * @param RemoteFilesystem $remoteFilesystem
      * @param string $cacheRoot
      */
     public function __construct(
         Io $io,
         Unzipper $unzipper,
-        Filesystem $filesystem,
         RemoteFilesystem $remoteFilesystem,
         string $cacheRoot
     ) {
 
         $this->io = $io;
         $this->unzipper = $unzipper;
-        $this->filesystem = $filesystem;
         $this->cacheRoot = $cacheRoot;
         $this->remoteFilesystem = $remoteFilesystem;
     }

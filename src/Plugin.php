@@ -127,13 +127,11 @@ final class Plugin implements
 
         /** @var Config $config */
         $config = $composer->getConfig();
-
-        /** @var Cache $cache */
         $cache = new Cache($io, $composer->getConfig()->get('cache-dir') . '/translations');
 
-        /** @var Filesystem $filesystem */
         $this->filesystem = new Filesystem();
 
+        /** @var PluginConfiguration pluginConfig */
         $this->pluginConfig = PluginConfigurationBuilder::build($composer->getPackage()->getExtra());
 
         $this->translatablePackageFactory = new TranslatablePackageFactory(
@@ -144,7 +142,6 @@ final class Plugin implements
         $this->downloader = new Downloader(
             $this->io,
             new Unzipper($io),
-            $this->filesystem,
             new RemoteFilesystem($io, $config),
             $cache->getRoot()
         );

@@ -20,6 +20,13 @@ final class PluginConfigurationBuilder
 
     public const KEY = 'wp-translation-downloader';
 
+    /**
+     * @param array $extra
+     *
+     * @return PluginConfiguration
+     *
+     * @throws \Throwable
+     */
     public static function build(array $extra = []): PluginConfiguration
     {
         if (! isset($extra[self::KEY])) {
