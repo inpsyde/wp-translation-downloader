@@ -31,8 +31,6 @@ class DefaultConfigurationTest extends AbstractIntegrationTestCase
     {
         [$testDirectory, $output] = $this->setupTestCase('default-configuration');
 
-        print_r($output);
-
         static::assertStringContainsString('wordpress-core: found 1 translations', $output);
         static::assertFileExists($testDirectory.'languages');
         // default folders
