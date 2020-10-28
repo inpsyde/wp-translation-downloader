@@ -48,7 +48,7 @@ class FeatureContext implements Context
      *
      * @param $fixtureFolder
      */
-    public function givenForTestCase($fixtureFolder)
+    public function iAmUsingTheFixtures($fixtureFolder)
     {
         $this->currentTestCase = $fixtureFolder;
         $this->currentTestDirectory = $this->fixturesDir.'/'.$fixtureFolder.'/';
@@ -75,25 +75,6 @@ class FeatureContext implements Context
         }
 
         $this->runComposer([$command]);
-    }
-
-    /**
-     * @When /^I run composer ([^"]*) with parameters:$/
-     *
-     * @param $command
-     * @param $parameterJson
-     */
-    public function iRunComposerCommandWithParameters($command, PyStringNode $parameterJson)
-    {
-        $commandParameters = json_decode($parameterJson->getRaw(), true);
-        if ($commandParameters === null) {
-            throw new \InvalidArgumentException(
-                "PyStringNode could not be converted to json."
-            );
-        }
-
-        array_unshift($command, $commandParameters);
-        $this->runComposer($command);
     }
 
     /**
