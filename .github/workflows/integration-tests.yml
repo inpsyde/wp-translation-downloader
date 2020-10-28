@@ -14,15 +14,11 @@ jobs:
     steps:
       - uses: actions/checkout@v1
 
-      - name: Composer v2
-        run: |
-          sudo composer self-update --2
-          composer --version
-
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php-versions }}
+          tools: composer:v2
 
       - name: Install dependencies
         run: composer install --prefer-dist --no-progress --no-suggest
