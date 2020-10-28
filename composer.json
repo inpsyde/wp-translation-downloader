@@ -18,7 +18,8 @@
         "composer/composer": "^2.0",
         "inpsyde/php-coding-standards": "^1.0.0-RC.1",
         "phpunit/phpunit": "^8",
-        "brain/monkey": "^2"
+        "brain/monkey": "^2",
+        "behat/behat": "^3.7"
     },
     "autoload": {
         "psr-4": {
@@ -37,6 +38,6 @@
         "cs": "@php ./vendor/squizlabs/php_codesniffer/bin/phpcs",
         "tests": "@php ./vendor/phpunit/phpunit/phpunit",
         "tests:unit": "@php ./vendor/phpunit/phpunit/phpunit --testsuite Unit",
-        "tests:integration": "@php ./vendor/phpunit/phpunit/phpunit --testsuite Integration"
+        "behat": "@php ./vendor/bin/behat -V"
     }
 }

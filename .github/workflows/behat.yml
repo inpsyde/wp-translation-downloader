@@ -1,4 +1,4 @@
-name: Integration Tests
+name: Behat Tests
 
 on: [ push ]
 
@@ -23,5 +23,5 @@ jobs:
       - name: Install dependencies
         run: composer install --prefer-dist --no-progress --no-suggest
 
-      - name: Run PHPUnit
-        run: composer tests:integration
+      - name: Run Behat
+        run: composer behat

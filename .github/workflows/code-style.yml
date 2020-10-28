@@ -10,8 +10,11 @@ jobs:
     steps:
       - uses: actions/checkout@v1
 
-      - name: Composer version
-        run: composer --version
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-versions }}
+          tools: composer:v2
 
       - name: Validate composer.json
         run: composer validate
