@@ -22,8 +22,8 @@ use Symfony\Component\Process\ExecutableFinder;
 /**
  * Class Unzipper
  *
- * This file contains some code copied from Composer v1 `RemoteFilesystem`,
- * since v2 had a lot of breaking changes which does not allow us
+ * This file contains some code copied from Composer v1 `Composer\Downloader\ZipDownloader`.
+ * Composer v2 had a lot of breaking changes which does not allow us
  * anymore to really use it without providing either a PackageInterface
  * or implementing checks for Composer v1 and v2.
  *
