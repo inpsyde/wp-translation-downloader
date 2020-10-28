@@ -1,0 +1,16 @@
+{
+    "name": "wp-translation-downloader/disable-autorun",
+    "require": {
+        "johnpbloch/wordpress": "5.5.*@stable",
+        "inpsyde/wp-translation-downloader": "dev-composer-v2"
+    },
+    "extra": {
+        "wp-translation-downloader": {
+            "languages": [
+                "de_DE"
+            ],
+            "directory": "languages",
+            "auto-run": false
+        }
+    }
+}

@@ -30,6 +30,13 @@ abstract class AbstractIntegrationTestCase extends TestCase
      */
     protected $fixturesDir = '';
 
+    /**
+     * AbstractIntegrationTestCase constructor.
+     *
+     * @param null $name
+     * @param array $data
+     * @param string $dataName
+     */
     public function __construct($name = null, array $data = [], $dataName = '')
     {
         parent::__construct($name, $data, $dataName);
@@ -39,17 +46,44 @@ abstract class AbstractIntegrationTestCase extends TestCase
     }
 
     /**
-     * @param array
+     * @param string $testCase
+     *
+     * @return array
+     *
+     * @throws \Throwable
      */
     protected function setupTestCase(string $testCase): array
     {
         $testDirectory = $this->fixturesDir.'/'.$testCase.'/';
-        $process = new Process(
+        $output = $this->runComposer(
+            $testDirectory,
             [
-                $this->composerExecutable,
                 'install',
                 '--no-interaction',
-            ],
+                '--no-progress',
+            ]
+        );
+
+        // check, if composer installation did not fail.
+        static::assertFileExists($testDirectory.'composer.lock');
+
+        return [$testDirectory, $output];
+    }
+
+    /**
+     * @param string $testDirectory
+     * @param array $commands
+     *
+     * @return string
+     *
+     * @throws \Throwable
+     */
+    protected function runComposer(string $testDirectory, array $commands): string
+    {
+        array_unshift($commands, $this->composerExecutable);
+
+        $process = new Process(
+            $commands,
             $testDirectory,
             null,
             null,
@@ -68,9 +102,6 @@ abstract class AbstractIntegrationTestCase extends TestCase
             );
         }
 
-        // check, if composer installation did not fail.
-        static::assertFileExists($testDirectory.'composer.lock');
-
-        return [$testDirectory, $process->getOutput()];
+        return $process->getOutput();
     }
 }
