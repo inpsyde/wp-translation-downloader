@@ -1,7 +1,5 @@
 name: Unit Tests
-
-on: [ push ]
-
+on: [push]
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -11,15 +9,12 @@ jobs:
         php-versions: [ '7.2', '7.3', '7.4' ]
     steps:
       - uses: actions/checkout@v1
-
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php-versions }}
           tools: composer:v2
-
       - name: Install dependencies
         run: composer install --prefer-dist --no-progress --no-suggest
-
       - name: Run PHPUnit
         run: composer tests:unit
