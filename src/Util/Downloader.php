@@ -1,17 +1,25 @@
-<?php declare(strict_types=1); # -*- coding: utf-8 -*-
+<?php
 
-namespace Inpsyde\WpTranslationDownloader\Downloader;
+/*
+ * This file is part of the WP Translation Downloader package.
+ *
+ * (c) Inpsyde GmbH
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
 
-use Composer\Config;
+declare(strict_types=1);
+
+namespace Inpsyde\WpTranslationDownloader\Util;
+
 use Composer\Downloader\ZipDownloader;
 use Composer\Util\Filesystem;
 use Composer\Util\RemoteFilesystem;
 use Inpsyde\WpTranslationDownloader\Io;
 use Inpsyde\WpTranslationDownloader\Package\TranslatablePackage;
-use Symfony\Component\Finder\Finder;
-use Symfony\Component\Finder\SplFileInfo;
 
-class TranslationDownloader
+class Downloader
 {
 
     /**
@@ -20,19 +28,9 @@ class TranslationDownloader
     private $io;
 
     /**
-     * @var Config
-     */
-    private $config;
-
-    /**
      * @var ZipDownloader
      */
     private $unzipper;
-
-    /**
-     * @var Filesystem
-     */
-    private $filesystem;
 
     /**
      * @var string
@@ -48,22 +46,19 @@ class TranslationDownloader
      * TranslationDownloader constructor.
      *
      * @param Io $io
-     * @param ZipDownloader $unzipper
-     * @param Filesystem $filesystem
+     * @param Unzipper $unzipper
      * @param RemoteFilesystem $remoteFilesystem
      * @param string $cacheRoot
      */
     public function __construct(
         Io $io,
-        ZipDownloader $unzipper,
-        Filesystem $filesystem,
+        Unzipper $unzipper,
         RemoteFilesystem $remoteFilesystem,
         string $cacheRoot
     ) {
 
         $this->io = $io;
         $this->unzipper = $unzipper;
-        $this->filesystem = $filesystem;
         $this->cacheRoot = $cacheRoot;
         $this->remoteFilesystem = $remoteFilesystem;
     }
@@ -109,7 +104,7 @@ class TranslationDownloader
                     $version,
                     pathinfo($packageUrl, PATHINFO_EXTENSION)
                 );
-                $zipFile = $this->cacheRoot.$fileName;
+                $zipFile = $this->cacheRoot . $fileName;
 
                 $this->downloadZipFile($zipFile, $packageUrl);
 
@@ -156,42 +151,34 @@ class TranslationDownloader
             return false;
         }
 
-        $origin = RemoteFilesystem::getOrigin($packageUrl);
+        $origin = $this->origin($packageUrl);
         $result = $this->remoteFilesystem->copy($origin, $packageUrl, $zipFile, false);
 
         return ! ! $result;
     }
 
-    public function remove(TranslatablePackage $transPackage)
+    /**
+     * Internal helper to detect the origin of an URL for RemoteFilesystem.
+     *
+     * @param string $url
+     *
+     * @return string
+     */
+    private function origin(string $url): string
     {
-        $pattern = sprintf("~^%s-.+?\.(?:po|mo|json)$~i", $transPackage->projectName());
-
-        $files = Finder::create()
-            ->in($transPackage->languageDirectory())
-            ->ignoreUnreadableDirs()
-            ->ignoreVCS(true)
-            ->ignoreDotFiles(true)
-            ->depth('== 0')
-            ->files()
-            ->filter(static function (SplFileInfo $info) use ($pattern): bool {
-                return (bool)preg_match($pattern, $info->getFilename());
-            });
-
-        foreach ($files as $file) {
-            try {
-                $this->filesystem->unlink($file->getPathname());
-                $this->io->write(
-                    sprintf(
-                        "    - <info>[OK]</info> %s: deleted %s translation file.",
-                        $transPackage->projectName(),
-                        $file->getBasename()
-                    )
-                );
-            } catch (\Throwable $exception) {
-                $this->io->error($exception->getMessage());
-            }
+        if (0 === strpos($url, 'file://')) {
+            return $url;
         }
 
-        return true;
+        $origin = (string) parse_url($url, PHP_URL_HOST);
+        if ($port = parse_url($url, PHP_URL_PORT)) {
+            $origin .= ':'.$port;
+        }
+
+        if ($origin === '') {
+            $origin = $url;
+        }
+
+        return $origin;
     }
 }

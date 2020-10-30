@@ -1,11 +1,21 @@
-<?php declare(strict_types=1); # -*- coding: utf-8 -*-
+<?php
+
+/*
+ * This file is part of the WP Translation Downloader package.
+ *
+ * (c) Inpsyde GmbH
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+declare(strict_types=1);
 
 namespace Inpsyde\WpTranslationDownloader;
 
 use Composer\Cache;
 use Composer\Composer;
 use Composer\Config;
-use Composer\Downloader\ZipDownloader;
 use Composer\EventDispatcher\EventSubscriberInterface;
 use Composer\Installer\PackageEvent;
 use Composer\IO\IOInterface;
@@ -20,8 +30,10 @@ use Inpsyde\WpTranslationDownloader\Command\CleanUpCommand;
 use Inpsyde\WpTranslationDownloader\Command\DownloadCommand;
 use Inpsyde\WpTranslationDownloader\Config\PluginConfiguration;
 use Inpsyde\WpTranslationDownloader\Config\PluginConfigurationBuilder;
-use Inpsyde\WpTranslationDownloader\Downloader\TranslationDownloader;
+use Inpsyde\WpTranslationDownloader\Util\Downloader;
 use Inpsyde\WpTranslationDownloader\Package\TranslatablePackage;
+use Inpsyde\WpTranslationDownloader\Util\Remover;
+use Inpsyde\WpTranslationDownloader\Util\Unzipper;
 
 final class Plugin implements
     PluginInterface,
@@ -36,9 +48,14 @@ final class Plugin implements
     private $io;
 
     /**
-     * @var TranslationDownloader
+     * @var Downloader
      */
-    private $translationDownloader;
+    private $downloader;
+
+    /**
+     * @var Remover
+     */
+    private $remover;
 
     /**
      * @var PluginConfiguration
@@ -110,29 +127,27 @@ final class Plugin implements
 
         /** @var Config $config */
         $config = $composer->getConfig();
+        $cache = new Cache($io, $composer->getConfig()->get('cache-dir') . '/translations');
 
-        /** @var Cache $cache */
-        $cache = new Cache($io, $composer->getConfig()->get('cache-dir').'/translations');
-
-        /** @var Filesystem $filesystem */
         $this->filesystem = new Filesystem();
 
-        // initialize PluginConfiguration
+        /** @var PluginConfiguration pluginConfig */
         $this->pluginConfig = PluginConfigurationBuilder::build($composer->getPackage()->getExtra());
 
-        // initialize TranslatablePackageFactory
         $this->translatablePackageFactory = new TranslatablePackageFactory(
             $this->pluginConfig,
             new ApiEndpointResolver($this->pluginConfig)
         );
 
-        // initialize TranslationDownloader
-        $this->translationDownloader = new TranslationDownloader(
+        $this->downloader = new Downloader(
             $this->io,
-            new ZipDownloader($io, $config),
-            $this->filesystem,
+            new Unzipper($io),
             new RemoteFilesystem($io, $config),
             $cache->getRoot()
+        );
+        $this->remover = new Remover(
+            $this->io,
+            $this->filesystem
         );
 
         if ($cache->gcIsNecessary()) {
@@ -152,7 +167,9 @@ final class Plugin implements
     {
         if (! $this->pluginConfig->autorun()) {
             // phpcs:disable Inpsyde.CodeQuality.LineLength.TooLong
-            $this->io->infoOnVerbose('Configuration "auto-run" is set to "false". You need to run wp-translation-downloader manually.');
+            $this->io->infoOnVerbose(
+                'Configuration "auto-run" is set to "false". You need to run wp-translation-downloader manually.'
+            );
 
             return;
         }
@@ -190,7 +207,7 @@ final class Plugin implements
             if ($transPackage === null) {
                 continue;
             }
-            $this->translationDownloader->download($transPackage, $allowedLanguages);
+            $this->downloader->download($transPackage, $allowedLanguages);
         }
     }
 
@@ -206,7 +223,7 @@ final class Plugin implements
         /** @var PackageInterface|TranslatablePackage|null $transPackage */
         $transPackage = $this->translatablePackageFactory->createFromOperation($event->getOperation());
         if ($transPackage) {
-            $this->translationDownloader->remove($transPackage);
+            $this->remover->remove($transPackage);
         }
     }
 

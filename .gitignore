@@ -9,3 +9,11 @@ composer.lock
 # composer.lock
 
 .phpunit.result.cache
+
+# generally ignoring everything in fixtures
+# which is generated on running integration tests
+/tests/fixtures/
+# but don't ignore the folder and composer.json
+# and configuration files.
+!/tests/fixtures/*/composer.json
+!/tests/fixtures/*/wp-translation-downloader.json

@@ -1,7 +1,19 @@
-<?php declare(strict_types=1); # -*- coding: utf-8 -*-
+<?php
+
+/*
+ * This file is part of the WP Translation Downloader package.
+ *
+ * (c) Inpsyde GmbH
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+declare(strict_types=1);
 
 namespace Inpsyde\WpTranslationDownloader\Command;
 
+use Symfony\Component\Console\Output\ConsoleOutputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
 trait ErrorFormatterTrait
@@ -19,7 +31,7 @@ trait ErrorFormatterTrait
         $lines = [];
         $line = '';
         foreach ($words as $word) {
-            if (strlen($line.$word) < 60) {
+            if (strlen($line . $word) < 60) {
                 $line .= $line
                     ? " {$word}"
                     : $word;
@@ -33,7 +45,7 @@ trait ErrorFormatterTrait
         $line and $lines[] = "  {$line}  ";
 
         $lenMax = max(array_map('strlen', $lines));
-        $empty = '<error>'.str_repeat(' ', $lenMax).'</error>';
+        $empty = '<error>' . str_repeat(' ', $lenMax) . '</error>';
         $errors = ['', $empty];
         foreach ($lines as $line) {
             $lineLen = strlen($line);

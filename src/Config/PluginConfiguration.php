@@ -1,4 +1,15 @@
-<?php declare(strict_types=1); # -*- coding: utf-8 -*-
+<?php
+
+/*
+ * This file is part of the WP Translation Downloader package.
+ *
+ * (c) Inpsyde GmbH
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+declare(strict_types=1);
 
 namespace Inpsyde\WpTranslationDownloader\Config;
 
@@ -9,6 +20,7 @@ final class PluginConfiguration
 {
 
     public const KEY = 'wp-translation-downloader';
+
     /**
      * @var array
      */
@@ -23,7 +35,7 @@ final class PluginConfiguration
     /**
      * @var array
      */
-    const DEFAULTS = [
+    private const DEFAULTS = [
         'auto-run' => true,
         'excludes' => [],
         'languages' => [],
@@ -49,16 +61,16 @@ final class PluginConfiguration
     {
         $config = array_replace_recursive(self::DEFAULTS, $config);
 
-        $languageRoot = getcwd().'/';
+        $languageRoot = getcwd() . '/';
         if ($config['directory'] !== '') {
-            $languageRoot .= $config['directory'].'/';
+            $languageRoot .= $config['directory'] . '/';
         }
 
         $dirs = [
             TranslatablePackage::TYPE_CORE => $languageRoot,
-            TranslatablePackage::TYPE_PLUGIN => $languageRoot.'plugins/',
-            TranslatablePackage::TYPE_THEME => $languageRoot.'themes/',
-            TranslatablePackage::TYPE_LIBRARY => $languageRoot.'library/',
+            TranslatablePackage::TYPE_PLUGIN => $languageRoot . 'plugins/',
+            TranslatablePackage::TYPE_THEME => $languageRoot . 'themes/',
+            TranslatablePackage::TYPE_LIBRARY => $languageRoot . 'library/',
         ];
 
         $config['auto-run'] = (bool) ($config['auto-run'] ?? true);
@@ -82,7 +94,7 @@ final class PluginConfiguration
 
         $rules = array_map([$this, 'prepareRegex'], $excludes);
 
-        return '/'.implode('|', $rules).'/';
+        return '/' . implode('|', $rules) . '/';
     }
 
     /**
@@ -192,7 +204,7 @@ final class PluginConfiguration
      */
     public function prepareRegex(string $input): string
     {
-        return '('.str_replace(['*', '/'], ['.+', '\/'], $input).')';
+        return '(' . str_replace(['*', '/'], ['.+', '\/'], $input) . ')';
     }
 
     /**
