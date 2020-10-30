@@ -7,6 +7,18 @@
 
 Composer plugin to download translations from the WordPress.org API or from custom GlotPress installations.
 
+## Composer v1 and v2
+Since Composer v2 introduced various changes in public API, we had to separate some logic and refactor code in our Plugin.
+
+To ensure no failures and best compatibility, we recommend following:
+
+|Composer|WP Translation Downloader|
+|---|---|
+|1.x|1.x|
+|2.x|2.x|
+ 
+**[!]** Composer v1 does also work in WP Translation Downloader v2, but is not officially supported. We're recommending to stick with WP Translation Downloader v1 as defined in the matrix above.
+
 ## Installation
 
 ```
