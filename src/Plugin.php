@@ -208,8 +208,10 @@ final class Plugin implements
         /** @var PackageInterface $package */
         foreach ($packages as $package) {
             $packageName = $package->getName();
-            $transPackage = $this->translatablePackageFactory->create($package);
-            if ($transPackage === null || in_array($packageName, $processedPackages, true)) {
+            $transPackage = in_array($packageName, $processedPackages, true)
+                ? null
+                : $this->translatablePackageFactory->create($package);
+            if ($transPackage === null) {
                 continue;
             }
             $processedPackages[] = $packageName;
