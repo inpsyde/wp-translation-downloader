@@ -201,8 +201,8 @@ final class Plugin implements
         }
 
         $allowedLanguages = $this->pluginConfig->allowedLanguages();
-        // We keep track of which package is already
-        // processed to skip duplicate entires in $packages
+        // We keep track of package which are already
+        // processed, to skip duplicate entries in $packages.
         $processedPackages = [];
 
         /** @var PackageInterface $package */
