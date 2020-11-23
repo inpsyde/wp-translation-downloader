@@ -201,12 +201,18 @@ final class Plugin implements
         }
 
         $allowedLanguages = $this->pluginConfig->allowedLanguages();
+        // We keep track of which package is already
+        // processed to skip duplicate entires in $packages
+        $processedPackages = [];
 
+        /** @var PackageInterface $package */
         foreach ($packages as $package) {
+            $packageName = $package->getName();
             $transPackage = $this->translatablePackageFactory->create($package);
-            if ($transPackage === null) {
+            if ($transPackage === null || in_array($packageName, $processedPackages, true)) {
                 continue;
             }
+            $processedPackages[] = $packageName;
             $this->downloader->download($transPackage, $allowedLanguages);
         }
     }
