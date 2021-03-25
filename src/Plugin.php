@@ -41,7 +41,6 @@ final class Plugin implements
     Capable,
     CommandProvider
 {
-
     /**
      * @var Io
      */
@@ -165,7 +164,7 @@ final class Plugin implements
      */
     public function onPostInstallAndUpdate(Event $event)
     {
-        if (! $this->pluginConfig->autorun()) {
+        if (!$this->pluginConfig->autorun()) {
             // phpcs:disable Inpsyde.CodeQuality.LineLength.TooLong
             $this->io->infoOnVerbose(
                 'Configuration "auto-run" is set to "false". You need to run wp-translation-downloader manually.'
@@ -214,7 +213,7 @@ final class Plugin implements
             if ($transPackage === null) {
                 continue;
             }
-            if($this->pluginConfig->doExclude($packageName)){
+            if ($this->pluginConfig->doExclude($packageName)) {
                 continue;
             }
             $processedPackages[] = $packageName;
