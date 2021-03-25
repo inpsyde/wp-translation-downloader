@@ -29,7 +29,6 @@ final class Plugin implements
     Capable,
     CommandProvider
 {
-
     /**
      * @var Io
      */
@@ -112,7 +111,7 @@ final class Plugin implements
         $config = $composer->getConfig();
 
         /** @var Cache $cache */
-        $cache = new Cache($io, $composer->getConfig()->get('cache-dir').'/translations');
+        $cache = new Cache($io, $composer->getConfig()->get('cache-dir') . '/translations');
 
         /** @var Filesystem $filesystem */
         $this->filesystem = new Filesystem();
@@ -150,9 +149,11 @@ final class Plugin implements
      */
     public function onPostInstallAndUpdate(Event $event)
     {
-        if (! $this->pluginConfig->autorun()) {
+        if (!$this->pluginConfig->autorun()) {
             // phpcs:disable Inpsyde.CodeQuality.LineLength.TooLong
-            $this->io->infoOnVerbose('Configuration "auto-run" is set to "false". You need to run wp-translation-downloader manually.');
+            $this->io->infoOnVerbose(
+                'Configuration "auto-run" is set to "false". You need to run wp-translation-downloader manually.'
+            );
 
             return;
         }
@@ -185,9 +186,13 @@ final class Plugin implements
 
         $allowedLanguages = $this->pluginConfig->allowedLanguages();
 
+        /** @var PackageInterface $package */
         foreach ($packages as $package) {
             $transPackage = $this->translatablePackageFactory->create($package);
             if ($transPackage === null) {
+                continue;
+            }
+            if ($this->pluginConfig->doExclude($package->getName())) {
                 continue;
             }
             $this->translationDownloader->download($transPackage, $allowedLanguages);
