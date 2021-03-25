@@ -214,6 +214,9 @@ final class Plugin implements
             if ($transPackage === null) {
                 continue;
             }
+            if($this->pluginConfig->doExclude($packageName)){
+                continue;
+            }
             $processedPackages[] = $packageName;
             $this->downloader->download($transPackage, $allowedLanguages);
         }

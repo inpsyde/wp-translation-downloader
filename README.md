@@ -87,7 +87,7 @@ To exclude specific packages you can use the following configuration:
 {
     "name": "vendor/my-package",
     "require": {
-        "inpsyde/wp-translation-downloader": "~0.1",
+        "inpsyde/wp-translation-downloader": "dev-master",
         "johnpbloch/wordpress": "5.3.*@stable",
         "inpsyde/google-tag-manager": "1.0",
         "wpackagist-plugin/wordpress-seo": "13.0"
@@ -135,7 +135,7 @@ Example `composer.json` file:
 {
     "name": "vendor/my-package",
     "require": {
-        "inpsyde/wp-translation-downloader": "~0.1",
+        "inpsyde/wp-translation-downloader": "dev-master",
         "johnpbloch/wordpress": "5.3.*@stable",
         "wpackagist-plugin/wordpress-seo": "13.0",
         "wpackagist-theme/twentytwenty": "1.1"

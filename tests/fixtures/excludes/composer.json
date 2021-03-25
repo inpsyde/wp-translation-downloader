@@ -1,13 +1,17 @@
 {
-    "name": "wp-translation-downloader/default-configuration",
+    "name": "wp-translation-downloader/excludes",
     "require": {
         "inpsyde/wp-translation-downloader": "dev-master",
-        "johnpbloch/wordpress": "5.5.*@stable"
+        "johnpbloch/wordpress": "5.5.*@stable",
+        "inpsyde/google-tag-manager": "1.0"
     },
     "extra": {
         "wp-translation-downloader": {
             "languages": [
                 "de_DE"
+            ],
+            "excludes": [
+                "johnpbloch/*"
             ],
             "directory": "languages"
         }
