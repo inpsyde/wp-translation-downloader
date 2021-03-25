@@ -17,7 +17,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: ${{ env.VIP_PHP_VERSION }}
+          php-version: ${{ matrix.php-versions }}
           tools: composer:v1
 
       - name: Validate composer.json
