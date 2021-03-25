@@ -1,14 +1,24 @@
 name: Testing
 
-on: [push]
+on: [ push ]
 
 jobs:
   build:
 
     runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, 'ci skip')"
+    strategy:
+      matrix:
+        php-versions: [ '7.2', '7.3', '7.4' ]
 
     steps:
       - uses: actions/checkout@v1
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.VIP_PHP_VERSION }}
+          tools: composer:v1
 
       - name: Validate composer.json
         run: composer validate
