@@ -32,6 +32,7 @@ use Inpsyde\WpTranslationDownloader\Config\PluginConfiguration;
 use Inpsyde\WpTranslationDownloader\Config\PluginConfigurationBuilder;
 use Inpsyde\WpTranslationDownloader\Util\Downloader;
 use Inpsyde\WpTranslationDownloader\Package\TranslatablePackage;
+use Inpsyde\WpTranslationDownloader\Util\Locker;
 use Inpsyde\WpTranslationDownloader\Util\Remover;
 use Inpsyde\WpTranslationDownloader\Util\Unzipper;
 
@@ -130,6 +131,11 @@ final class Plugin implements
 
         $this->filesystem = new Filesystem();
 
+        $rootDir = getcwd() . '/';
+
+        /** @var Locker $locker */
+        $locker = new Locker($this->io, $rootDir);
+
         /** @var PluginConfiguration pluginConfig */
         $this->pluginConfig = PluginConfigurationBuilder::build($composer->getPackage()->getExtra());
 
@@ -142,6 +148,7 @@ final class Plugin implements
             $this->io,
             new Unzipper($io),
             new RemoteFilesystem($io, $config),
+            $locker,
             $cache->getRoot()
         );
         $this->remover = new Remover(
