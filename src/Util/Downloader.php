@@ -114,9 +114,9 @@ class Downloader
                 $zipFile = $this->cacheRoot . $fileName;
 
                 if ($this->locker->isLocked($projectName, $language, $lastUpdated)) {
-                    $this->io->write(
+                    $this->io->writeOnVerbose(
                         sprintf(
-                            '    <info>[LOCKED]</info> %1$s | %2$s | %3$s',
+                            '    <info>[LOCKED]</info> %2$s | %3$s',
                             $projectName,
                             $language,
                             $lastUpdated
