@@ -47,6 +47,7 @@ class Remover
         Filesystem $filesystem,
         Locker $locker
     ) {
+
         $this->io = $io;
         $this->filesystem = $filesystem;
         $this->locker = $locker;
