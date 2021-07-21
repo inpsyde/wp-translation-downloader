@@ -61,7 +61,6 @@ class Downloader
         Locker $locker,
         string $cacheRoot
     ) {
-
         $this->io = $io;
         $this->unzipper = $unzipper;
         $this->remoteFilesystem = $remoteFilesystem;
@@ -98,6 +97,7 @@ class Downloader
             )
         );
 
+        $downloaded = 0;
         foreach ($translations as $translation) {
             try {
                 $packageUrl = $translation['package'];
@@ -137,6 +137,7 @@ class Downloader
                 );
 
                 $this->locker->lock($projectName, $language, $lastUpdated);
+                $downloaded++;
             } catch (\Throwable $exception) {
                 $this->io->write(
                     sprintf(
@@ -148,6 +149,13 @@ class Downloader
                 $this->io->error($exception->getMessage());
             }
         }
+
+        $this->io->write(
+            sprintf(
+                '    <fg=green>Downloaded %d translations.',
+                $downloaded
+            )
+        );
 
         return true;
     }
