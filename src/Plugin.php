@@ -153,7 +153,8 @@ final class Plugin implements
         );
         $this->remover = new Remover(
             $this->io,
-            $this->filesystem
+            $this->filesystem,
+            $locker
         );
 
         if ($cache->gcIsNecessary()) {
