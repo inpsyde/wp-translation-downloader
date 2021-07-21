@@ -56,20 +56,32 @@ class Locker
      * @param string $projectName
      * @param string $language
      * @param string $lastUpdated
+     * @param string $version
      *
      * @return bool
      */
-    public function isLocked(string $projectName, string $language, string $lastUpdated): bool
+    public function isLocked(string $projectName, string $language, string $lastUpdated, string $version): bool
     {
         // phpcs:disable Inpsyde.CodeQuality.LineLength.TooLong
-        $lockedLastUpdated = $this->lockedData[$projectName]['translations'][$language]['updated'] ?? null;
-        if (!$lockedLastUpdated) {
+        $lockedData = $this->lockedData[$projectName]['translations'][$language] ?? null;
+        if (!$lockedData) {
             return false;
         }
 
-        // When lockedLastUpdated is greater or equal the lastUpdated, then
-        // no updates are available -> isLocked.
-        return strtotime($lockedLastUpdated) >= strtotime($lastUpdated);
+        $lockedLastUpdated = $lockedData['updated'] ?? null;
+        $lockedVersion = $lockedData['version'] ?? null;
+        if (!$lockedLastUpdated && !$lockedVersion) {
+            return false;
+        }
+
+        // A project with a given language is locked when...
+        //
+        //  -> lockedLastUpdated is greater or equal the lastUpdated
+        //  -> lockedVersion is greater or equal the current version
+        return (
+            strtotime($lockedLastUpdated) >= strtotime($lastUpdated)
+            || version_compare($lockedVersion, $version, '>=')
+        );
     }
 
     /**
@@ -106,10 +118,11 @@ class Locker
      * @param string $projectName
      * @param string $language
      * @param string $lastUpdated
+     * @param string $version
      *
      * @throws \UnexpectedValueException
      */
-    public function lock(string $projectName, string $language, string $lastUpdated): bool
+    public function lock(string $projectName, string $language, string $lastUpdated, string $version): bool
     {
         if (!isset($this->lockedData[$projectName])) {
             $this->lockedData[$projectName] = [
@@ -117,7 +130,10 @@ class Locker
             ];
         }
 
-        $this->lockedData[$projectName]['translations'][$language] = ['updated' => $lastUpdated];
+        $this->lockedData[$projectName]['translations'][$language] = [
+            'updated' => $lastUpdated,
+            'version' => $version,
+        ];
 
         $this->file->write($this->lockedData);
 

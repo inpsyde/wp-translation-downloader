@@ -98,7 +98,7 @@ class Downloader
             )
         );
 
-        $downloaded = 0;
+        $downloaded = $locked = 0;
         foreach ($translations as $translation) {
             try {
                 $packageUrl = $translation['package'];
@@ -114,14 +114,16 @@ class Downloader
                 );
                 $zipFile = $this->cacheRoot . $fileName;
 
-                if ($this->locker->isLocked($projectName, $language, $lastUpdated)) {
+                if ($this->locker->isLocked($projectName, $language, $lastUpdated, $version)) {
                     $this->io->writeOnVerbose(
                         sprintf(
-                            '    <info>[LOCKED]</info> %1$s | %2$s',
+                            '    <info>[LOCKED]</info> %1$s | %2$s | %3$s',
                             $language,
-                            $lastUpdated
+                            $lastUpdated,
+                            $version
                         )
                     );
+                    $locked++;
                     continue;
                 }
 
@@ -137,7 +139,7 @@ class Downloader
                     )
                 );
 
-                $this->locker->lock($projectName, $language, $lastUpdated);
+                $this->locker->lock($projectName, $language, $lastUpdated, $version);
                 $downloaded++;
             } catch (\Throwable $exception) {
                 $this->io->write(
@@ -153,8 +155,9 @@ class Downloader
 
         $this->io->write(
             sprintf(
-                '    <fg=green>Downloaded %d translations.',
-                $downloaded
+                '    <options=bold>Stats:</> %1$d downloads, %2$d locked.',
+                $downloaded,
+                $locked
             )
         );
 

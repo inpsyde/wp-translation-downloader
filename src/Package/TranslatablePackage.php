@@ -13,7 +13,9 @@ declare(strict_types=1);
 
 namespace Inpsyde\WpTranslationDownloader\Package;
 
-interface TranslatablePackage
+use Composer\Package\PackageInterface;
+
+interface TranslatablePackage extends PackageInterface
 {
 
     public const TYPE_CORE = 'wordpress-core';
