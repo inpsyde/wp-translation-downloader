@@ -93,7 +93,7 @@ class Downloader
 
         $this->io->writeOnVerbose(
             sprintf(
-                '  - Endpoint: %s',
+                '  - <options=bold>Endpoint:</> %s',
                 $transPackage->apiEndpoint()
             )
         );
