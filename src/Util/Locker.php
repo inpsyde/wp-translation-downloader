@@ -109,7 +109,7 @@ class Locker
      *
      * @throws \UnexpectedValueException
      */
-    public function lock(string $projectName, string $language, string $lastUpdated)
+    public function lock(string $projectName, string $language, string $lastUpdated): bool
     {
         if (!isset($this->lockedData[$projectName])) {
             $this->lockedData[$projectName] = [
@@ -120,5 +120,28 @@ class Locker
         $this->lockedData[$projectName]['translations'][$language] = ['updated' => $lastUpdated];
 
         $this->file->write($this->lockedData);
+
+        return true;
+    }
+
+    /**
+     * Unlock a translation project when e.G. deleting the project.
+     *
+     * @param string $projectName
+     * @param string|null $language
+     *
+     * @return bool
+     * @throws \UnexpectedValueException
+     */
+    public function unlock(string $projectName): bool
+    {
+        if (!isset($this->lockedData[$projectName])) {
+            return false;
+        }
+
+        unset($this->lockedData[$projectName]);
+        $this->file->write($this->lockedData);
+
+        return true;
     }
 }

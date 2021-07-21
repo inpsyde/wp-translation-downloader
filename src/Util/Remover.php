@@ -21,7 +21,6 @@ use Symfony\Component\Finder\SplFileInfo;
 
 class Remover
 {
-
     /**
      * @var Io
      */
@@ -33,15 +32,24 @@ class Remover
     private $filesystem;
 
     /**
+     * @var Locker
+     */
+    private $locker;
+
+    /**
      * Remover constructor.
      *
      * @param Io $io
      * @param Filesystem $filesystem
      */
-    public function __construct(Io $io, Filesystem $filesystem)
-    {
+    public function __construct(
+        Io $io,
+        Filesystem $filesystem,
+        Locker $locker
+    ) {
         $this->io = $io;
         $this->filesystem = $filesystem;
+        $this->locker = $locker;
     }
 
     public function remove(TranslatablePackage $transPackage): bool
@@ -76,6 +84,6 @@ class Remover
             }
         }
 
-        return true;
+        return $this->locker->unlock($transPackage->projectName());
     }
 }
