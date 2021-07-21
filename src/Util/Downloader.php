@@ -93,7 +93,7 @@ class Downloader
 
         $this->io->writeOnVerbose(
             sprintf(
-                '  - <options=bold>Endpoint:</> %s',
+                '  - Endpoint: %s',
                 $transPackage->apiEndpoint()
             )
         );
@@ -115,14 +115,6 @@ class Downloader
                 $zipFile = $this->cacheRoot . $fileName;
 
                 if ($this->locker->isLocked($projectName, $language, $lastUpdated, $version)) {
-                    $this->io->writeOnVerbose(
-                        sprintf(
-                            '    <info>[LOCKED]</info> %1$s | %2$s | %3$s',
-                            $language,
-                            $lastUpdated,
-                            $version
-                        )
-                    );
                     $locked++;
                     continue;
                 }
@@ -139,7 +131,7 @@ class Downloader
                     )
                 );
 
-                $this->locker->lock($projectName, $language, $lastUpdated, $version);
+                $this->locker->addProjectLock($projectName, $language, $lastUpdated, $version);
                 $downloaded++;
             } catch (\Throwable $exception) {
                 $this->io->write(

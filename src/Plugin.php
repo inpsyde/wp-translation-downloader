@@ -73,6 +73,11 @@ final class Plugin implements
     private $filesystem;
 
     /**
+     * @var Locker
+     */
+    private $locker;
+
+    /**
      * Subscribe to Composer events.
      *
      * @return array The events and callbacks.
@@ -134,7 +139,7 @@ final class Plugin implements
         $rootDir = getcwd() . '/';
 
         /** @var Locker $locker */
-        $locker = new Locker($this->io, $rootDir);
+        $this->locker = new Locker($this->io, $rootDir);
 
         /** @var PluginConfiguration pluginConfig */
         $this->pluginConfig = PluginConfigurationBuilder::build($composer->getPackage()->getExtra());
@@ -148,13 +153,12 @@ final class Plugin implements
             $this->io,
             new Unzipper($io),
             new RemoteFilesystem($io, $config),
-            $locker,
+            $this->locker,
             $cache->getRoot()
         );
         $this->remover = new Remover(
             $this->io,
-            $this->filesystem,
-            $locker
+            $this->filesystem
         );
 
         if ($cache->gcIsNecessary()) {
@@ -215,7 +219,7 @@ final class Plugin implements
         /** @var PackageInterface $package */
         foreach ($packages as $package) {
             $packageName = $package->getName();
-            $transPackage = in_array($packageName, $processedPackages, true)
+            $transPackage = isset($processedPackages[$packageName])
                 ? null
                 : $this->translatablePackageFactory->create($package);
             if ($transPackage === null) {
@@ -224,9 +228,11 @@ final class Plugin implements
             if ($this->pluginConfig->doExclude($packageName)) {
                 continue;
             }
-            $processedPackages[] = $packageName;
+            $processedPackages[$packageName] = true;
             $this->downloader->download($transPackage, $allowedLanguages);
         }
+
+        $this->locker->writeLockData();
     }
 
     /**

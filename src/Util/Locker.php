@@ -36,6 +36,11 @@ class Locker
     private $lockedData = [];
 
     /**
+     * @var array
+     */
+    private $cachedLockData = [];
+
+    /**
      * Locker constructor.
      *
      * @param Io $io
@@ -63,7 +68,7 @@ class Locker
     public function isLocked(string $projectName, string $language, string $lastUpdated, string $version): bool
     {
         // phpcs:disable Inpsyde.CodeQuality.LineLength.TooLong
-        $lockedData = $this->lockedData[$projectName]['translations'][$language] ?? null;
+        $lockedData = $this->cachedLockData[$projectName]['translations'][$language] ?? null;
         if (!$lockedData) {
             return false;
         }
@@ -78,38 +83,28 @@ class Locker
         //
         //  -> lockedLastUpdated is greater or equal the lastUpdated
         //  -> lockedVersion is greater or equal the current version
-        return (
+        $isLocked = (
             strtotime($lockedLastUpdated) >= strtotime($lastUpdated)
             || version_compare($lockedVersion, $version, '>=')
         );
-    }
 
-    /**
-     * @return bool
-     */
-    private function loadLockData(): bool
-    {
-        try {
-            if (!$this->file->exists()) {
-                $this->io->writeOnVerbose(
-                    sprintf('<info>No %s found.</info>', $this->file->getPath())
-                );
-
-                return false;
-            }
-
-            $this->lockedData = $this->file->read();
-
+        if ($isLocked) {
             $this->io->writeOnVerbose(
-                sprintf('<info>Successfully loaded %s.</info>', $this->file->getPath())
+                sprintf(
+                    '    <info>[LOCKED]</info> %1$s | %2$s | %3$s',
+                    $language,
+                    $lastUpdated,
+                    $version
+                )
             );
+            // When a project is locked, then we want to add it again
+            // to the lock-file.
+            $this->addProjectLock($projectName, $language, $lastUpdated, $version);
 
             return true;
-        } catch (\Throwable $exception) {
-            $this->io->writeOnVerbose($exception->getMessage());
-
-            return false;
         }
+
+        return false;
     }
 
     /**
@@ -119,10 +114,8 @@ class Locker
      * @param string $language
      * @param string $lastUpdated
      * @param string $version
-     *
-     * @throws \UnexpectedValueException
      */
-    public function lock(string $projectName, string $language, string $lastUpdated, string $version): bool
+    public function addProjectLock(string $projectName, string $language, string $lastUpdated, string $version): bool
     {
         if (!isset($this->lockedData[$projectName])) {
             $this->lockedData[$projectName] = [
@@ -135,29 +128,45 @@ class Locker
             'version' => $version,
         ];
 
-        $this->file->write($this->lockedData);
-
         return true;
     }
 
     /**
-     * Unlock a translation project when e.G. deleting the project.
-     *
-     * @param string $projectName
-     * @param string|null $language
-     *
-     * @return bool
      * @throws \UnexpectedValueException
      */
-    public function unlock(string $projectName): bool
+    public function writeLockData(): void
     {
-        if (!isset($this->lockedData[$projectName])) {
+        $this->io->write(
+            sprintf("\n<info>Writing new lock data to %s<info>", $this->file->getPath())
+        );
+        $this->file->write($this->lockedData);
+    }
+
+    /**
+     * @return bool
+     */
+    private function loadLockData(): bool
+    {
+        try {
+            if (!$this->file->exists()) {
+                $this->io->writeOnVerbose(
+                    sprintf('<error>No %s found.</error>', $this->file->getPath())
+                );
+
+                return false;
+            }
+
+            $this->cachedLockData = $this->file->read();
+
+            $this->io->writeOnVerbose(
+                sprintf('<info>Successfully loaded %s.</info>', $this->file->getPath())
+            );
+
+            return true;
+        } catch (\Throwable $exception) {
+            $this->io->writeOnVerbose($exception->getMessage());
+
             return false;
         }
-
-        unset($this->lockedData[$projectName]);
-        $this->file->write($this->lockedData);
-
-        return true;
     }
 }

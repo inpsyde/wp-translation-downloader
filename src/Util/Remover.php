@@ -44,13 +44,11 @@ class Remover
      */
     public function __construct(
         Io $io,
-        Filesystem $filesystem,
-        Locker $locker
+        Filesystem $filesystem
     ) {
 
         $this->io = $io;
         $this->filesystem = $filesystem;
-        $this->locker = $locker;
     }
 
     public function remove(TranslatablePackage $transPackage): bool
@@ -85,6 +83,6 @@ class Remover
             }
         }
 
-        return $this->locker->unlock($transPackage->projectName());
+        return true;
     }
 }
