@@ -29,7 +29,7 @@ class LockerTest extends TestCase
     public function testBasic(): void
     {
         $testee = $this->locker();
-        static::assertEmpty($testee->cachedLockData());
+        static::assertEmpty($testee->lockData());
     }
 
     /**
@@ -44,7 +44,6 @@ class LockerTest extends TestCase
         string $version,
         bool $expected
     ): void {
-
         $this->mockLockFile($lockData);
         $testee = $this->locker();
 
@@ -132,7 +131,27 @@ class LockerTest extends TestCase
     /**
      * @test
      */
-    public function testAddProjectLockAndReadAgain(): void
+    public function testRemoveLockData(): void
+    {
+        $testee = $this->locker();
+
+        static::assertTrue(
+            $testee->addProjectLock(
+                'project-name',
+                'de',
+                date('c', time() - 1),
+                '1.0'
+            )
+        );
+        $testee->writeLockFile();
+
+        static::assertTrue($testee->removeLockFile());
+    }
+
+    /**
+     * @test
+     */
+    public function testAddProjectLockData(): void
     {
         $expectedProjectName = 'project-name';
         $expectedLanguage = 'de';
@@ -149,11 +168,14 @@ class LockerTest extends TestCase
                 $expectedVersion
             )
         );
-        $testee->writeLockData();
+        static::assertTrue(
+            $testee->isLocked($expectedProjectName, $expectedLanguage, $expectedUpdated, $expectedVersion)
+        );
+
+        static::assertTrue($testee->writeLockFile());
 
         // re-access the written file.
         $testee = $this->locker();
-        $cachedLockData = $testee->cachedLockData();
         static::assertSame(
             [
                 $expectedProjectName => [
@@ -165,8 +187,35 @@ class LockerTest extends TestCase
                     ],
                 ],
             ],
-            $cachedLockData
+            $testee->lockData()
         );
+    }
+
+    /**
+     * @test
+     */
+    public function testRemoveProjectLock(): void
+    {
+        $expectedProjectName = 'project-name';
+        $expectedLanguage = 'de';
+        $expectedVersion = '1.0';
+        $expectedUpdated = date('c', time() - 1);
+
+        $this->mockLockFile(
+            [
+                $expectedProjectName => [
+                    'translations' => [
+                        $expectedLanguage => [
+                            'version' => $expectedVersion,
+                            'updated' => $expectedUpdated,
+                        ],
+                    ],
+                ],
+            ],
+        );
+
+        $testee = $this->locker();
+        static::assertTrue($testee->removeProjectLock($expectedProjectName));
     }
 
     private function locker(): Locker

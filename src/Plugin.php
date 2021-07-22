@@ -158,7 +158,8 @@ final class Plugin implements
         );
         $this->remover = new Remover(
             $this->io,
-            $this->filesystem
+            $this->filesystem,
+            $this->locker
         );
 
         if ($cache->gcIsNecessary()) {
@@ -232,7 +233,7 @@ final class Plugin implements
             $this->downloader->download($transPackage, $allowedLanguages);
         }
 
-        $this->locker->writeLockData();
+        $this->locker->writeLockFile();
     }
 
     /**
@@ -267,6 +268,7 @@ final class Plugin implements
                 $this->io->error($exception->getMessage());
             }
         }
+        $this->locker->removeLockFile();
     }
 
     /**

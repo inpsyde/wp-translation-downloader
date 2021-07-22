@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace Inpsyde\WpTranslationDownloader\Util;
 
 use Composer\Json\JsonFile;
+use Composer\Util\Filesystem;
 use Inpsyde\WpTranslationDownloader\Io;
 
 class Locker
@@ -36,11 +37,6 @@ class Locker
     private $lockedData = [];
 
     /**
-     * @var array
-     */
-    private $cachedLockData = [];
-
-    /**
      * Locker constructor.
      *
      * @param Io $io
@@ -56,7 +52,7 @@ class Locker
     }
 
     /**
-     * Detects if a translation project for the current language is locked.
+     * Check if a translation project for the current language is locked.
      *
      * @param string $projectName
      * @param string $language
@@ -68,7 +64,7 @@ class Locker
     public function isLocked(string $projectName, string $language, string $lastUpdated, string $version): bool
     {
         // phpcs:disable Inpsyde.CodeQuality.LineLength.TooLong
-        $lockedData = $this->cachedLockData[$projectName]['translations'][$language] ?? null;
+        $lockedData = $this->lockedData[$projectName]['translations'][$language] ?? null;
         if (!$lockedData) {
             return false;
         }
@@ -133,14 +129,56 @@ class Locker
     }
 
     /**
-     * @throws \UnexpectedValueException
+     * Remove a given translation project by name from lock data.
+     *
+     * @param string $projectName
+     *
+     * @return bool
      */
-    public function writeLockData(): void
+    public function removeProjectLock(string $projectName): bool
+    {
+        if (!isset($this->lockedData[$projectName])) {
+            return false;
+        }
+
+        unset($this->lockedData[$projectName]);
+
+        return true;
+    }
+
+    /**
+     * Writing lock-file into filesystem.
+     *
+     * @return bool
+     */
+    public function writeLockFile(): bool
+    {
+        try {
+            $this->io->write(
+                sprintf("\n<info>Writing new lock data to %s<info>", $this->file->getPath())
+            );
+            $this->file->write($this->lockedData);
+
+            return true;
+        } catch (\Throwable $exception) {
+            $this->io->error($exception->getMessage());
+
+            return false;
+        }
+    }
+
+    /**
+     * Remove lock-file from filesystem.
+     *
+     * @return bool
+     */
+    public function removeLockFile(): bool
     {
         $this->io->write(
-            sprintf("\n<info>Writing new lock data to %s<info>", $this->file->getPath())
+            sprintf("\n<info>Lock file %s was removed.<info>", $this->file->getPath())
         );
-        $this->file->write($this->lockedData);
+
+        return (new Filesystem())->remove($this->file->getPath());
     }
 
     /**
@@ -157,7 +195,7 @@ class Locker
                 return false;
             }
 
-            $this->cachedLockData = $this->file->read();
+            $this->lockedData = $this->file->read();
 
             $this->io->writeOnVerbose(
                 sprintf('<info>Successfully loaded %s.</info>', $this->file->getPath())
@@ -174,8 +212,8 @@ class Locker
     /**
      * @return array
      */
-    public function cachedLockData(): array
+    public function lockData(): array
     {
-        return $this->cachedLockData;
+        return $this->lockedData;
     }
 }
