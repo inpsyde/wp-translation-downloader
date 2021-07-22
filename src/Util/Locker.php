@@ -83,10 +83,11 @@ class Locker
         //
         //  -> lockedLastUpdated is greater or equal the lastUpdated
         //  -> lockedVersion is greater or equal the current version
-        $isLocked = (
-            strtotime($lockedLastUpdated) >= strtotime($lastUpdated)
-            || version_compare($lockedVersion, $version, '>=')
-        );
+        $checks = [
+            strtotime($lockedLastUpdated) >= strtotime($lastUpdated),
+            version_compare($lockedVersion, $version, '>=')
+        ];
+        $isLocked = !in_array(false, $checks, true);
 
         if ($isLocked) {
             $this->io->writeOnVerbose(
@@ -168,5 +169,13 @@ class Locker
 
             return false;
         }
+    }
+
+    /**
+     * @return array
+     */
+    public function cachedLockData(): array
+    {
+        return $this->cachedLockData;
     }
 }

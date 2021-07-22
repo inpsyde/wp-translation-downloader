@@ -19,6 +19,7 @@
         "inpsyde/php-coding-standards": "^1.0.0-RC.1",
         "phpunit/phpunit": "^8",
         "brain/monkey": "^2",
+        "mikey179/vfsstream": "^1.6",
         "behat/behat": "^3.7"
     },
     "autoload": {
