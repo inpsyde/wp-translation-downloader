@@ -85,7 +85,7 @@ class Locker
         //  -> lockedVersion is greater or equal the current version
         $checks = [
             strtotime($lockedLastUpdated) >= strtotime($lastUpdated),
-            version_compare($lockedVersion, $version, '>=')
+            version_compare($lockedVersion, $version, '>='),
         ];
         $isLocked = !in_array(false, $checks, true);
 
