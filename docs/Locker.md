@@ -25,5 +25,6 @@ A locked translations will be identified by following:
     - The lock lastUpdated is greater or equal then current lastUpdated.
 
 --> If both of those checks are matching, then the current packageName-language is locked and will **not** updated.
+
 --> If one of those is **not** matching, then the current packageName-language is **not** locked and will be updated.
 
