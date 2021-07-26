@@ -29,7 +29,8 @@ composer require inpsyde/wp-translation-downloader
 
 1. [Configuration](./docs/Configuraton.md)
 2. [Supported composer types](./docs/Supported-composer-types.md)
-3. [Commands](./docs/Commands.md)
+3. [Locker](./docs/Locker.md)
+4. [Commands](./docs/Commands.md)
 
 ## License
 
