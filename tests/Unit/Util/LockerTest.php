@@ -211,7 +211,7 @@ class LockerTest extends TestCase
                         ],
                     ],
                 ],
-            ],
+            ]
         );
 
         $testee = $this->locker();
