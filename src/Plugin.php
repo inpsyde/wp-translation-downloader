@@ -133,7 +133,7 @@ final class Plugin implements
 
             return false;
         }
-        
+
         $this->filesystem = new Filesystem();
 
         /** @var PluginConfiguration pluginConfig */
