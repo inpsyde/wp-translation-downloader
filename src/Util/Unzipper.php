@@ -18,6 +18,7 @@ use Composer\IO\IOInterface;
 use Composer\Util\Platform;
 use Composer\Util\ProcessExecutor;
 use Symfony\Component\Process\ExecutableFinder;
+use ZipArchive;
 
 /**
  * Class Unzipper
@@ -75,7 +76,7 @@ class Unzipper
         $finder = new ExecutableFinder;
 
         self::$isWindows = Platform::isWindows();
-        self::$hasZipArchive = class_exists('ZipArchive');
+        self::$hasZipArchive = class_exists(ZipArchive::class);
         self::$hasSystemUnzip = (bool) $finder->find('unzip');
     }
 
