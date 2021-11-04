@@ -134,6 +134,12 @@ final class Plugin implements
         $config = $composer->getConfig();
         $cache = new Cache($io, $composer->getConfig()->get('cache-dir') . '/translations');
 
+        if (!$cache->isEnabled()) {
+            $this->io->error("Composer Cache folder is not enabled.");
+
+            return false;
+        }
+        
         $this->filesystem = new Filesystem();
 
         $rootDir = getcwd() . '/';
