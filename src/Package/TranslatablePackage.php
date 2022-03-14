@@ -15,7 +15,6 @@ namespace Inpsyde\WpTranslationDownloader\Package;
 
 interface TranslatablePackage
 {
-
     public const TYPE_CORE = 'wordpress-core';
     public const TYPE_PLUGIN = 'wordpress-plugin';
     public const TYPE_THEME = 'wordpress-theme';
