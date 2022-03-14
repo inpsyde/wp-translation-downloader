@@ -21,7 +21,6 @@ use Symfony\Component\Finder\SplFileInfo;
 
 class Remover
 {
-
     /**
      * @var Io
      */

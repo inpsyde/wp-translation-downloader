@@ -17,7 +17,6 @@ use Composer\Json\JsonFile;
 
 final class PluginConfigurationBuilder
 {
-
     public const KEY = 'wp-translation-downloader';
 
     /**

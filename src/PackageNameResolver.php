@@ -15,7 +15,6 @@ namespace Inpsyde\WpTranslationDownloader;
 
 class PackageNameResolver
 {
-
     /**
      * Splits a packageName into vendorName and projectName
      *

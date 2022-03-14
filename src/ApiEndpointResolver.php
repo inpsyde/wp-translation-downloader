@@ -18,7 +18,6 @@ use Inpsyde\WpTranslationDownloader\Config\PluginConfiguration;
 
 class ApiEndpointResolver
 {
-
     /**
      * @var PluginConfiguration
      */

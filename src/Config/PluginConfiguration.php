@@ -18,7 +18,6 @@ use Inpsyde\WpTranslationDownloader\Package\TranslatablePackage;
 
 final class PluginConfiguration
 {
-
     public const KEY = 'wp-translation-downloader';
 
     /**

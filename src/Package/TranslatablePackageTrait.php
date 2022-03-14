@@ -20,7 +20,6 @@ use Inpsyde\WpTranslationDownloader\PackageNameResolver;
  */
 trait TranslatablePackageTrait
 {
-
     /**
      * All translations from the API.
      *

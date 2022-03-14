@@ -18,7 +18,6 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 trait ErrorFormatterTrait
 {
-
     /**
      * @param OutputInterface $output
      * @param string $message

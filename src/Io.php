@@ -17,7 +17,6 @@ use Composer\IO\IOInterface;
 
 class Io
 {
-
     /**
      * @var IOInterface
      */
