@@ -21,7 +21,6 @@ use Inpsyde\WpTranslationDownloader\Package\TranslatablePackage;
 
 class Downloader
 {
-
     /**
      * @var Io
      */
