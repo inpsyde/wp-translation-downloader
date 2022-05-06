@@ -17,7 +17,6 @@ use Composer\Package\PackageInterface;
 
 interface TranslatablePackage extends PackageInterface
 {
-
     public const TYPE_CORE = 'wordpress-core';
     public const TYPE_PLUGIN = 'wordpress-plugin';
     public const TYPE_THEME = 'wordpress-theme';

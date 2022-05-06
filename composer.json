@@ -1,8 +1,8 @@
 {
     "name": "inpsyde/wp-translation-downloader",
+    "type": "composer-plugin",
     "description": "Composer plugin to download translations from wordpress.org API.",
     "license": "MIT",
-    "type": "composer-plugin",
     "authors": [
         {
             "name": "Christian Leucht",
@@ -11,16 +11,24 @@
     ],
     "require": {
         "php": ">=7.1",
-        "composer/installers": "^1.6",
-        "composer-plugin-api": "^1.0 || ^2.0"
+        "composer-plugin-api": "^1.0 || ^2.0",
+        "composer/installers": "^1.0 || ^2.0"
     },
     "require-dev": {
-        "composer/composer": "^2.0",
-        "inpsyde/php-coding-standards": "^1.0.0-RC.1",
-        "phpunit/phpunit": "^8",
+        "behat/behat": "^3.7",
         "brain/monkey": "^2",
-        "mikey179/vfsstream": "^1.6",
-        "behat/behat": "^3.7"
+        "composer/composer": "^2.0",
+        "inpsyde/php-coding-standards": "^1.0.0",
+        "phpunit/phpunit": "^8"
+    },
+    "config": {
+        "allow-plugins": {
+            "composer/installers": true,
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        }
+    },
+    "extra": {
+        "class": "Inpsyde\\WpTranslationDownloader\\Plugin"
     },
     "autoload": {
         "psr-4": {
@@ -32,13 +40,10 @@
             "Inpsyde\\WpTranslationDownloader\\Tests\\": "tests/"
         }
     },
-    "extra": {
-        "class": "Inpsyde\\WpTranslationDownloader\\Plugin"
-    },
     "scripts": {
+        "behat": "@php ./vendor/bin/behat",
         "cs": "@php ./vendor/squizlabs/php_codesniffer/bin/phpcs",
         "tests": "@php ./vendor/phpunit/phpunit/phpunit",
-        "tests:unit": "@php ./vendor/phpunit/phpunit/phpunit --testsuite Unit",
-        "behat": "@php ./vendor/bin/behat"
+        "tests:unit": "@php ./vendor/phpunit/phpunit/phpunit --testsuite Unit"
     }
 }

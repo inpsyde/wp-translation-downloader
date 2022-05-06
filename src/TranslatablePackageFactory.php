@@ -23,7 +23,6 @@ use Inpsyde\WpTranslationDownloader\Package;
 
 class TranslatablePackageFactory
 {
-
     /**
      * @var PluginConfiguration
      */
