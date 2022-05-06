@@ -17,6 +17,7 @@
     "require-dev": {
         "behat/behat": "^3.7",
         "brain/monkey": "^2",
+        "mikey179/vfsstream": "^1.6",
         "composer/composer": "^2.0",
         "inpsyde/php-coding-standards": "^1.0.0",
         "phpunit/phpunit": "^8"
