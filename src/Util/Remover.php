@@ -32,20 +32,31 @@ class Remover
     private $filesystem;
 
     /**
+     * @var Locker
+     */
+    private $locker;
+
+    /**
      * Remover constructor.
      *
      * @param Io $io
      * @param Filesystem $filesystem
      */
-    public function __construct(Io $io, Filesystem $filesystem)
-    {
+    public function __construct(
+        Io $io,
+        Filesystem $filesystem,
+        Locker $locker
+    ) {
+
         $this->io = $io;
         $this->filesystem = $filesystem;
+        $this->locker = $locker;
     }
 
     public function remove(TranslatablePackage $transPackage): bool
     {
-        $pattern = sprintf("~^%s-.+?\.(?:po|mo|json)$~i", $transPackage->projectName());
+        $projectName = $transPackage->projectName();
+        $pattern = sprintf("~^%s-.+?\.(?:po|mo|json)$~i", $projectName);
 
         $files = Finder::create()
             ->in($transPackage->languageDirectory())
@@ -66,7 +77,7 @@ class Remover
                 $this->io->write(
                     sprintf(
                         "    - <info>[OK]</info> %s: deleted %s translation file.",
-                        $transPackage->projectName(),
+                        $projectName,
                         $file->getBasename()
                     )
                 );
@@ -74,6 +85,8 @@ class Remover
                 $this->io->error($exception->getMessage());
             }
         }
+
+        $this->locker->removeProjectLock($projectName);
 
         return true;
     }

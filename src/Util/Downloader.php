@@ -14,7 +14,6 @@ declare(strict_types=1);
 namespace Inpsyde\WpTranslationDownloader\Util;
 
 use Composer\Downloader\ZipDownloader;
-use Composer\Util\Filesystem;
 use Composer\Util\RemoteFilesystem;
 use Inpsyde\WpTranslationDownloader\Io;
 use Inpsyde\WpTranslationDownloader\Package\TranslatablePackage;
@@ -32,6 +31,11 @@ class Downloader
     private $unzipper;
 
     /**
+     * @var Locker
+     */
+    private $locker;
+
+    /**
      * @var string
      */
     private $cacheRoot;
@@ -47,19 +51,22 @@ class Downloader
      * @param Io $io
      * @param Unzipper $unzipper
      * @param RemoteFilesystem $remoteFilesystem
+     * @param Locker $locker
      * @param string $cacheRoot
      */
     public function __construct(
         Io $io,
         Unzipper $unzipper,
         RemoteFilesystem $remoteFilesystem,
+        Locker $locker,
         string $cacheRoot
     ) {
 
         $this->io = $io;
         $this->unzipper = $unzipper;
-        $this->cacheRoot = $cacheRoot;
         $this->remoteFilesystem = $remoteFilesystem;
+        $this->locker = $locker;
+        $this->cacheRoot = $cacheRoot;
     }
 
     /**
@@ -91,10 +98,12 @@ class Downloader
             )
         );
 
+        $downloaded = $locked = 0;
         foreach ($translations as $translation) {
             try {
                 $packageUrl = $translation['package'];
                 $language = $translation['language'];
+                $lastUpdated = $translation['updated'];
                 $version = $translation['version'];
                 $fileName = sprintf(
                     '%1$s-%2$s-%3$s.%4$s',
@@ -104,6 +113,11 @@ class Downloader
                     pathinfo($packageUrl, PATHINFO_EXTENSION)
                 );
                 $zipFile = $this->cacheRoot . $fileName;
+
+                if ($this->locker->isLocked($projectName, $language, $lastUpdated, $version)) {
+                    $locked++;
+                    continue;
+                }
 
                 $this->downloadZipFile($zipFile, $packageUrl);
 
@@ -116,6 +130,9 @@ class Downloader
                         $language
                     )
                 );
+
+                $this->locker->addProjectLock($projectName, $language, $lastUpdated, $version);
+                $downloaded++;
             } catch (\Throwable $exception) {
                 $this->io->write(
                     sprintf(
@@ -127,6 +144,14 @@ class Downloader
                 $this->io->error($exception->getMessage());
             }
         }
+
+        $this->io->write(
+            sprintf(
+                '    <options=bold>Stats:</> %1$d downloads, %2$d locked.',
+                $downloaded,
+                $locked
+            )
+        );
 
         return true;
     }
@@ -153,7 +178,7 @@ class Downloader
         $origin = $this->origin($packageUrl);
         $result = $this->remoteFilesystem->copy($origin, $packageUrl, $zipFile, false);
 
-        return ! ! $result;
+        return !!$result;
     }
 
     /**
@@ -171,7 +196,7 @@ class Downloader
 
         $origin = (string) parse_url($url, PHP_URL_HOST);
         if ($port = parse_url($url, PHP_URL_PORT)) {
-            $origin .= ':'.$port;
+            $origin .= ':' . $port;
         }
 
         if ($origin === '') {

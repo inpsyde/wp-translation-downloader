@@ -32,6 +32,7 @@ use Inpsyde\WpTranslationDownloader\Config\PluginConfiguration;
 use Inpsyde\WpTranslationDownloader\Config\PluginConfigurationBuilder;
 use Inpsyde\WpTranslationDownloader\Util\Downloader;
 use Inpsyde\WpTranslationDownloader\Package\TranslatablePackage;
+use Inpsyde\WpTranslationDownloader\Util\Locker;
 use Inpsyde\WpTranslationDownloader\Util\Remover;
 use Inpsyde\WpTranslationDownloader\Util\Unzipper;
 
@@ -70,6 +71,11 @@ final class Plugin implements
      * @var Filesystem
      */
     private $filesystem;
+
+    /**
+     * @var Locker
+     */
+    private $locker;
 
     /**
      * Subscribe to Composer events.
@@ -136,6 +142,11 @@ final class Plugin implements
 
         $this->filesystem = new Filesystem();
 
+        $rootDir = getcwd() . '/';
+
+        /** @var Locker $locker */
+        $this->locker = new Locker($this->io, $rootDir);
+
         /** @var PluginConfiguration pluginConfig */
         $this->pluginConfig = PluginConfigurationBuilder::build($composer->getPackage()->getExtra());
 
@@ -148,11 +159,13 @@ final class Plugin implements
             $this->io,
             new Unzipper($io),
             new RemoteFilesystem($io, $config),
+            $this->locker,
             $cache->getRoot()
         );
         $this->remover = new Remover(
             $this->io,
-            $this->filesystem
+            $this->filesystem,
+            $this->locker
         );
 
         if ($cache->gcIsNecessary()) {
@@ -213,7 +226,7 @@ final class Plugin implements
         /** @var PackageInterface $package */
         foreach ($packages as $package) {
             $packageName = $package->getName();
-            $transPackage = in_array($packageName, $processedPackages, true)
+            $transPackage = isset($processedPackages[$packageName])
                 ? null
                 : $this->translatablePackageFactory->create($package);
             if ($transPackage === null) {
@@ -222,9 +235,11 @@ final class Plugin implements
             if ($this->pluginConfig->doExclude($packageName)) {
                 continue;
             }
-            $processedPackages[] = $packageName;
+            $processedPackages[$packageName] = true;
             $this->downloader->download($transPackage, $allowedLanguages);
         }
+
+        $this->locker->writeLockFile();
     }
 
     /**
@@ -259,6 +274,7 @@ final class Plugin implements
                 $this->io->error($exception->getMessage());
             }
         }
+        $this->locker->removeLockFile();
     }
 
     /**
