@@ -38,8 +38,7 @@ class DirectoryResolver
         $packageName = $package->getName();
         $packageType = $package->getType();
 
-        $directory = null;
-
+        $directory = false;
         // resolve directory by "name".
         $byName = $this->pluginConfiguration->directoryBy(PluginConfiguration::BY_NAME);
         foreach ($byName as $name => $dir) {
@@ -52,10 +51,9 @@ class DirectoryResolver
 
         // resolve directory by "type"
         $byType = $this->pluginConfiguration->directoryBy(PluginConfiguration::BY_TYPE);
-
-        // Not found by "name" nor by "type".
-        $directory = $directory ?? $byType[$packageType] ?? null;
-        if (!$directory) {
+        $directory = $directory ?? $byType[$packageType] ?? false;
+        // In case by "name" or "type" is "false" or not set we stop here.
+        if ($directory === false) {
             return null;
         }
 
