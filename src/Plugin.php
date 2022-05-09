@@ -152,7 +152,8 @@ final class Plugin implements
 
         $this->translatablePackageFactory = new TranslatablePackageFactory(
             $this->pluginConfig,
-            new ApiEndpointResolver($this->pluginConfig)
+            new ApiEndpointResolver($this->pluginConfig),
+            new DirectoryResolver($this->pluginConfig)
         );
 
         $this->downloader = new Downloader(
