@@ -50,6 +50,7 @@ class TranslatablePackageFactory
         ApiEndpointResolver $apiEndpointResolver,
         DirectoryResolver $directoryResolver
     ) {
+
         $this->pluginConfiguration = $pluginConfiguration;
         $this->apiEndpointResolver = $apiEndpointResolver;
         $this->directoryResolver = $directoryResolver;

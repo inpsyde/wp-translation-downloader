@@ -76,7 +76,7 @@ final class PluginConfiguration
      *
      * @return string
      */
-    private function languageRoot(array $config)
+    private function languageRoot(array $config): string
     {
         $root = getcwd();
 
