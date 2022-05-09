@@ -32,7 +32,6 @@ use Inpsyde\WpTranslationDownloader\Config\PluginConfiguration;
 use Inpsyde\WpTranslationDownloader\Config\PluginConfigurationBuilder;
 use Inpsyde\WpTranslationDownloader\Package\TranslatablePackageInterface;
 use Inpsyde\WpTranslationDownloader\Util\Downloader;
-use Inpsyde\WpTranslationDownloader\Package\TranslatablePackage;
 use Inpsyde\WpTranslationDownloader\Package\TranslatablePackageFactory;
 use Inpsyde\WpTranslationDownloader\Util\Locker;
 use Inpsyde\WpTranslationDownloader\Util\Remover;
@@ -152,11 +151,7 @@ final class Plugin implements
         /** @var PluginConfiguration pluginConfig */
         $this->pluginConfig = PluginConfigurationBuilder::build($composer->getPackage()->getExtra());
 
-        $this->translatablePackageFactory = new TranslatablePackageFactory(
-            $this->pluginConfig,
-            new PackageNameResolver($this->pluginConfig),
-            new DirectoryResolver($this->pluginConfig)
-        );
+        $this->translatablePackageFactory = new TranslatablePackageFactory($this->pluginConfig);
 
         $this->downloader = new Downloader(
             $this->io,
