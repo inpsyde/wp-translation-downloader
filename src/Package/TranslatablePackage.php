@@ -17,16 +17,8 @@ use Composer\Package\Package;
 use Composer\Package\PackageInterface;
 use Inpsyde\WpTranslationDownloader\PackageNameResolver;
 
-class TranslatablePackage extends Package implements PackageInterface
+class TranslatablePackage extends Package implements TranslatablePackageInterface
 {
-    /**
-     * Default types which are supported by the library.
-     */
-    public const TYPE_CORE = 'wordpress-core';
-    public const TYPE_PLUGIN = 'wordpress-plugin';
-    public const TYPE_THEME = 'wordpress-theme';
-    public const TYPE_LIBRARY = 'library';
-
     /**
      * All translations from the API.
      *
@@ -63,16 +55,17 @@ class TranslatablePackage extends Package implements PackageInterface
     {
         parent::__construct($package->getName(), $package->getVersion(), $package->getPrettyVersion());
 
+        // Type is not set by constructor, so we have to set it manually
+        // in case we want to access it again.
+        // Otherwise, it will fall back to "library".
+        $this->setType($package->getType());
+
         $this->endpoint = $endpoint;
         $this->languageDirectory = $directory;
     }
 
     /**
-     * @param array $allowedLanguages
-     *
-     * @return array
-     * @see TranslatablePackage::translations()
-     *
+     * {@inheritDoc}
      */
     public function translations(array $allowedLanguages = []): array
     {
@@ -103,12 +96,12 @@ class TranslatablePackage extends Package implements PackageInterface
         }
 
         $result = @file_get_contents($this->apiEndpoint());
-        if (! $result) {
+        if (!$result) {
             return false;
         }
 
         $result = json_decode($result, true);
-        if (! isset($result['translations']) || count($result['translations']) < 1) {
+        if (!isset($result['translations']) || count($result['translations']) < 1) {
             return false;
         }
 
@@ -118,9 +111,7 @@ class TranslatablePackage extends Package implements PackageInterface
     }
 
     /**
-     * @return string
-     * @see TranslatablePackage::apiEndpoint()
-     *
+     * {@inheritDoc}
      */
     public function apiEndpoint(): string
     {
@@ -128,13 +119,11 @@ class TranslatablePackage extends Package implements PackageInterface
     }
 
     /**
-     * @return string
-     * @see TranslatablePackage::projectName()
-     *
+     * {@inheritDoc}
      */
     public function projectName(): string
     {
-        if (! $this->projectName) {
+        if (!$this->projectName) {
             [$vendorName, $projectName] = PackageNameResolver::resolve($this->getName());
             $this->projectName = $projectName;
         }
@@ -143,9 +132,7 @@ class TranslatablePackage extends Package implements PackageInterface
     }
 
     /**
-     * @return string
-     * @see TranslatablePackage::languageDirectory()
-     *
+     * {@inheritDoc}
      */
     public function languageDirectory(): string
     {

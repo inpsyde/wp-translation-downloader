@@ -13,7 +13,10 @@ declare(strict_types=1);
 
 namespace Inpsyde\WpTranslationDownloader\Tests\Unit;
 
+use Composer\Package\PackageInterface;
 use Inpsyde\WpTranslationDownloader\PackageNameResolver;
+use Inpsyde\WpTranslationDownloader\Config\PluginConfiguration;
+use Inpsyde\WpTranslationDownloader\Package\TranslatablePackage;
 use PHPUnit\Framework\TestCase;
 
 class PackageNameResolverTest extends TestCase
@@ -27,11 +30,9 @@ class PackageNameResolverTest extends TestCase
      *
      * @test
      */
-    public function testBasic(string $input, array $expected): void
+    public function testResolve(string $input, array $expected): void
     {
-        $testee = new PackageNameResolver();
-
-        static::assertSame($expected, $testee->resolve($input));
+        static::assertSame($expected, PackageNameResolver::resolve($input));
     }
 
     public function providePackageNames(): \Generator

@@ -16,7 +16,7 @@ namespace Inpsyde\WpTranslationDownloader\Util;
 use Composer\Downloader\ZipDownloader;
 use Composer\Util\RemoteFilesystem;
 use Inpsyde\WpTranslationDownloader\Io;
-use Inpsyde\WpTranslationDownloader\Package\TranslatablePackage;
+use Inpsyde\WpTranslationDownloader\Package\TranslatablePackageInterface;
 
 class Downloader
 {
@@ -70,14 +70,14 @@ class Downloader
     }
 
     /**
-     * @param TranslatablePackage $transPackage
+     * @param TranslatablePackageInterface $transPackage
      * @param array $allowedLanguages
      *
      * @return bool
      *
      * phpcs:disable
      */
-    public function download(TranslatablePackage $transPackage, array $allowedLanguages)
+    public function download(TranslatablePackageInterface $transPackage, array $allowedLanguages)
     {
         $directory = $transPackage->languageDirectory();
         $translations = $transPackage->translations($allowedLanguages);

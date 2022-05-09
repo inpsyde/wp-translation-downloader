@@ -30,8 +30,10 @@ use Inpsyde\WpTranslationDownloader\Command\CleanUpCommand;
 use Inpsyde\WpTranslationDownloader\Command\DownloadCommand;
 use Inpsyde\WpTranslationDownloader\Config\PluginConfiguration;
 use Inpsyde\WpTranslationDownloader\Config\PluginConfigurationBuilder;
+use Inpsyde\WpTranslationDownloader\Package\TranslatablePackageInterface;
 use Inpsyde\WpTranslationDownloader\Util\Downloader;
 use Inpsyde\WpTranslationDownloader\Package\TranslatablePackage;
+use Inpsyde\WpTranslationDownloader\Package\TranslatablePackageFactory;
 use Inpsyde\WpTranslationDownloader\Util\Locker;
 use Inpsyde\WpTranslationDownloader\Util\Remover;
 use Inpsyde\WpTranslationDownloader\Util\Unzipper;
@@ -152,7 +154,7 @@ final class Plugin implements
 
         $this->translatablePackageFactory = new TranslatablePackageFactory(
             $this->pluginConfig,
-            new ApiEndpointResolver($this->pluginConfig),
+            new PackageNameResolver($this->pluginConfig),
             new DirectoryResolver($this->pluginConfig)
         );
 
@@ -255,7 +257,7 @@ final class Plugin implements
      */
     public function onPackageUninstall(PackageEvent $event)
     {
-        /** @var PackageInterface|TranslatablePackage|null $transPackage */
+        /** @var PackageInterface|TranslatablePackageInterface|null $transPackage */
         $transPackage = $this->translatablePackageFactory->createFromOperation($event->getOperation());
         if ($transPackage) {
             $this->remover->remove($transPackage);
