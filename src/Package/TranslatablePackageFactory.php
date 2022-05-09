@@ -164,6 +164,7 @@ class TranslatablePackageFactory
             };
         }
 
+        // phpcs:disable Squiz.PHP.CommentedOutCode.Found
         // In case, someone set ["name" => ["inpsyde/google-tag-manager" => false]]
         if ($directory === false) {
             $directory = null;
@@ -176,6 +177,7 @@ class TranslatablePackageFactory
     {
         $directory = $byType[$packageType] ?? null;
 
+        // phpcs:disable Squiz.PHP.CommentedOutCode.Found
         // In case, someone set ["type" => ["wordpress-plugin" => false]]
         if ($directory === false) {
             $directory = null;
