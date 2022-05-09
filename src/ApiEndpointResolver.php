@@ -51,8 +51,11 @@ class ApiEndpointResolver
         }
 
         // resolve endpoint by "type".
-        $byType = $this->pluginConfiguration->apiBy(PluginConfiguration::BY_TYPE);
-        $apiEndpoint = $apiEndpoint ?? $byType[$packageType] ?? false;
+        if($apiEndpoint === false) {
+            $byType = $this->pluginConfiguration->apiBy(PluginConfiguration::BY_TYPE);
+            $apiEndpoint = $byType[$packageType] ?? false;
+        }
+
         // In case by "name" or "type" is "false" or not set we stop here.
         if ($apiEndpoint === false) {
             return null;

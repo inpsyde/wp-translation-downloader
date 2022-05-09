@@ -41,7 +41,7 @@ class ApiEndpointResolverTest extends TestCase
             $packageStub->expects('getPrettyVersion')->andReturn($package['version']);
 
             static::assertSame(
-                $package['expectedEndpoint'],
+                $package['expected'],
                 $testee->resolve($packageStub)
             );
         }
@@ -56,13 +56,13 @@ class ApiEndpointResolverTest extends TestCase
                     'name' => 'inpsyde/google-tag-manager',
                     'version' => '1.0',
                     'type' => TranslatablePackage::TYPE_PLUGIN,
-                    'expectedEndpoint' => 'https://api.wordpress.org/translations/plugins/1.0/?slug=google-tag-manager&version=1.0',
+                    'expected' => 'https://api.wordpress.org/translations/plugins/1.0/?slug=google-tag-manager&version=1.0',
                 ],
                 [
                     'name' => 'foo',
                     'version' => '1.0',
                     'type' => 'bar',
-                    'expectedEndpoint' => null,
+                    'expected' => null,
                 ],
             ],
         ];
@@ -80,7 +80,7 @@ class ApiEndpointResolverTest extends TestCase
                     'name' => 'inpsyde/google-tag-manager',
                     'version' => '1.0',
                     'type' => TranslatablePackage::TYPE_PLUGIN,
-                    'expectedEndpoint' => 'https://inpsyde.com/google-tag-manager',
+                    'expected' => 'https://inpsyde.com/google-tag-manager',
                 ],
             ],
         ];
@@ -98,7 +98,7 @@ class ApiEndpointResolverTest extends TestCase
                     'name' => 'inpsyde/google-tag-manager',
                     'version' => '1.0',
                     'type' => TranslatablePackage::TYPE_PLUGIN,
-                    'expectedEndpoint' => "https://inpsyde.com/"
+                    'expected' => "https://inpsyde.com/"
                         . TranslatablePackage::TYPE_PLUGIN
                         . "/inpsyde/google-tag-manager",
                 ],
@@ -118,7 +118,7 @@ class ApiEndpointResolverTest extends TestCase
                     'name' => 'inpsyde/google-tag-manager',
                     'version' => '1.0',
                     'type' => TranslatablePackage::TYPE_PLUGIN,
-                    'expectedEndpoint' => null,
+                    'expected' => null,
                 ],
             ],
         ];

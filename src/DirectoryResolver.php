@@ -50,8 +50,11 @@ class DirectoryResolver
         }
 
         // resolve directory by "type"
-        $byType = $this->pluginConfiguration->directoryBy(PluginConfiguration::BY_TYPE);
-        $directory = $directory ?? $byType[$packageType] ?? false;
+        if ($directory === false) {
+            $byType = $this->pluginConfiguration->directoryBy(PluginConfiguration::BY_TYPE);
+            $directory = $byType[$packageType] ?? false;
+        }
+
         // In case by "name" or "type" is "false" or not set we stop here.
         if ($directory === false) {
             return null;
