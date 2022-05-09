@@ -12,5 +12,12 @@
             "directory": "languages",
             "auto-run": false
         }
+    },
+    "config": {
+        "allow-plugins": {
+            "composer/installers": true,
+            "johnpbloch/wordpress-core-installer": true,
+            "inpsyde/wp-translation-downloader": true
+        }
     }
 }

@@ -6,5 +6,12 @@
     },
     "extra": {
         "wp-translation-downloader": "wp-translation-downloader.json"
+    },
+    "config": {
+        "allow-plugins": {
+            "composer/installers": true,
+            "johnpbloch/wordpress-core-installer": true,
+            "inpsyde/wp-translation-downloader": true
+        }
     }
 }
