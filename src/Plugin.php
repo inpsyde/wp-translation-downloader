@@ -267,17 +267,18 @@ final class Plugin implements
      */
     public function doCleanUpDirectories()
     {
-        $this->io->logo();
-        $this->io->write('Starting to empty the directories...');
-        foreach ($this->pluginConfig->directories() as $directory) {
-            try {
-                $this->filesystem->emptyDirectory($directory);
-                $this->io->write(sprintf('  <info>✓</info> %s', $directory));
-            } catch (\Throwable $exception) {
-                $this->io->write(sprintf('  <fg=red>✗</> %s', $directory));
-                $this->io->error($exception->getMessage());
-            }
+        try {
+            $this->io->logo();
+            $this->io->write('Starting to empty the directories...');
+
+            $directory = $this->pluginConfig->languageRootDir();
+            $this->filesystem->emptyDirectory($directory);
+            $this->io->write(sprintf('  <info>✓</info> %s', $directory));
+        } catch (\Throwable $exception) {
+            $this->io->write(sprintf('  <fg=red>✗</> %s', $directory));
+            $this->io->error($exception->getMessage());
         }
+
         $this->locker->removeLockFile();
     }
 
