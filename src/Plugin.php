@@ -300,9 +300,7 @@ final class Plugin implements
     private function ensureDirectories(): bool
     {
         try {
-            foreach ($this->pluginConfig->directories() as $directory) {
-                $this->filesystem->ensureDirectoryExists($directory);
-            }
+            $this->filesystem->ensureDirectoryExists($this->pluginConfig->languageRootDir());
 
             return true;
         } catch (\Throwable $exception) {
