@@ -1,8 +1,8 @@
-## Support Composer types
+# Support Composer types
 
 The WP Translation Downloader will map the `type`-field in composer.json to folders within your WordPress installation `languages`-folder.
 
-### WordPress types
+## WordPress types
 
 WordPress specific types like following:
 
@@ -12,7 +12,7 @@ WordPress specific types like following:
 
 are supported out of the box and will be placed in the corresponding folder defined by WordPress.
 
-### type `library`
+## `library` type
 WP Translation Downloader also supports Composer packages of type `library`. Translation files will be downloaded to `WP_LANG_DIR . '/library/'`. To enable it, you have to set the `"api.types"` object accordingly (see above).
 
 To access the translations in your library, including a fallback, you can add a helper function like this:

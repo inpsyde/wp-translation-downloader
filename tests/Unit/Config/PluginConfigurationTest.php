@@ -19,22 +19,29 @@ use PHPUnit\Framework\TestCase;
 
 class PluginConfigurationTest extends TestCase
 {
-
     /**
-     * @throws \Throwable
+     * @test
      */
-    public function testBasic()
+    public function testBasic(): void
     {
         $testee = new PluginConfiguration([]);
 
         static::assertEmpty($testee->allowedLanguages());
-        static::assertEmpty($testee->apiBy(PluginConfiguration::API_BY_NAME));
-        static::assertNotEmpty($testee->apiBy(PluginConfiguration::API_BY_TYPE));
-        static::assertNotEmpty($testee->isValid());
         static::assertTrue($testee->autorun());
+
+        // Default API configuration
+        static::assertEmpty($testee->apiBy(PluginConfiguration::BY_NAME));
+        static::assertNotEmpty($testee->apiBy(PluginConfiguration::BY_TYPE));
+        static::assertNotEmpty($testee->isValid());
+
+        // Default directory configuration
+        static::assertNotEmpty($testee->languageRootDir());
+        static::assertEmpty($testee->directoryBy(PluginConfiguration::BY_NAME));
+        static::assertNotEmpty($testee->directoryBy(PluginConfiguration::BY_TYPE));
     }
 
     /**
+     * @test
      * @dataProvider provideExcludes
      * @throws \Throwable
      */
@@ -57,9 +64,9 @@ class PluginConfigurationTest extends TestCase
         }
     }
 
-    public function provideExcludes()
+    public function provideExcludes(): \Generator
     {
-        yield [
+        yield 'Exclude wildcard' => [
             ['inpsyde/*'],
             [
                 'inpsyde/google-tag-manager' => true,
@@ -67,7 +74,7 @@ class PluginConfigurationTest extends TestCase
             ],
         ];
 
-        yield [
+        yield 'Exclude specific and wildcard' => [
             ['inpsyde/google-tag-manager', 'wpackagist-plugins/*'],
             [
                 'inpsyde/google-tag-manager' => true,
@@ -78,38 +85,33 @@ class PluginConfigurationTest extends TestCase
         ];
     }
 
-    public function testPackageTypeSupport()
-    {
-        $testee = new PluginConfiguration([]);
-
-        static::assertTrue($testee->isPackageTypeSupported(TranslatablePackage::TYPE_PLUGIN));
-        static::assertTrue($testee->isPackageTypeSupported(TranslatablePackage::TYPE_LIBRARY));
-        static::assertTrue($testee->isPackageTypeSupported(TranslatablePackage::TYPE_CORE));
-        static::assertTrue($testee->isPackageTypeSupported(TranslatablePackage::TYPE_THEME));
-        static::assertFalse($testee->isPackageTypeSupported('foo'));
-    }
-
-    public function testApiNames()
+    /**
+     * @test
+     */
+    public function testApiNames(): void
     {
         $expected = ['foo' => 'bar'];
         $apiInput = [
             'api' => [
-                PluginConfiguration::API_BY_NAME => $expected,
+                PluginConfiguration::BY_NAME => $expected,
             ],
         ];
         $testee = new PluginConfiguration($apiInput);
 
-        $apiResult = $testee->apiBy(PluginConfiguration::API_BY_NAME);
+        $apiResult = $testee->apiBy(PluginConfiguration::BY_NAME);
 
         static::assertSame($expected, $apiResult);
     }
 
-    public function testApiReplaceType()
+    /**
+     * @test
+     */
+    public function testApiReplaceType(): void
     {
         $expected = 'foo';
         $apiInput = [
             'api' => [
-                PluginConfiguration::API_BY_TYPE => [
+                PluginConfiguration::BY_TYPE => [
                     TranslatablePackage::TYPE_PLUGIN => $expected,
                 ],
             ],
@@ -117,7 +119,40 @@ class PluginConfigurationTest extends TestCase
 
         $testee = new PluginConfiguration($apiInput);
 
-        $apiResult = $testee->apiBy(PluginConfiguration::API_BY_TYPE);
+        $apiResult = $testee->apiBy(PluginConfiguration::BY_TYPE);
         static::assertSame($expected, $apiResult[TranslatablePackage::TYPE_PLUGIN]);
+    }
+
+    /**
+     * @test
+     */
+    public function testDirectories(): void
+    {
+        $expectedPlugin = '1';
+        $expectedCore = '2';
+        $expectedTheme = '3';
+        $expectedLibrary = '4';
+        $expectedCustom = '5';
+
+        $input = [
+            'directories' => [
+                PluginConfiguration::BY_TYPE => [
+                    TranslatablePackage::TYPE_CORE => $expectedCore,
+                    TranslatablePackage::TYPE_PLUGIN => $expectedPlugin,
+                    TranslatablePackage::TYPE_THEME => $expectedTheme,
+                    TranslatablePackage::TYPE_LIBRARY => $expectedLibrary,
+                    'custom' => $expectedCustom,
+                ],
+            ],
+        ];
+        $testee = new PluginConfiguration($input);
+
+        $directories = $testee->directoryBy(PluginConfiguration::BY_TYPE);
+
+        static::assertSame($expectedCore, $directories[TranslatablePackage::TYPE_CORE]);
+        static::assertSame($expectedLibrary, $directories[TranslatablePackage::TYPE_LIBRARY]);
+        static::assertSame($expectedPlugin, $directories[TranslatablePackage::TYPE_PLUGIN]);
+        static::assertSame($expectedTheme, $directories[TranslatablePackage::TYPE_THEME]);
+        static::assertSame($expectedCustom, $directories['custom']);
     }
 }

@@ -195,6 +195,9 @@ final class Plugin implements
         $packages = $event->getComposer()->getRepositoryManager()
             ->getLocalRepository()->getPackages();
 
+        // Add root package as well to be processed.
+        $packages[] = $event->getComposer()->getPackage();
+
         $this->doUpdatePackages($packages);
     }
 

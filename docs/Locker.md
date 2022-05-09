@@ -1,4 +1,4 @@
-## Locker
+# Locker
 
 WP Translation Downloader will generate on installation a `wp-translation-downloader.lock` file. This file will contain all installed packages with translations by languages like following:
 

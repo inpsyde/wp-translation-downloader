@@ -16,7 +16,7 @@ namespace Inpsyde\WpTranslationDownloader;
 use Composer\Package\PackageInterface;
 use Inpsyde\WpTranslationDownloader\Config\PluginConfiguration;
 
-class ApiEndpointResolver
+class DirectoryResolver
 {
     /**
      * @var PluginConfiguration
@@ -38,27 +38,34 @@ class ApiEndpointResolver
         $packageName = $package->getName();
         $packageType = $package->getType();
 
-        $apiEndpoint = null;
+        $directory = null;
 
-        // resolve endpoint by "name".
-        $byName = $this->pluginConfiguration->apiBy(PluginConfiguration::BY_NAME);
-        foreach ($byName as $apiPackage => $endpoint) {
-            $pattern = '/' . $this->pluginConfiguration->prepareRegex($apiPackage) . '/';
+        // resolve directory by "name".
+        $byName = $this->pluginConfiguration->directoryBy(PluginConfiguration::BY_NAME);
+        foreach ($byName as $name => $dir) {
+            $pattern = '/' . $this->pluginConfiguration->prepareRegex($name) . '/';
             if (preg_match($pattern, $packageName) === 1) {
-                $apiEndpoint = $endpoint;
+                $directory = $dir;
                 break;
             };
         }
 
-        // resolve endpoint by "type".
-        $byType = $this->pluginConfiguration->apiBy(PluginConfiguration::BY_TYPE);
-        $apiEndpoint = $apiEndpoint ?? $byType[$packageType] ?? null;
-        if (!$apiEndpoint) {
+        // resolve directory by "type"
+        $byType = $this->pluginConfiguration->directoryBy(PluginConfiguration::BY_TYPE);
+
+        // Not found by "name" nor by "type".
+        $directory = $directory ?? $byType[$packageType] ?? null;
+        if (!$directory) {
             return null;
         }
 
-        [$vendorName, $projectName] = PackageNameResolver::resolve($package->getName());
+        $directory = trim($directory, DIRECTORY_SEPARATOR);
+        $resolvedDir = $this->pluginConfiguration->languageRootDir();
+        if ($directory !== '') {
+            $resolvedDir .= $directory . DIRECTORY_SEPARATOR;
+        }
 
+        [$vendorName, $projectName] = PackageNameResolver::resolve($package->getName());
         $replacements = [
             '%vendorName%' => $vendorName,
             '%projectName%' => $projectName,
@@ -70,7 +77,7 @@ class ApiEndpointResolver
         return str_replace(
             array_keys($replacements),
             array_values($replacements),
-            $apiEndpoint
+            $resolvedDir
         );
     }
 }

@@ -25,16 +25,16 @@ class PackageNameResolverTest extends TestCase
      * @param string $input
      * @param array $expected
      *
-     * @throws \Throwable
+     * @test
      */
-    public function testBasic(string $input, array $expected)
+    public function testBasic(string $input, array $expected): void
     {
         $testee = new PackageNameResolver();
 
         static::assertSame($expected, $testee->resolve($input));
     }
 
-    public function providePackageNames()
+    public function providePackageNames(): \Generator
     {
         yield [
             'inpsyde/google-tag-manager',

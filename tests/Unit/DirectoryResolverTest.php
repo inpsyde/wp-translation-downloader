@@ -14,34 +14,34 @@ declare(strict_types=1);
 namespace Inpsyde\WpTranslationDownloader\Tests\Unit;
 
 use Composer\Package\PackageInterface;
-use Inpsyde\WpTranslationDownloader\ApiEndpointResolver;
 use Inpsyde\WpTranslationDownloader\Config\PluginConfiguration;
+use Inpsyde\WpTranslationDownloader\DirectoryResolver;
 use Inpsyde\WpTranslationDownloader\Package\TranslatablePackage;
 use PHPUnit\Framework\TestCase;
 
-class ApiEndpointResolverTest extends TestCase
+class DirectoryResolverTest extends TestCase
 {
     /**
      * @dataProvider provideData
      *
-     * @param array $expectedApi
+     * @param array $input
      * @param array $packages
      *
      * @test
      */
-    public function testBasic(array $expectedApi, array $packages): void
+    public function testBasic(array $input, array $packages): void
     {
-        $pluginConfiguration = new PluginConfiguration($expectedApi);
+        $pluginConfiguration = new PluginConfiguration($input);
 
-        $testee = new ApiEndpointResolver($pluginConfiguration);
+        $testee = new DirectoryResolver($pluginConfiguration);
         foreach ($packages as $package) {
             $packageStub = \Mockery::mock(PackageInterface::class);
             $packageStub->expects('getName')->andReturn($package['name']);
             $packageStub->expects('getType')->andReturn($package['type']);
-            $packageStub->expects('getPrettyVersion')->andReturn($package['version']);
+            $packageStub->expects('getPrettyVersion')->andReturn($package['version'] ?? '1.0');
 
             static::assertSame(
-                $package['expectedEndpoint'],
+                $package['expected'],
                 $testee->resolve($packageStub)
             );
         }
@@ -49,65 +49,45 @@ class ApiEndpointResolverTest extends TestCase
 
     public function provideData(): \Generator
     {
-        yield "Default" => [
+        yield 'Default' => [
             [],
             [
                 [
                     'name' => 'inpsyde/google-tag-manager',
-                    'version' => '1.0',
                     'type' => TranslatablePackage::TYPE_PLUGIN,
-                    'expectedEndpoint' => 'https://api.wordpress.org/translations/plugins/1.0/?slug=google-tag-manager&version=1.0',
+                    'version' => '1.0',
+                    'expected' => getcwd() . DIRECTORY_SEPARATOR . 'plugins' . DIRECTORY_SEPARATOR,
                 ],
                 [
                     'name' => 'foo',
-                    'version' => '1.0',
                     'type' => 'bar',
-                    'expectedEndpoint' => null,
-                ],
-            ],
-        ];
-
-        yield "custom API for a matching name" => [
-            [
-                'api' => [
-                    PluginConfiguration::BY_NAME => [
-                        'inpsyde/*' => 'https://inpsyde.com/%projectName%',
-                    ],
-                ],
-            ],
-            [
-                [
-                    'name' => 'inpsyde/google-tag-manager',
                     'version' => '1.0',
-                    'type' => TranslatablePackage::TYPE_PLUGIN,
-                    'expectedEndpoint' => 'https://inpsyde.com/google-tag-manager',
+                    'expected' => null,
                 ],
             ],
         ];
 
-        yield "Test by type" => [
+        yield 'Custom type' => [
             [
-                'api' => [
+                'directories' => [
                     PluginConfiguration::BY_TYPE => [
-                        TranslatablePackage::TYPE_PLUGIN => 'https://inpsyde.com/%packageType%/%vendorName%/%projectName%',
+                        'custom' => 'custom-path',
                     ],
                 ],
             ],
             [
                 [
-                    'name' => 'inpsyde/google-tag-manager',
+                    'name' => 'custom/package',
+                    'type' => 'custom',
                     'version' => '1.0',
-                    'type' => TranslatablePackage::TYPE_PLUGIN,
-                    'expectedEndpoint' => "https://inpsyde.com/"
-                        . TranslatablePackage::TYPE_PLUGIN
-                        . "/inpsyde/google-tag-manager",
+                    'expected' => getcwd() . DIRECTORY_SEPARATOR . 'custom-path' . DIRECTORY_SEPARATOR,
                 ],
             ],
         ];
 
-        yield "Test disable API" => [
+        yield 'Disable type' => [
             [
-                'api' => [
+                'directories' => [
                     PluginConfiguration::BY_TYPE => [
                         TranslatablePackage::TYPE_PLUGIN => false,
                     ],
@@ -116,9 +96,8 @@ class ApiEndpointResolverTest extends TestCase
             [
                 [
                     'name' => 'inpsyde/google-tag-manager',
-                    'version' => '1.0',
                     'type' => TranslatablePackage::TYPE_PLUGIN,
-                    'expectedEndpoint' => null,
+                    'expected' => null,
                 ],
             ],
         ];
@@ -130,7 +109,7 @@ class ApiEndpointResolverTest extends TestCase
     public function testReplacingPlaceholders(): void
     {
         $api = [
-            'api' => [
+            'directories' => [
                 PluginConfiguration::BY_NAME => [
                     '*' => '%vendorName%-%projectName%-%packageName%-%packageType%-%packageVersion%',
                 ],
@@ -143,7 +122,10 @@ class ApiEndpointResolverTest extends TestCase
         $expectedType = TranslatablePackage::TYPE_PLUGIN;
         $expectedVersion = '1.0';
 
-        $expected = "{$expectedVendor}-{$expectedProjectName}-{$expectedPackageName}-{$expectedType}-{$expectedVersion}";
+        $expected = getcwd()
+            . DIRECTORY_SEPARATOR
+            . "{$expectedVendor}-{$expectedProjectName}-{$expectedPackageName}-{$expectedType}-{$expectedVersion}"
+            . DIRECTORY_SEPARATOR;
 
         $packageStub = \Mockery::mock(PackageInterface::class);
         $packageStub->expects('getName')->andReturn($expectedPackageName);
@@ -152,7 +134,7 @@ class ApiEndpointResolverTest extends TestCase
 
         $pluginConfiguration = new PluginConfiguration($api);
 
-        $testee = new ApiEndpointResolver($pluginConfiguration);
+        $testee = new DirectoryResolver($pluginConfiguration);
 
         static::assertSame($expected, $testee->resolve($packageStub));
     }

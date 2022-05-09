@@ -111,6 +111,8 @@ class Locker
      * @param string $language
      * @param string $lastUpdated
      * @param string $version
+     *
+     * @return bool
      */
     public function addProjectLock(string $projectName, string $language, string $lastUpdated, string $version): bool
     {

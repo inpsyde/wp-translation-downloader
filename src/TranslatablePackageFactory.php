@@ -34,18 +34,25 @@ class TranslatablePackageFactory
     protected $apiEndpointResolver;
 
     /**
+     * @var DirectoryResolver
+     */
+    protected $directoryResolver;
+
+    /**
      * TranslatablePackageFactory constructor.
      *
      * @param PluginConfiguration $pluginConfiguration
      * @param ApiEndpointResolver $apiEndpointResolver
+     * @param DirectoryResolver $directoryResolver
      */
     public function __construct(
         PluginConfiguration $pluginConfiguration,
-        ApiEndpointResolver $apiEndpointResolver
+        ApiEndpointResolver $apiEndpointResolver,
+        DirectoryResolver $directoryResolver
     ) {
-
         $this->pluginConfiguration = $pluginConfiguration;
         $this->apiEndpointResolver = $apiEndpointResolver;
+        $this->directoryResolver = $directoryResolver;
     }
 
     /**
@@ -71,22 +78,16 @@ class TranslatablePackageFactory
      */
     public function create(PackageInterface $package): ?Package\TranslatablePackage
     {
-        $type = $package->getType();
-
-        if (! $this->pluginConfiguration->isPackageTypeSupported($type)) {
+        $directory = $this->directoryResolver->resolve($package);
+        if (!$directory) {
             return null;
         }
-
-        /** @var Package\TranslatablePackage $transPackage */
-        $class = $this->pluginConfiguration->packageTypeClass($type);
-
-        $directory = $this->pluginConfiguration->directory($type);
 
         $endpoint = $this->apiEndpointResolver->resolve($package);
         if ($endpoint === null) {
             return null;
         }
 
-        return new $class($package, $directory, $endpoint);
+        return new Package\TranslatablePackage($package, $directory, $endpoint);
     }
 }
