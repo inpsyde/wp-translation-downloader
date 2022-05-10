@@ -1,7 +1,14 @@
 {
     "name": "wp-translation-downloader/commands",
+    "minimum-stability": "dev",
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../../../"
+        }
+    ],
     "require": {
-        "inpsyde/wp-translation-downloader": "dev-master",
+        "inpsyde/wp-translation-downloader": "*",
         "johnpbloch/wordpress": "5.5.*@stable"
     },
     "extra": {

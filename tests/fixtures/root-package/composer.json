@@ -1,7 +1,13 @@
 {
-    "name": "wp-translation-downloader/excludes",
+    "name": "wpackagist-plugin/backwpup",
+    "type": "wordpress-plugin",
+    "description": "We're using 'backwpup' as 'name' to check if for this root package translation files are downloaded as well.",
     "minimum-stability": "dev",
     "repositories": [
+        {
+            "type": "composer",
+            "url": "https://wpackagist.org"
+        },
         {
             "type": "path",
             "url": "../../../"
@@ -9,18 +15,14 @@
     ],
     "require": {
         "inpsyde/wp-translation-downloader": "*",
-        "johnpbloch/wordpress": "5.5.*@stable",
-        "inpsyde/google-tag-manager": "1.0"
+        "johnpbloch/wordpress": "5.5.*@stable"
     },
     "extra": {
         "wp-translation-downloader": {
             "languages": [
                 "de_DE"
             ],
-            "excludes": [
-                "johnpbloch/*"
-            ],
-            "directory": "languages"
+            "languageRootDir": "languages/"
         }
     },
     "config": {

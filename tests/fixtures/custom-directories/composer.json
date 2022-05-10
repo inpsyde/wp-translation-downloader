@@ -1,7 +1,11 @@
 {
-    "name": "wp-translation-downloader/excludes",
+    "name": "wp-translation-downloader/custom-directories",
     "minimum-stability": "dev",
     "repositories": [
+        {
+            "type": "composer",
+            "url": "https://wpackagist.org"
+        },
         {
             "type": "path",
             "url": "../../../"
@@ -10,17 +14,22 @@
     "require": {
         "inpsyde/wp-translation-downloader": "*",
         "johnpbloch/wordpress": "5.5.*@stable",
-        "inpsyde/google-tag-manager": "1.0"
+        "wpackagist-plugin/backwpup": "3.10.0"
     },
     "extra": {
         "wp-translation-downloader": {
             "languages": [
                 "de_DE"
             ],
-            "excludes": [
-                "johnpbloch/*"
-            ],
-            "directory": "languages"
+            "languageRootDir": "languages/",
+            "directories": {
+                "types": {
+                    "wordpress-core": "core"
+                },
+                "names": {
+                    "*/backwpup": "inpsyde"
+                }
+            }
         }
     },
     "config": {
