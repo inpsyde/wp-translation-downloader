@@ -132,9 +132,9 @@ class TranslatablePackageFactory
     /**
      * @param string $input
      * @param PackageInterface $package
-     * @param bool $allowDevVersion If set to true it will replace %packageVersion% also with "dev-master".
-     *                              This causes problems on https://api.wordpress.org/translations/
-     *                              But for folders we might want to have "dev-master" in folder name.
+     * @param bool $allowDevVersion If set to true it will replace %packageVersion% with "dev-*".
+     *                              For api endpoints this is set to false.
+     *                              It causes problems on https://api.wordpress.org/translations/
      *
      * @return string
      */
