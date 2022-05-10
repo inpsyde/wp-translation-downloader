@@ -126,24 +126,37 @@ class TranslatablePackageFactory
             $resolvedDir .= $directory . DIRECTORY_SEPARATOR;
         }
 
-        return $this->replacePlaceholders($resolvedDir, $package);
+        return $this->replacePlaceholders($resolvedDir, $package, true);
     }
 
     /**
      * @param string $input
      * @param PackageInterface $package
+     * @param bool $allowDevVersion If set to true it will replace %packageVersion% also with "dev-master".
+     *                              This causes problems on https://api.wordpress.org/translations/
+     *                              But for folders we might want to have "dev-master" in folder name.
      *
      * @return string
      */
-    private function replacePlaceholders(string $input, PackageInterface $package): string
-    {
+    private function replacePlaceholders(
+        string $input,
+        PackageInterface $package,
+        bool $allowDevVersion = false
+    ): string {
+
         [$vendorName, $projectName] = PackageNameResolver::resolve($package->getName());
+
+        $version = $package->getPrettyVersion();
+        if (!$allowDevVersion && strpos($version, "dev-") === 0) {
+            $version = '';
+        }
+
         $replacements = [
             '%vendorName%' => $vendorName,
             '%projectName%' => $projectName,
             '%packageName%' => $package->getName(),
             '%packageType%' => $package->getType(),
-            '%packageVersion%' => $package->getPrettyVersion(),
+            '%packageVersion%' => $version,
         ];
 
         return str_replace(
