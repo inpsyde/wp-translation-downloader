@@ -13,42 +13,129 @@ declare(strict_types=1);
 
 namespace Inpsyde\WpTranslationDownloader\Package;
 
+use Composer\Package\Package;
 use Composer\Package\PackageInterface;
+use Inpsyde\WpTranslationDownloader\PackageNameResolver;
 
-interface TranslatablePackage extends PackageInterface
+class TranslatablePackage extends Package implements TranslatablePackageInterface
 {
-    public const TYPE_CORE = 'wordpress-core';
-    public const TYPE_PLUGIN = 'wordpress-plugin';
-    public const TYPE_THEME = 'wordpress-theme';
-    public const TYPE_LIBRARY = 'library';
+    /**
+     * All translations from the API.
+     *
+     * @var array
+     */
+    protected $translations = [];
 
     /**
-     * The cleaned name of the project without vendor.
-     *
-     * @return string
+     * @var string
      */
-    public function projectName(): string;
+    protected $projectName;
 
     /**
-     * The build URL to the api endpoint.
-     *
-     * @return string
+     * @var string
      */
-    public function apiEndpoint(): string;
+    protected $languageDirectory;
 
     /**
-     * Retrieve the path to the language directory.
-     *
-     * @return string
+     * @var string
      */
-    public function languageDirectory(): string;
+    protected $endpoint;
 
     /**
-     * Get all or filtered translations by allowed language(s).
-     *
-     * @param array $allowedLanguages
-     *
-     * @return array
+     * @var bool
      */
-    public function translations(array $allowedLanguages = []): array;
+    private $translationLoaded = false;
+
+    /**
+     * @param PackageInterface $package
+     * @param string $directory
+     * @param string $endpoint
+     */
+    public function __construct(PackageInterface $package, string $directory, string $endpoint)
+    {
+        parent::__construct($package->getName(), $package->getVersion(), $package->getPrettyVersion());
+
+        // Type is not set by constructor, so we have to set it manually
+        // in case we want to access it again.
+        // Otherwise, it will fall back to "library".
+        $this->setType($package->getType());
+
+        $this->endpoint = $endpoint;
+        $this->languageDirectory = $directory;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function translations(array $allowedLanguages = []): array
+    {
+        $this->loadTranslations();
+
+        if (count($allowedLanguages) === 0) {
+            return $this->translations;
+        }
+
+        return array_filter(
+            $this->translations,
+            static function (array $trans) use ($allowedLanguages): bool {
+                return in_array($trans['language'], $allowedLanguages, true);
+            }
+        );
+    }
+
+    protected function loadTranslations(): bool
+    {
+        if ($this->translationLoaded) {
+            return false;
+        }
+        $this->translationLoaded = [];
+
+        $apiUrl = $this->apiEndpoint();
+        if ($apiUrl === '') {
+            return false;
+        }
+
+        $result = @file_get_contents($this->apiEndpoint());
+        if (!$result) {
+            return false;
+        }
+
+        $result = json_decode($result, true);
+        if (!isset($result['translations']) || count($result['translations']) < 1) {
+            return false;
+        }
+
+        $this->translations = $result['translations'];
+
+        return true;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function apiEndpoint(): string
+    {
+        return $this->endpoint;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function projectName(): string
+    {
+        if (!$this->projectName) {
+            [$vendorName, $projectName] = PackageNameResolver::resolve($this->getName());
+            $this->projectName = $projectName;
+        }
+
+        return $this->projectName;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function languageDirectory(): string
+    {
+        return $this->languageDirectory;
+    }
 }

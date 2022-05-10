@@ -15,7 +15,7 @@ namespace Inpsyde\WpTranslationDownloader\Util;
 
 use Composer\Util\Filesystem;
 use Inpsyde\WpTranslationDownloader\Io;
-use Inpsyde\WpTranslationDownloader\Package\TranslatablePackage;
+use Inpsyde\WpTranslationDownloader\Package\TranslatablePackageInterface;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Finder\SplFileInfo;
 
@@ -53,7 +53,7 @@ class Remover
         $this->locker = $locker;
     }
 
-    public function remove(TranslatablePackage $transPackage): bool
+    public function remove(TranslatablePackageInterface $transPackage): bool
     {
         $projectName = $transPackage->projectName();
         $pattern = sprintf("~^%s-.+?\.(?:po|mo|json)$~i", $projectName);

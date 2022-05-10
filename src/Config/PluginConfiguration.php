@@ -19,18 +19,11 @@ use Inpsyde\WpTranslationDownloader\Package\TranslatablePackage;
 final class PluginConfiguration
 {
     public const KEY = 'wp-translation-downloader';
-
     /**
-     * @var array
+     * Configuration selectors for "api" and "directory".
      */
-    public const SUPPORTED_PACKAGES = [
-        Package\TranslatablePackage::TYPE_CORE => Package\WpCorePackage::class,
-        Package\TranslatablePackage::TYPE_PLUGIN => Package\WpPluginPackage::class,
-        Package\TranslatablePackage::TYPE_THEME => Package\WpThemePackage::class,
-        Package\TranslatablePackage::TYPE_LIBRARY => Package\LibraryPackage::class,
-    ];
-    public const API_BY_NAME = 'names';
-    public const API_BY_TYPE = 'types';
+    public const BY_NAME = 'names';
+    public const BY_TYPE = 'types';
     /**
      * @var array
      */
@@ -38,11 +31,19 @@ final class PluginConfiguration
         'auto-run' => true,
         'excludes' => [],
         'languages' => [],
-        'directory' => '',
-        'directories' => [],
+        'languageRootDir' => '',
+        'directories' => [
+            self::BY_NAME => [],
+            self::BY_TYPE => [
+                TranslatablePackage::TYPE_CORE => '',
+                TranslatablePackage::TYPE_PLUGIN => 'plugins',
+                TranslatablePackage::TYPE_THEME => 'themes',
+                TranslatablePackage::TYPE_LIBRARY => 'library',
+            ],
+        ],
         'api' => [
-            self::API_BY_NAME => [],
-            self::API_BY_TYPE => [
+            self::BY_NAME => [],
+            self::BY_TYPE => [
                 // phpcs:disable Inpsyde.CodeQuality.LineLength.TooLong
                 Package\TranslatablePackage::TYPE_CORE => 'https://api.wordpress.org/translations/core/1.0/?version=%packageVersion%',
                 Package\TranslatablePackage::TYPE_PLUGIN => 'https://api.wordpress.org/translations/plugins/1.0/?slug=%projectName%&version=%packageVersion%',
@@ -60,24 +61,34 @@ final class PluginConfiguration
     {
         $config = array_replace_recursive(self::DEFAULTS, $config);
 
-        $languageRoot = getcwd() . '/';
-        if ($config['directory'] !== '') {
-            $languageRoot .= $config['directory'] . '/';
-        }
-
-        $dirs = [
-            TranslatablePackage::TYPE_CORE => $languageRoot,
-            TranslatablePackage::TYPE_PLUGIN => $languageRoot . 'plugins/',
-            TranslatablePackage::TYPE_THEME => $languageRoot . 'themes/',
-            TranslatablePackage::TYPE_LIBRARY => $languageRoot . 'library/',
-        ];
-
         $config['auto-run'] = (bool) ($config['auto-run'] ?? true);
-        $config['directory'] = $languageRoot;
-        $config['directories'] = $dirs;
+        $config['languageRootDir'] = $this->languageRoot($config);
         $config['excludes'] = $this->prepareExcludes($config['excludes']);
 
         $this->config = $config;
+    }
+
+    /**
+     * Resolve the "root" directory for languages with back compat
+     * to previous version where "directory" was a string value as root.
+     *
+     * @param array $config
+     *
+     * @return string
+     */
+    private function languageRoot(array $config): string
+    {
+        $root = getcwd();
+
+        // version 2.0 supported ["directory" => "/path/"]
+        // version 2.1 supports ["languageRootDir" => "/path"]
+        $dir = $config['directory'] ?? $config["languageRootDir"] ?? '';
+        $dir = trim($dir, DIRECTORY_SEPARATOR);
+        if ($dir === '') {
+            return $root . DIRECTORY_SEPARATOR;
+        }
+
+        return $root . DIRECTORY_SEPARATOR . $dir . DIRECTORY_SEPARATOR;
     }
 
     /**
@@ -97,17 +108,13 @@ final class PluginConfiguration
     }
 
     /**
-     * @param string $packageType
+     * @param string $type
      *
-     * @return string
+     * @return array
      */
-    public function directory(string $packageType = 'wordpress-core'): string
+    public function directoryBy(string $type): array
     {
-        if (! isset($this->config['directories'][$packageType])) {
-            return '';
-        }
-
-        return $this->config['directories'][$packageType];
+        return $this->config['directories'][$type] ?? [];
     }
 
     /**
@@ -116,6 +123,11 @@ final class PluginConfiguration
     public function directories(): array
     {
         return $this->config['directories'];
+    }
+
+    public function languageRootDir(): string
+    {
+        return $this->config['languageRootDir'];
     }
 
     /**
@@ -160,26 +172,6 @@ final class PluginConfiguration
     public function allowedLanguages(): array
     {
         return $this->config['languages'];
-    }
-
-    /**
-     * @param string $packageType
-     *
-     * @return bool
-     */
-    public function isPackageTypeSupported(string $packageType): bool
-    {
-        return isset(self::SUPPORTED_PACKAGES[$packageType]);
-    }
-
-    /**
-     * @param string $packType
-     *
-     * @return string
-     */
-    public function packageTypeClass(string $packType): string
-    {
-        return self::SUPPORTED_PACKAGES[$packType];
     }
 
     public function api(): array

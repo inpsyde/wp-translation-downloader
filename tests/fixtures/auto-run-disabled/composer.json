@@ -1,7 +1,14 @@
 {
     "name": "wp-translation-downloader/disable-autorun",
+    "minimum-stability": "dev",
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../../../"
+        }
+    ],
     "require": {
-        "inpsyde/wp-translation-downloader": "dev-master",
+        "inpsyde/wp-translation-downloader": "*",
         "johnpbloch/wordpress": "5.5.*@stable"
     },
     "extra": {
@@ -12,6 +19,13 @@
             ],
             "directory": "languages",
             "auto-run": false
+        }
+    },
+    "config": {
+        "allow-plugins": {
+            "composer/installers": true,
+            "johnpbloch/wordpress-core-installer": true,
+            "inpsyde/wp-translation-downloader": true
         }
     }
 }

@@ -30,8 +30,9 @@ use Inpsyde\WpTranslationDownloader\Command\CleanUpCommand;
 use Inpsyde\WpTranslationDownloader\Command\DownloadCommand;
 use Inpsyde\WpTranslationDownloader\Config\PluginConfiguration;
 use Inpsyde\WpTranslationDownloader\Config\PluginConfigurationBuilder;
+use Inpsyde\WpTranslationDownloader\Package\TranslatablePackageInterface;
 use Inpsyde\WpTranslationDownloader\Util\Downloader;
-use Inpsyde\WpTranslationDownloader\Package\TranslatablePackage;
+use Inpsyde\WpTranslationDownloader\Package\TranslatablePackageFactory;
 use Inpsyde\WpTranslationDownloader\Util\Locker;
 use Inpsyde\WpTranslationDownloader\Util\Remover;
 use Inpsyde\WpTranslationDownloader\Util\Unzipper;
@@ -150,10 +151,7 @@ final class Plugin implements
         /** @var PluginConfiguration pluginConfig */
         $this->pluginConfig = PluginConfigurationBuilder::build($composer->getPackage()->getExtra());
 
-        $this->translatablePackageFactory = new TranslatablePackageFactory(
-            $this->pluginConfig,
-            new ApiEndpointResolver($this->pluginConfig)
-        );
+        $this->translatablePackageFactory = new TranslatablePackageFactory($this->pluginConfig);
 
         $this->downloader = new Downloader(
             $this->io,
@@ -194,6 +192,9 @@ final class Plugin implements
 
         $packages = $event->getComposer()->getRepositoryManager()
             ->getLocalRepository()->getPackages();
+
+        // Add root package as well to be processed.
+        $packages[] = $event->getComposer()->getPackage();
 
         $this->doUpdatePackages($packages);
     }
@@ -251,7 +252,7 @@ final class Plugin implements
      */
     public function onPackageUninstall(PackageEvent $event)
     {
-        /** @var PackageInterface|TranslatablePackage|null $transPackage */
+        /** @var PackageInterface|TranslatablePackageInterface|null $transPackage */
         $transPackage = $this->translatablePackageFactory->createFromOperation($event->getOperation());
         if ($transPackage) {
             $this->remover->remove($transPackage);
@@ -263,17 +264,18 @@ final class Plugin implements
      */
     public function doCleanUpDirectories()
     {
-        $this->io->logo();
-        $this->io->write('Starting to empty the directories...');
-        foreach ($this->pluginConfig->directories() as $directory) {
-            try {
-                $this->filesystem->emptyDirectory($directory);
-                $this->io->write(sprintf('  <info>✓</info> %s', $directory));
-            } catch (\Throwable $exception) {
-                $this->io->write(sprintf('  <fg=red>✗</> %s', $directory));
-                $this->io->error($exception->getMessage());
-            }
+        try {
+            $this->io->logo();
+            $this->io->write('Starting to empty the directories...');
+
+            $directory = $this->pluginConfig->languageRootDir();
+            $this->filesystem->emptyDirectory($directory);
+            $this->io->write(sprintf('  <info>✓</info> %s', $directory));
+        } catch (\Throwable $exception) {
+            $this->io->write(sprintf('  <fg=red>✗</> %s', $directory));
+            $this->io->error($exception->getMessage());
         }
+
         $this->locker->removeLockFile();
     }
 
@@ -296,9 +298,7 @@ final class Plugin implements
     private function ensureDirectories(): bool
     {
         try {
-            foreach ($this->pluginConfig->directories() as $directory) {
-                $this->filesystem->ensureDirectoryExists($directory);
-            }
+            $this->filesystem->ensureDirectoryExists($this->pluginConfig->languageRootDir());
 
             return true;
         } catch (\Throwable $exception) {

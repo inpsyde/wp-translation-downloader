@@ -1,7 +1,14 @@
 {
     "name": "wp-translation-downloader/default-configuration",
+    "minimum-stability": "dev",
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../../../"
+        }
+    ],
     "require": {
-        "inpsyde/wp-translation-downloader": "dev-master",
+        "inpsyde/wp-translation-downloader": "*",
         "johnpbloch/wordpress": "5.5.*@stable"
     },
     "extra": {
@@ -10,6 +17,13 @@
                 "de_DE"
             ],
             "directory": "languages"
+        }
+    },
+    "config": {
+        "allow-plugins": {
+            "composer/installers": true,
+            "johnpbloch/wordpress-core-installer": true,
+            "inpsyde/wp-translation-downloader": true
         }
     }
 }

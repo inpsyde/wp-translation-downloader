@@ -114,6 +114,9 @@ class DownloadCommand extends BaseCommand
         $packages = $composer->getRepositoryManager()
             ->getLocalRepository()->getPackages();
 
+        // Add root level package as well.
+        $packages[] = $composer->getPackage();
+
         if (count($packagesToProcess) > 0) {
             $packages = array_filter(
                 $packages,
