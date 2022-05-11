@@ -13,8 +13,8 @@ declare(strict_types=1);
 
 namespace Inpsyde\WpTranslationDownloader\Util;
 
+use Composer\IO\IOInterface;
 use Composer\Util\Filesystem;
-use Inpsyde\WpTranslationDownloader\Io;
 use Inpsyde\WpTranslationDownloader\Package\TranslatablePackageInterface;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Finder\SplFileInfo;
@@ -22,7 +22,7 @@ use Symfony\Component\Finder\SplFileInfo;
 class Remover
 {
     /**
-     * @var Io
+     * @var IOInterface
      */
     private $io;
 
@@ -39,11 +39,11 @@ class Remover
     /**
      * Remover constructor.
      *
-     * @param Io $io
+     * @param IOInterface $io
      * @param Filesystem $filesystem
      */
     public function __construct(
-        Io $io,
+        IOInterface $io,
         Filesystem $filesystem,
         Locker $locker
     ) {
@@ -82,7 +82,7 @@ class Remover
                     )
                 );
             } catch (\Throwable $exception) {
-                $this->io->error($exception->getMessage());
+                $this->io->writeError($exception->getMessage());
             }
         }
 

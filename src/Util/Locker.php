@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace Inpsyde\WpTranslationDownloader\Util;
 
+use Composer\IO\IOInterface;
 use Composer\Json\JsonFile;
 use Composer\Util\Filesystem;
 use Inpsyde\WpTranslationDownloader\Io;
@@ -22,7 +23,7 @@ class Locker
     public const LOCK_FILE = 'wp-translation-downloader.lock';
 
     /**
-     * @var Io
+     * @var IOInterface
      */
     private $io;
 
@@ -39,12 +40,12 @@ class Locker
     /**
      * Locker constructor.
      *
-     * @param Io $io
+     * @param IOInterface $io
      * @param string $projectRoot
      *
      * @throws \InvalidArgumentException
      */
-    public function __construct(Io $io, string $projectRoot)
+    public function __construct(IOInterface $io, string $projectRoot)
     {
         $this->io = $io;
         $this->file = new JsonFile($projectRoot . self::LOCK_FILE);
@@ -86,13 +87,15 @@ class Locker
         $isLocked = !in_array(false, $checks, true);
 
         if ($isLocked) {
-            $this->io->writeOnVerbose(
+            $this->io->write(
                 sprintf(
                     '    <info>[LOCKED]</info> %1$s | %2$s | %3$s',
                     $language,
                     $lastUpdated,
                     $version
-                )
+                ),
+                true,
+                IOInterface::VERBOSE
             );
             // When a project is locked, then we want to add it again
             // to the lock-file.
@@ -190,8 +193,10 @@ class Locker
     {
         try {
             if (!$this->file->exists()) {
-                $this->io->writeOnVerbose(
-                    sprintf('<error>No %s found.</error>', $this->file->getPath())
+                $this->io->write(
+                    sprintf('<error>No %s found.</error>', $this->file->getPath()),
+                    true,
+                    IOInterface::VERBOSE
                 );
 
                 return false;
@@ -199,13 +204,19 @@ class Locker
 
             $this->lockedData = $this->file->read();
 
-            $this->io->writeOnVerbose(
-                sprintf('<info>Successfully loaded %s.</info>', $this->file->getPath())
+            $this->io->write(
+                sprintf('<info>Successfully loaded %s.</info>', $this->file->getPath()),
+                true,
+                IOInterface::VERBOSE
             );
 
             return true;
         } catch (\Throwable $exception) {
-            $this->io->writeOnVerbose($exception->getMessage());
+            $this->io->write(
+                $exception->getMessage(),
+                true,
+                IOInterface::VERBOSE
+            );
 
             return false;
         }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Inpsyde\WpTranslationDownloader\Tests\Unit\Util;
 
+use Composer\IO\IOInterface;
 use Inpsyde\WpTranslationDownloader\Io;
 use Inpsyde\WpTranslationDownloader\Util\Locker;
 use PHPUnit\Framework\TestCase;
@@ -220,7 +221,7 @@ class LockerTest extends TestCase
 
     private function locker(): Locker
     {
-        $ioStub = \Mockery::mock(Io::class);
+        $ioStub = \Mockery::mock(IOInterface::class);
         $ioStub->expects('writeOnVerbose')->andReturns();
         $ioStub->expects('write')->andReturns();
 

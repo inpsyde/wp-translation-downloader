@@ -154,19 +154,6 @@ final class PluginConfiguration
     }
 
     /**
-     * @return string
-     */
-    public function isValid(): string
-    {
-        if (count($this->allowedLanguages()) < 1) {
-            // phpcs:disable Inpsyde.CodeQuality.LineLength.TooLong
-            return '<fg=red>extra.wp-translation-downloader.languages has to be configured as non empty array in your composer.json</>';
-        }
-
-        return '';
-    }
-
-    /**
      * @return array
      */
     public function allowedLanguages(): array
