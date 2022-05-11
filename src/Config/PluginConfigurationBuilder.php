@@ -46,7 +46,7 @@ final class PluginConfigurationBuilder
         if (!isset($extra[self::KEY])) {
             $this->io->write(
                 sprintf(
-                    '<info>No "%2" in "extra" found.</info>',
+                    '<info>No "%s" in "extra" found.</info>',
                     self::KEY
                 ),
                 true,
