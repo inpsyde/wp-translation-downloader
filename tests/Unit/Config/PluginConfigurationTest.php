@@ -32,7 +32,6 @@ class PluginConfigurationTest extends TestCase
         // Default API configuration
         static::assertEmpty($testee->apiBy(PluginConfiguration::BY_NAME));
         static::assertNotEmpty($testee->apiBy(PluginConfiguration::BY_TYPE));
-        static::assertNotEmpty($testee->isValid());
 
         // Default directory configuration
         static::assertNotEmpty($testee->languageRootDir());
@@ -47,7 +46,7 @@ class PluginConfigurationTest extends TestCase
      */
     public function testExcludes(array $excludes, array $expectedResults)
     {
-        $testee = new PluginConfiguration(['excludes' => $excludes]);
+        $testee = new PluginConfiguration(["excludes" => $excludes]);
 
         foreach ($expectedResults as $packageName => $expected) {
             static::assertSame(
@@ -92,7 +91,7 @@ class PluginConfigurationTest extends TestCase
     {
         $expected = ['foo' => 'bar'];
         $apiInput = [
-            'api' => [
+            "api" => [
                 PluginConfiguration::BY_NAME => $expected,
             ],
         ];

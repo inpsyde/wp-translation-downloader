@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace Inpsyde\WpTranslationDownloader\Util;
 
 use Composer\Downloader\ZipDownloader;
+use Composer\IO\IOInterface;
 use Composer\Util\RemoteFilesystem;
 use Inpsyde\WpTranslationDownloader\Io;
 use Inpsyde\WpTranslationDownloader\Package\TranslatablePackageInterface;
@@ -21,7 +22,7 @@ use Inpsyde\WpTranslationDownloader\Package\TranslatablePackageInterface;
 class Downloader
 {
     /**
-     * @var Io
+     * @var IOInterface
      */
     private $io;
 
@@ -48,14 +49,14 @@ class Downloader
     /**
      * TranslationDownloader constructor.
      *
-     * @param Io $io
+     * @param IOInterface $io
      * @param Unzipper $unzipper
      * @param RemoteFilesystem $remoteFilesystem
      * @param Locker $locker
      * @param string $cacheRoot
      */
     public function __construct(
-        Io $io,
+        IOInterface $io,
         Unzipper $unzipper,
         RemoteFilesystem $remoteFilesystem,
         Locker $locker,
@@ -91,11 +92,13 @@ class Downloader
             )
         );
 
-        $this->io->writeOnVerbose(
+        $this->io->write(
             sprintf(
                 '  - Endpoint: %s',
                 $transPackage->apiEndpoint()
-            )
+            ),
+            true,
+            IOInterface::VERBOSE
         );
 
         $downloaded = $locked = 0;
@@ -141,7 +144,7 @@ class Downloader
                         $language
                     )
                 );
-                $this->io->error($exception->getMessage());
+                $this->io->writeError($exception->getMessage());
             }
         }
 
@@ -165,7 +168,7 @@ class Downloader
     private function downloadZipFile(string $zipFile, $packageUrl): bool
     {
         if (file_exists($zipFile)) {
-            $this->io->writeOnVerbose(
+            $this->io->write(
                 sprintf(
                     '    <info>[CACHED]</info> %s</info> ',
                     $zipFile

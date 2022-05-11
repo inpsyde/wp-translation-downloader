@@ -44,9 +44,14 @@ final class Plugin implements
     CommandProvider
 {
     /**
-     * @var Io
+     * @var IOInterface
      */
     private $io;
+
+    /**
+     * @var Composer
+     */
+    private $composer;
 
     /**
      * @var Downloader
@@ -77,6 +82,11 @@ final class Plugin implements
      * @var Locker
      */
     private $locker;
+
+    /**
+     * @var bool
+     */
+    private $booted = false;
 
     /**
      * Subscribe to Composer events.
@@ -128,13 +138,30 @@ final class Plugin implements
      */
     public function activate(Composer $composer, IOInterface $io)
     {
-        /** @var IOInterface io */
-        $this->io = new Io($io);
+        $this->io = $io;
+        $this->composer = $composer;
+    }
 
-        /** @var Config $config */
-        $config = $composer->getConfig();
-        $cache = new Cache($io, $composer->getConfig()->get('cache-dir') . '/translations');
+    /**
+     * Internal function to lazy bootstrap services, when Plugin is executed.
+     *
+     * @return bool
+     * @throws \InvalidArgumentException
+     * @throws \RuntimeException
+     * @throws \Throwable
+     */
+    private function bootstrap(): bool
+    {
+        if ($this->booted) {
+            return false;
+        }
+        $this->booted = true;
 
+        $this->logo();
+
+        $config = $this->composer->getConfig();
+
+        $cache = new Cache($this->io, $config->get('cache-dir') . '/translations');
         if (!$cache->isEnabled()) {
             $this->io->error("Composer Cache folder is not enabled.");
 
@@ -148,15 +175,20 @@ final class Plugin implements
         /** @var Locker $locker */
         $this->locker = new Locker($this->io, $rootDir);
 
-        /** @var PluginConfiguration pluginConfig */
-        $this->pluginConfig = PluginConfigurationBuilder::build($composer->getPackage()->getExtra());
+        $pluginConfigBuilder = new PluginConfigurationBuilder($this->io);
+        /** @var PluginConfiguration|null pluginConfig */
+        $this->pluginConfig = $pluginConfigBuilder->build($this->composer->getPackage()->getExtra());
+
+        if ($this->pluginConfig === null) {
+            return false;
+        }
 
         $this->translatablePackageFactory = new TranslatablePackageFactory($this->pluginConfig);
 
         $this->downloader = new Downloader(
             $this->io,
-            new Unzipper($io),
-            new RemoteFilesystem($io, $config),
+            new Unzipper($this->io),
+            new RemoteFilesystem($this->io, $config),
             $this->locker,
             $cache->getRoot()
         );
@@ -171,6 +203,8 @@ final class Plugin implements
         }
 
         $this->ensureDirectories();
+
+        return true;
     }
 
     /**
@@ -181,9 +215,13 @@ final class Plugin implements
      */
     public function onPostInstallAndUpdate(Event $event)
     {
+        if (!$this->bootstrap()) {
+            return;
+        }
+
         if (!$this->pluginConfig->autorun()) {
             // phpcs:disable Inpsyde.CodeQuality.LineLength.TooLong
-            $this->io->infoOnVerbose(
+            $this->io->write(
                 'Configuration "auto-run" is set to "false". You need to run wp-translation-downloader manually.'
             );
 
@@ -204,12 +242,9 @@ final class Plugin implements
      */
     public function doUpdatePackages(array $packages)
     {
-        $this->io->logo();
+        $this->bootstrap();
 
-        $error = $this->pluginConfig->isValid();
-        if ($error !== '') {
-            $this->io->error($error);
-
+        if ($this->pluginConfig === null) {
             return;
         }
 
@@ -252,6 +287,10 @@ final class Plugin implements
      */
     public function onPackageUninstall(PackageEvent $event)
     {
+        if (!$this->bootstrap()) {
+            return;
+        }
+
         /** @var PackageInterface|TranslatablePackageInterface|null $transPackage */
         $transPackage = $this->translatablePackageFactory->createFromOperation($event->getOperation());
         if ($transPackage) {
@@ -265,15 +304,14 @@ final class Plugin implements
     public function doCleanUpDirectories()
     {
         try {
-            $this->io->logo();
+            $this->bootstrap();
             $this->io->write('Starting to empty the directories...');
-
             $directory = $this->pluginConfig->languageRootDir();
             $this->filesystem->emptyDirectory($directory);
             $this->io->write(sprintf('  <info>✓</info> %s', $directory));
         } catch (\Throwable $exception) {
             $this->io->write(sprintf('  <fg=red>✗</> %s', $directory));
-            $this->io->error($exception->getMessage());
+            $this->io->writeError($exception->getMessage());
         }
 
         $this->locker->removeLockFile();
@@ -306,5 +344,22 @@ final class Plugin implements
 
             return false;
         }
+    }
+
+    /**
+     * @return void
+     */
+    public function logo(): void
+    {
+        // phpcs:disable
+        $logo = <<<LOGO
+    <fg=white;bg=green>                        </>
+    <fg=white;bg=green>        Inpsyde         </>
+    <fg=white;bg=green>                        </>
+    <fg=magenta>WP Translation Downloader</>
+LOGO;
+        // phpcs:enable
+
+        $this->io->write("\n{$logo}\n");
     }
 }
