@@ -15,8 +15,8 @@ jobs:
           php-version: ${{ matrix.php-versions }}
           tools: composer:v2
       - name: Install Composer dependencies
-          uses: ramsey/composer-install@v1
-          with:
-            composer-options: "--prefer-dist"
+        uses: ramsey/composer-install@v1
+        with:
+          composer-options: "--prefer-dist"
       - name: Run Behat
         run: ./vendor/bin/behat --colors"
