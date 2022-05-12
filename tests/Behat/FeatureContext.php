@@ -1,7 +1,8 @@
 <?php
 
+namespace Inpsyde\WpTranslationDownloader\Tests\Behat;
+
 use Behat\Behat\Context\Context;
-use Behat\Gherkin\Node\PyStringNode;
 use Symfony\Component\Process\ExecutableFinder;
 use Symfony\Component\Process\Process;
 use PHPUnit\Framework\Assert;
@@ -40,7 +41,7 @@ class FeatureContext implements Context
     public function __construct()
     {
         $this->composerExecutable = (new ExecutableFinder())->find('composer');
-        $this->fixturesDir = __DIR__.'/../../tests/fixtures';
+        $this->fixturesDir = __DIR__.'/../fixtures';
     }
 
     /**

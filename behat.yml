@@ -1,4 +1,7 @@
 default:
   suites:
     default:
-      contexts: [ FeatureContext ]
+      contexts:
+       - Inpsyde\WpTranslationDownloader\Tests\Behat\FeatureContext
+      paths:
+        - tests/Behat/features/
