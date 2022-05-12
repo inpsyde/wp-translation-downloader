@@ -8,13 +8,15 @@ jobs:
       matrix:
         php-versions: [ '7.2', '7.3', '7.4', '8.0', '8.1' ]
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v3
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php-versions }}
           tools: composer:v2
-      - name: Install dependencies
-        run: composer install --prefer-dist --no-progress --no-suggest
+      - name: Install Composer dependencies
+          uses: ramsey/composer-install@v1
+          with:
+            composer-options: "--prefer-dist"
       - name: Run Behat
-        run: composer behat
+        run: ./vendor/bin/behat --colors"
