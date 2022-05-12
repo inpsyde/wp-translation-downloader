@@ -19,4 +19,4 @@ jobs:
         with:
           composer-options: "--prefer-dist"
       - name: Run Behat
-        run: ./vendor/bin/behat --colors"
+        run: ./vendor/bin/behat --colors
