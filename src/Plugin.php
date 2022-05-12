@@ -202,7 +202,7 @@ final class Plugin implements
             $cache->gc($config->get('cache-files-ttl'), $config->get('cache-files-maxsize'));
         }
 
-        $this->ensureDirectories();
+        $this->ensureDirectoryExists($this->pluginConfig->languageRootDir());
 
         return true;
     }
@@ -272,6 +272,8 @@ final class Plugin implements
                 continue;
             }
             $processedPackages[$packageName] = true;
+
+            $this->ensureDirectoryExists($transPackage->languageDirectory());
             $this->downloader->download($transPackage, $allowedLanguages);
         }
 
@@ -333,10 +335,10 @@ final class Plugin implements
     {
     }
 
-    private function ensureDirectories(): bool
+    private function ensureDirectoryExists(string $dir): bool
     {
         try {
-            $this->filesystem->ensureDirectoryExists($this->pluginConfig->languageRootDir());
+            $this->filesystem->ensureDirectoryExists($dir);
 
             return true;
         } catch (\Throwable $exception) {

@@ -160,7 +160,7 @@ class Locker
     {
         try {
             $this->io->write(
-                sprintf("\n<info>Writing new lock data to %s<info>", $this->file->getPath())
+                sprintf("\n  <info>Writing new lock data to %s<info>", $this->file->getPath())
             );
             $this->file->write($this->lockedData);
 
@@ -180,7 +180,7 @@ class Locker
     public function removeLockFile(): bool
     {
         $this->io->write(
-            sprintf("\n<info>Lock file %s was removed.<info>", $this->file->getPath())
+            sprintf("<info>Lock file %s was removed.<info>", $this->file->getPath())
         );
 
         return (new Filesystem())->remove($this->file->getPath());
@@ -194,7 +194,7 @@ class Locker
         try {
             if (!$this->file->exists()) {
                 $this->io->write(
-                    sprintf('<error>No %s found.</error>', $this->file->getPath()),
+                    sprintf('  <info>No %s found.</info>', $this->file->getPath()),
                     true,
                     IOInterface::VERBOSE
                 );
@@ -205,7 +205,7 @@ class Locker
             $this->lockedData = $this->file->read();
 
             $this->io->write(
-                sprintf('<info>Successfully loaded %s.</info>', $this->file->getPath()),
+                sprintf("  <info>Successfully loaded %s.</info>\n", $this->file->getPath()),
                 true,
                 IOInterface::VERBOSE
             );

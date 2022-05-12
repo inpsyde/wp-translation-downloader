@@ -85,6 +85,11 @@ class PluginConfigurationBuilderTest extends TestCase
             true,
         ];
 
+        yield 'languages - multiple ones' => [
+            ['languages' => ['de_DE', 'de_CH']],
+            true,
+        ];
+
         yield 'languageRootDir' => [
             ['languages' => ['de_DE'], 'languageRootDir' => '/foo/bar/'],
             true,

@@ -120,8 +120,9 @@ class TranslatablePackageFactory
             return null;
         }
 
-        $directory = trim($directory, DIRECTORY_SEPARATOR);
+        $directory = trim($directory, "\\/");
         $resolvedDir = $this->pluginConfiguration->languageRootDir();
+
         if ($directory !== '') {
             $resolvedDir .= $directory . DIRECTORY_SEPARATOR;
         }

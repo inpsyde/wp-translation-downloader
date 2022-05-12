@@ -83,7 +83,7 @@ final class PluginConfiguration
         // version 2.0 supported ["directory" => "/path/"]
         // version 2.1 supports ["languageRootDir" => "/path"]
         $dir = $config['directory'] ?? $config["languageRootDir"] ?? '';
-        $dir = trim($dir, DIRECTORY_SEPARATOR);
+        $dir = trim($dir, "\\/");
         if ($dir === '') {
             return $root . DIRECTORY_SEPARATOR;
         }
