@@ -16,7 +16,6 @@ namespace Inpsyde\WpTranslationDownloader\Util;
 use Composer\Downloader\ZipDownloader;
 use Composer\IO\IOInterface;
 use Composer\Util\RemoteFilesystem;
-use Inpsyde\WpTranslationDownloader\Io;
 use Inpsyde\WpTranslationDownloader\Package\TranslatablePackageInterface;
 
 class Downloader
