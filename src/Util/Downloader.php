@@ -61,6 +61,7 @@ class Downloader
         Locker $locker,
         string $cacheRoot
     ) {
+
         $this->io = $io;
         $this->unzipper = $unzipper;
         $this->remoteFilesystem = $remoteFilesystem;
