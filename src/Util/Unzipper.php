@@ -146,11 +146,10 @@ class Unzipper
             throw $processError;
         }
 
-        $this->io->writeError('    '.$processError->getMessage());
-        $this->io->writeError(
-            '    The archive may contain identical file names with different capitalization (which fails on case insensitive filesystems)'
-        );
-        $this->io->writeError('    Unzip with unzip command failed, falling back to ZipArchive class');
+        $message = "    <error>" . $processError->getMessage() . "</error>";
+        $message .= "\n   The archive may contain identical file names with different capitalization (which fails on case insensitive filesystems).";
+        $message .="\n    Unzip with unzip command failed, falling back to ZipArchive class.";
+        $this->io->write($message, true, IOInterface::VERBOSE);
 
         return $this->extractWithZipArchive($file, $path, true);
     }
@@ -218,8 +217,11 @@ class Unzipper
             throw $processError;
         }
 
-        $this->io->writeError('    ' . $processError->getMessage());
-        $this->io->writeError('    Unzip with ZipArchive class failed, falling back to unzip command');
+        $message = "    <error>" . $processError->getMessage() . "</error>";
+        $message .= "\n    Unzip with ZipArchive class failed, falling back to unzip command.";
+
+
+        $this->io->write($message, true, IOInterface::VERBOSE);
 
         return $this->extractWithSystemUnzip($file, $path, true);
     }
