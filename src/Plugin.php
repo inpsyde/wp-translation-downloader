@@ -15,7 +15,6 @@ namespace Inpsyde\WpTranslationDownloader;
 
 use Composer\Cache;
 use Composer\Composer;
-use Composer\Config;
 use Composer\EventDispatcher\EventSubscriberInterface;
 use Composer\Installer\PackageEvent;
 use Composer\IO\IOInterface;

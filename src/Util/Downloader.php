@@ -61,7 +61,6 @@ class Downloader
         Locker $locker,
         string $cacheRoot
     ) {
-
         $this->io = $io;
         $this->unzipper = $unzipper;
         $this->remoteFilesystem = $remoteFilesystem;
@@ -121,7 +120,7 @@ class Downloader
                     continue;
                 }
 
-                $this->downloadZipFile($zipFile, $packageUrl);
+                $this->downloadZipFile($zipFile, $packageUrl, $lastUpdated);
 
                 // phpcs:disable NeutronStandard.Extract.DisallowExtract.Extract
                 $this->unzipper->extract($zipFile, $directory);
@@ -159,14 +158,19 @@ class Downloader
     }
 
     /**
+     * Downloads the zipFile if not exists yet or the file was updated in the meantime.
+     *
      * @param string $zipFile
-     * @param $packageUrl
+     * @param string $packageUrl
+     * @param string $lastUpdated date time in format yyyy-mm-dd hh:ii:ss
      *
      * @return bool
      */
-    private function downloadZipFile(string $zipFile, $packageUrl): bool
+    private function downloadZipFile(string $zipFile, string $packageUrl, string $lastUpdated): bool
     {
-        if (file_exists($zipFile)) {
+        $lastUpdated = new \DateTimeImmutable($lastUpdated);
+
+        if (file_exists($zipFile) && filemtime($zipFile) >= $lastUpdated->getTimestamp()) {
             $this->io->write(
                 sprintf(
                     '    <info>[CACHED]</info> %s</info> ',
@@ -180,7 +184,12 @@ class Downloader
         $origin = $this->origin($packageUrl);
         $result = $this->remoteFilesystem->copy($origin, $packageUrl, $zipFile, false);
 
-        return !!$result;
+        if ($result === false) {
+            return false;
+        }
+
+        // set the "updated" time as file time.
+        return touch($zipFile, $lastUpdated->getTimestamp());
     }
 
     /**
