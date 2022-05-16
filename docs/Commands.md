@@ -13,3 +13,9 @@ Downloads for all listed packages the translations. By default, when no packages
 **Command:** `composer wp-translation-downloader:clean-up`
 
 Removes all files from languages directories.
+
+## Clean cache
+
+**Command:** `composer wp-translation-downloader:clean-cache`
+
+WP Translation Downloader uses the Composer Cache which can be usally cleared via `composer clear-cache` command. This command will also delete all dependencies cached which is far from ideal. Therefor, we provide a command to just clean the cache dir:

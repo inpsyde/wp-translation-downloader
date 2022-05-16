@@ -25,6 +25,7 @@ use Composer\Plugin\PluginInterface;
 use Composer\Script\Event;
 use Composer\Util\Filesystem;
 use Composer\Util\RemoteFilesystem;
+use Inpsyde\WpTranslationDownloader\Command\CleanCacheCommand;
 use Inpsyde\WpTranslationDownloader\Command\CleanUpCommand;
 use Inpsyde\WpTranslationDownloader\Command\DownloadCommand;
 use Inpsyde\WpTranslationDownloader\Config\PluginConfiguration;
@@ -83,6 +84,11 @@ final class Plugin implements
     private $locker;
 
     /**
+     * @var Cache
+     */
+    private $cache;
+
+    /**
      * @var bool
      */
     private $booted = false;
@@ -126,6 +132,7 @@ final class Plugin implements
         return [
             new DownloadCommand(),
             new CleanUpCommand(),
+            new CleanCacheCommand(),
         ];
     }
 
@@ -160,8 +167,8 @@ final class Plugin implements
 
         $config = $this->composer->getConfig();
 
-        $cache = new Cache($this->io, $config->get('cache-dir') . '/translations');
-        if (!$cache->isEnabled()) {
+        $this->cache = new Cache($this->io, $config->get('cache-dir') . '/translations');
+        if (!$this->cache->isEnabled()) {
             $this->io->error("Composer Cache folder is not enabled.");
 
             return false;
@@ -189,7 +196,7 @@ final class Plugin implements
             new Unzipper($this->io),
             new RemoteFilesystem($this->io, $config),
             $this->locker,
-            $cache->getRoot()
+            $this->cache->getRoot()
         );
         $this->remover = new Remover(
             $this->io,
@@ -197,8 +204,8 @@ final class Plugin implements
             $this->locker
         );
 
-        if ($cache->gcIsNecessary()) {
-            $cache->gc($config->get('cache-files-ttl'), $config->get('cache-files-maxsize'));
+        if ($this->cache->gcIsNecessary()) {
+            $this->cache->gc($config->get('cache-files-ttl'), $config->get('cache-files-maxsize'));
         }
 
         $this->ensureDirectoryExists($this->pluginConfig->languageRootDir());
@@ -263,7 +270,6 @@ final class Plugin implements
 
         /** @var PackageInterface $package */
         foreach ($packages as $package) {
-
             $packageName = $package->getName();
             if ($this->pluginConfig->doExclude($packageName)) {
                 continue;
@@ -326,6 +332,22 @@ final class Plugin implements
         }
 
         $this->locker->removeLockFile();
+    }
+
+    /**
+     * @return void
+     */
+    public function doCleanCache()
+    {
+        try {
+            $this->bootstrap();
+            $this->io->write('Starting to clean cache directory.');
+            $this->cache->clear()
+                ? $this->io->write('<info>Cache folder was emptied successfully.</info>')
+                : $this->io->writeError('Could not empty cache dir.');
+        } catch (\Throwable $exception) {
+            $this->io->writeError($exception->getMessage());
+        }
     }
 
     /**
