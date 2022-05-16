@@ -263,14 +263,16 @@ final class Plugin implements
 
         /** @var PackageInterface $package */
         foreach ($packages as $package) {
+
             $packageName = $package->getName();
+            if ($this->pluginConfig->doExclude($packageName)) {
+                continue;
+            }
+
             $transPackage = isset($processedPackages[$packageName])
                 ? null
                 : $this->translatablePackageFactory->create($package);
             if ($transPackage === null) {
-                continue;
-            }
-            if ($this->pluginConfig->doExclude($packageName)) {
                 continue;
             }
 
