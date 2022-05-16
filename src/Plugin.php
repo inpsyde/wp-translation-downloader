@@ -257,6 +257,9 @@ final class Plugin implements
         // We keep track of package which are already
         // processed, to skip duplicate entries in $packages.
         $processedPackages = [];
+        // We keep track of folders which are already
+        // created, to skip duplicated is_dir() calls.
+        $processedFolders = [];
 
         /** @var PackageInterface $package */
         foreach ($packages as $package) {
@@ -270,10 +273,15 @@ final class Plugin implements
             if ($this->pluginConfig->doExclude($packageName)) {
                 continue;
             }
-            $processedPackages[$packageName] = true;
 
-            $this->ensureDirectoryExists($transPackage->languageDirectory());
+            $languageDir = $transPackage->languageDirectory();
+            if (!isset($processedFolders[$languageDir])) {
+                $this->ensureDirectoryExists($languageDir);
+                $processedFolders[$languageDir] = true;
+            }
+
             $this->downloader->download($transPackage, $allowedLanguages);
+            $processedPackages[$packageName] = true;
         }
 
         $this->locker->writeLockFile();
