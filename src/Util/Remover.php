@@ -47,7 +47,6 @@ class Remover
         Filesystem $filesystem,
         Locker $locker
     ) {
-
         $this->io = $io;
         $this->filesystem = $filesystem;
         $this->locker = $locker;
@@ -55,39 +54,45 @@ class Remover
 
     public function remove(TranslatablePackageInterface $transPackage): bool
     {
-        $projectName = $transPackage->projectName();
-        $pattern = sprintf("~^%s-.+?\.(?:po|mo|json)$~i", $projectName);
+        try {
+            $projectName = $transPackage->projectName();
+            $pattern = sprintf("~^%s-.+?\.(?:po|mo|json)$~i", $projectName);
 
-        $files = Finder::create()
-            ->in($transPackage->languageDirectory())
-            ->ignoreUnreadableDirs()
-            ->ignoreVCS(true)
-            ->ignoreDotFiles(true)
-            ->depth('== 0')
-            ->files()
-            ->filter(
-                static function (SplFileInfo $info) use ($pattern): bool {
-                    return (bool) preg_match($pattern, $info->getFilename());
-                }
-            );
-
-        foreach ($files as $file) {
-            try {
-                $this->filesystem->unlink($file->getPathname());
-                $this->io->write(
-                    sprintf(
-                        "    - <info>[OK]</info> %s: deleted %s translation file.",
-                        $projectName,
-                        $file->getBasename()
-                    )
+            $files = Finder::create()
+                ->in($transPackage->languageDirectory())
+                ->ignoreUnreadableDirs()
+                ->ignoreVCS(true)
+                ->ignoreDotFiles(true)
+                ->depth('== 0')
+                ->files()
+                ->filter(
+                    static function (SplFileInfo $info) use ($pattern): bool {
+                        return (bool) preg_match($pattern, $info->getFilename());
+                    }
                 );
-            } catch (\Throwable $exception) {
-                $this->io->writeError($exception->getMessage());
+
+            foreach ($files as $file) {
+                try {
+                    $this->filesystem->unlink($file->getPathname());
+                    $this->io->write(
+                        sprintf(
+                            "    - <info>[OK]</info> %s: deleted %s translation file.",
+                            $projectName,
+                            $file->getBasename()
+                        )
+                    );
+                } catch (\Throwable $exception) {
+                    $this->io->writeError($exception->getMessage());
+                }
             }
+
+            $this->locker->removeProjectLock($projectName);
+
+            return true;
+        } catch (\Throwable $exception) {
+            $this->io->writeError($exception->getMessage(), true, IOInterface::VERBOSE);
+
+            return false;
         }
-
-        $this->locker->removeProjectLock($projectName);
-
-        return true;
     }
 }
