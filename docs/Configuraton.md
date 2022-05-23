@@ -275,4 +275,4 @@ We allow to lock a version optionally, since WordPress.org Translation API resol
 | `"5.9"`        | https://api.wordpress.org/translations/core/1.0/?version=5.9   |
 | `"5.9.3"`      | https://api.wordpress.org/translations/core/1.0/?version=5.9.3 |
 | `""`           | https://api.wordpress.org/translations/core/1.0/               |
-| _none set      | https://api.wordpress.org/translations/core/1.0/               |
+| _none set_     | https://api.wordpress.org/translations/core/1.0/               |
