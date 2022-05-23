@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace Inpsyde\WpTranslationDownloader\Config;
 
+use Composer\Package\PackageInterface;
 use Inpsyde\WpTranslationDownloader\Package;
 use Inpsyde\WpTranslationDownloader\Package\TranslatablePackage;
 
@@ -50,6 +51,7 @@ final class PluginConfiguration
                 Package\TranslatablePackage::TYPE_THEME => 'https://api.wordpress.org/translations/themes/1.0/?slug=%projectName%&version=%packageVersion%',
             ],
         ],
+        "virtual-packages" => [],
     ];
 
     /**
@@ -64,8 +66,28 @@ final class PluginConfiguration
         $config['auto-run'] = (bool) ($config['auto-run'] ?? true);
         $config['languageRootDir'] = $this->languageRoot($config);
         $config['excludes'] = $this->prepareExcludes($config['excludes']);
+        $config['virtual-packages'] = $this->prepareVirtualPackages($config['virtual-packages']);
 
         $this->config = $config;
+    }
+
+    /**
+     * @param array<array{title:string, type:string, version?:string}> $packages
+     *
+     * @return PackageInterface
+     */
+    private function prepareVirtualPackages(array $packages): array
+    {
+        return array_map(
+            static function (array $package): PackageInterface {
+                $version = $package['version'] ?? '';
+                $virtualPackage = new \Composer\Package\Package($package['name'], $version, $version);
+                $virtualPackage->setType($package['type']);
+
+                return $virtualPackage;
+            },
+            $packages
+        );
     }
 
     /**
@@ -191,5 +213,13 @@ final class PluginConfiguration
     public function autorun(): bool
     {
         return $this->config['auto-run'];
+    }
+
+    /**
+     * @return PackageInterface[]
+     */
+    public function virtualPackages(): array
+    {
+        return $this->config['virtual-packages'];
     }
 }
