@@ -244,7 +244,7 @@ into `/{root path}/public/languages/some-folder/`.
 ## Virtual Packages
 Sometimes it is required to not define a dependency in `composer.json` via `require` or `require-dev` but still need the translations to be installed. That can be the case in the WordPress-world for hosting solutions or dockerized enviornments like https://hub.docker.com/_/wordpress which already shipping WordPress pre-installed.
 
-To install translations for "pre-installed platform" dependencies we introduced `virtual-packages` as part of the `wp-translation-downloader`-configuration. The following example will download additionally to all `require`-dependencies of `composer.json` the WordPress core translations:
+To install translations for "pre-installed platform dependencies", we introduced `virtual-packages` as part of the `wp-translation-downloader`-configuration. The following example will download additionally to all `require`-dependencies of `composer.json` the WordPress core translations:
 
 ```json
 {
@@ -262,13 +262,13 @@ To install translations for "pre-installed platform" dependencies we introduced 
 
 The configuration fields are following:
 
-| field     | required | type     | description                                                                          |
-|-----------|----------|----------|--------------------------------------------------------------------------------------|
-| `name`    | x        | `string` | The packageName of your pre-installed dependency.                                    |
-| `type`    | x        | `string` | The type which is usally defined in `composer.json` to resolve the correct endpoint. |
-| `version` |          | `string` | The string in which version you want to install the translations.                    |
+| field     | required | type     | description                                                                           |
+|-----------|----------|----------|---------------------------------------------------------------------------------------|
+| `name`    | x        | `string` | The packageName of your pre-installed dependency.                                     |
+| `type`    | x        | `string` | The type which is usually defined in `composer.json` to resolve the correct endpoint. |
+| `version` |          | `string` | The string in which version you want to install the translations.                     |
 
-We allow to lock a version optionally, since WordPress.org Translation API resolves translations dynamically via `?version=`. When the field is being empty the latest translations will be downloaded.
+We allow to lock a version optionally, since WordPress.org Translation API resolves translations dynamically via `?version={version}`. When the field is being empty the latest translations will be downloaded.
 
 | version string | endpoint                                                       |
 |----------------|----------------------------------------------------------------|
