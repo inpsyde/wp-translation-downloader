@@ -18,6 +18,7 @@ use Composer\Composer;
 use Composer\EventDispatcher\EventSubscriberInterface;
 use Composer\Installer\PackageEvent;
 use Composer\IO\IOInterface;
+use Composer\Package\Package;
 use Composer\Package\PackageInterface;
 use Composer\Plugin\Capability\CommandProvider;
 use Composer\Plugin\Capable;
@@ -239,6 +240,10 @@ final class Plugin implements
 
         // Add root package as well to be processed.
         $packages[] = $event->getComposer()->getPackage();
+
+        foreach ($this->pluginConfig->virtualPackages() as $package) {
+            $packages[] = $package;
+        }
 
         $this->doUpdatePackages($packages);
     }

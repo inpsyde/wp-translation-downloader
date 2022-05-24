@@ -20,7 +20,6 @@ use Composer\DependencyResolver\Operation\UpdateOperation;
 use Composer\Package\PackageInterface;
 use Inpsyde\WpTranslationDownloader\PackageNameResolver;
 use Inpsyde\WpTranslationDownloader\Config\PluginConfiguration;
-use Inpsyde\WpTranslationDownloader\DirectoryResolver;
 
 class TranslatablePackageFactory
 {
@@ -96,7 +95,9 @@ class TranslatablePackageFactory
             return null;
         }
 
-        return $this->replacePlaceholders($endpoint, $package);
+        $endpoint = $this->replacePlaceholders($endpoint, $package);
+
+        return $this->removeEmptyQueryParams($endpoint);
     }
 
     /**
@@ -131,6 +132,37 @@ class TranslatablePackageFactory
     }
 
     /**
+     * Removes empty query params from a given URL. This is necessary since WP will
+     * fail when sending ?version= to GlotPress API:
+     *
+     * ✗   https://api.wordpress.org/translations/core/1.0/?version=
+     * ✓   https://api.wordpress.org/translations/core/1.0/?version=5.9
+     *
+     * @param string $url
+     *
+     * @return string
+     */
+    protected function removeEmptyQueryParams(string $url): string
+    {
+        $parsedUrl = parse_url($url);
+        $query = $parsedUrl['query'] ?? '';
+        if ($query === '') {
+            return $url;
+        }
+
+        parse_str($query, $parameters);
+        $cleanedParams = array_filter($parameters);
+
+        $base = strtok($url, '?');
+
+        if (count($cleanedParams) > 0) {
+            $base .= '?' . http_build_query($cleanedParams);
+        }
+
+        return $base;
+    }
+
+    /**
      * @param string $input
      * @param PackageInterface $package
      * @param bool $allowDevVersion If set to true it will replace %packageVersion% with "dev-*".
@@ -139,7 +171,7 @@ class TranslatablePackageFactory
      *
      * @return string
      */
-    private function replacePlaceholders(
+    protected function replacePlaceholders(
         string $input,
         PackageInterface $package,
         bool $allowDevVersion = false
@@ -167,7 +199,7 @@ class TranslatablePackageFactory
         );
     }
 
-    private function findByName(string $packageName, array $byName): ?string
+    protected function findByName(string $packageName, array $byName): ?string
     {
         $directory = null;
         foreach ($byName as $name => $dir) {
@@ -187,7 +219,7 @@ class TranslatablePackageFactory
         return $directory;
     }
 
-    private function findByType(string $packageType, array $byType): ?string
+    protected function findByType(string $packageType, array $byType): ?string
     {
         $directory = $byType[$packageType] ?? null;
 

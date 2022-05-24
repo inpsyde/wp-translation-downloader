@@ -262,4 +262,51 @@ class TranslatablePackageFactoryTest extends TestCase
         ];
     }
 
+    /**
+     * @test
+     * @dataProvider provideRemoveEmptyQueryParams
+     */
+    public function testRemoveEmptyQueryParams(string $expected, string $input): void
+    {
+        $testee = new class extends TranslatablePackageFactory {
+            public function __construct()
+            {
+            }
+
+            public function removeEmptyQueryParams(string $url): string
+            {
+                return parent::removeEmptyQueryParams($url);
+            }
+        };
+
+        static::assertSame($expected, $testee->removeEmptyQueryParams($input));
+    }
+
+    public function provideRemoveEmptyQueryParams(): \Generator
+    {
+        yield 'no empty query param' => [
+            "https://api.wordpress.org/translations/core/1.0/",
+            "https://api.wordpress.org/translations/core/1.0/",
+        ];
+
+        yield 'empty query param' => [
+            "https://api.wordpress.org/translations/core/1.0/",
+            "https://api.wordpress.org/translations/core/1.0/?version=",
+        ];
+
+        yield 'multiple query params' => [
+            "https://api.wordpress.org/translations/core/1.0/?foo=bar",
+            "https://api.wordpress.org/translations/core/1.0/?foo=bar&version=",
+        ];
+
+        yield 'multiple query params 2' => [
+            "https://api.wordpress.org/translations/core/1.0/?foo=bar",
+            "https://api.wordpress.org/translations/core/1.0/?version=&foo=bar",
+        ];
+
+        yield 'multiple empty query params ' => [
+            "https://api.wordpress.org/translations/core/1.0/?baz=baz",
+            "https://api.wordpress.org/translations/core/1.0/?foo=&bar&baz=baz",
+        ];
+    }
 }

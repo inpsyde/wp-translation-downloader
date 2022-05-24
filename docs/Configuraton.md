@@ -13,6 +13,7 @@ The following configuration properties are available:
 | `languageRootDir`   | `string`   | x        | The relative path to the `languages` directory - replaces `directory`-key.       |
 | `directories.names` | `array`    | x        | Array of package names mapped to `language`sub-folders.                          |
 | `directories.types` | `array`    | x        | Array of package types mapped to `language` sub-folder.                          |
+| `virtual-packages`  | `array`    |          | An array of objects with `name`, `type` and optionally `version`.                |
 
 > **[!] Note:** You can use `*` as wildcard in the `exclude`, `api.names`, `api.types`, `directories.names`
 > and `directories.types` properties.
@@ -238,3 +239,40 @@ To change the directory for a specific package by name you can do following:
 
 This will place the package with `"name": "my/package-name"` in composer.json
 into `/{root path}/public/languages/some-folder/`.
+
+
+## Virtual Packages
+Sometimes it is required to not define a dependency in `composer.json` via `require` or `require-dev` but still need the translations to be installed. That can be the case in the WordPress-world for hosting solutions or dockerized enviornments like https://hub.docker.com/_/wordpress which already shipping WordPress pre-installed.
+
+To install translations for "pre-installed platform dependencies", we introduced `virtual-packages` as part of the `wp-translation-downloader`-configuration. The following example will download additionally to all `require`-dependencies of `composer.json` the WordPress core translations:
+
+```json
+{
+    "languageRootDir": "public/languages/",
+    "languages": ["de_DE"],
+    "virtual-packages": [
+        {
+            "name": "johnpbloch/wordpress",
+            "type": "wordpress-core",
+            "version": "5.8"
+        }
+    ]
+}
+```
+
+The configuration fields are following:
+
+| field     | required | type     | description                                                                           |
+|-----------|----------|----------|---------------------------------------------------------------------------------------|
+| `name`    | x        | `string` | The packageName of your pre-installed dependency.                                     |
+| `type`    | x        | `string` | The type which is usually defined in `composer.json` to resolve the correct endpoint. |
+| `version` |          | `string` | The string in which version you want to install the translations.                     |
+
+We allow to lock a version optionally, since WordPress.org Translation API resolves translations dynamically via `?version={version}`. When the field is being empty the latest translations will be downloaded.
+
+| version string | endpoint                                                       |
+|----------------|----------------------------------------------------------------|
+| `"5.9"`        | https://api.wordpress.org/translations/core/1.0/?version=5.9   |
+| `"5.9.3"`      | https://api.wordpress.org/translations/core/1.0/?version=5.9.3 |
+| `""`           | https://api.wordpress.org/translations/core/1.0/               |
+| _none set_     | https://api.wordpress.org/translations/core/1.0/               |

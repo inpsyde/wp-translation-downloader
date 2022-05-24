@@ -84,6 +84,31 @@
                     }
                 }
             }
+        },
+        "virtual-packages": {
+            "title": "Allows to define already installed dependencies without going through require/require-dev.",
+            "type": "array",
+            "items": [
+                {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                        "name": {
+                            "type": "string"
+                        },
+                        "type": {
+                            "type": "string"
+                        },
+                        "version": {
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "name",
+                        "type"
+                    ]
+                }
+            ]
         }
     }
 }

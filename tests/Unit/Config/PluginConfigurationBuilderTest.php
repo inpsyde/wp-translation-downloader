@@ -122,6 +122,11 @@ class PluginConfigurationBuilderTest extends TestCase
             ['languages' => ['de_DE'], 'excludes' => ['inpsyde/google-tag-manager']],
             true,
         ];
+
+        yield 'virtual-packages' => [
+            ['languages' => ['de_DE'], 'virtual-packages' => [['name' => 'wordpress/core', 'type' => 'wordpress-core']]],
+            true
+        ];
     }
 
     /**
@@ -144,6 +149,16 @@ class PluginConfigurationBuilderTest extends TestCase
         yield 'Incorrect languageRootDir' => [
             ['languages' => ['de_DE'], 'languageRootDir' => false],
             false,
+        ];
+
+        yield 'Incorrect virtual-packages - missing name' => [
+            ['languages' => ['de_DE'], 'virtual-packages' => [['type' => 'wordpress-core']]],
+            false
+        ];
+
+        yield 'Incorrect virtual-packages - missing type' => [
+            ['languages' => ['de_DE'], 'virtual-packages' => [['name' => 'wordpress/core']]],
+            false
         ];
     }
 }
