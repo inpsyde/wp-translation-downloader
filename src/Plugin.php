@@ -229,7 +229,7 @@ final class Plugin implements
         if (!$this->pluginConfig->autorun()) {
             // phpcs:disable Inpsyde.CodeQuality.LineLength.TooLong
             $this->io->write(
-                'Configuration "auto-run" is set to "false". You need to run wp-translation-downloader manually.'
+                '    Configuration "auto-run" is set to "false". You need to run wp-translation-downloader manually.'
             );
 
             return;
@@ -385,7 +385,7 @@ final class Plugin implements
             ->getLocalRepository()->getPackages();
 
         // Add root package.
-        $packages[] = $event->getComposer()->getPackage();
+        $packages[] = $composer->getPackage();
 
         // Add virtual packages from wp-translation-downloader config.
         foreach ($this->pluginConfig->virtualPackages() as $package) {
