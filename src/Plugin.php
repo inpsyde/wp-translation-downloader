@@ -185,7 +185,6 @@ final class Plugin implements
         }
 
         $this->ensureDirectoryExists($this->pluginConfig->languageRootDir());
-
     }
 
     /**
@@ -269,7 +268,7 @@ final class Plugin implements
      */
     public function onPackageUninstall(PackageEvent $event)
     {
-        if($this->pluginConfig === null){
+        if ($this->pluginConfig === null) {
             return;
         }
 
@@ -286,7 +285,7 @@ final class Plugin implements
     public function doCleanUpDirectories()
     {
         try {
-            if($this->pluginConfig === null){
+            if ($this->pluginConfig === null) {
                 return;
             }
 
@@ -309,7 +308,7 @@ final class Plugin implements
     public function doCleanCache()
     {
         try {
-            if($this->pluginConfig === null){
+            if ($this->pluginConfig === null) {
                 return;
             }
             $this->logo();
