@@ -235,15 +235,7 @@ final class Plugin implements
             return;
         }
 
-        $packages = $event->getComposer()->getRepositoryManager()
-            ->getLocalRepository()->getPackages();
-
-        // Add root package as well to be processed.
-        $packages[] = $event->getComposer()->getPackage();
-
-        foreach ($this->pluginConfig->virtualPackages() as $package) {
-            $packages[] = $package;
-        }
+        $packages = $this->availablePackages($event->getComposer());
 
         $this->doUpdatePackages($packages);
     }
@@ -256,12 +248,6 @@ final class Plugin implements
         $this->bootstrap();
 
         if ($this->pluginConfig === null) {
-            return;
-        }
-
-        if (count($packages) < 1) {
-            $this->io->error('No packages found to process.');
-
             return;
         }
 
@@ -382,6 +368,31 @@ final class Plugin implements
 
             return false;
         }
+    }
+
+    /**
+     * Returns all available packages defined in composer.json
+     * and wp-translation-downloader.virtual-packages configuration.
+     *
+     * @param Composer $composer
+     *
+     * @return PackageInterface[]
+     */
+    public function availablePackages(Composer $composer): array
+    {
+        /** @var PackageInterface[] $packages */
+        $packages = $composer->getRepositoryManager()
+            ->getLocalRepository()->getPackages();
+
+        // Add root package.
+        $packages[] = $event->getComposer()->getPackage();
+
+        // Add virtual packages from wp-translation-downloader config.
+        foreach ($this->pluginConfig->virtualPackages() as $package) {
+            $packages[] = $package;
+        }
+
+        return $packages;
     }
 
     /**

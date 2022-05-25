@@ -61,11 +61,18 @@ class DownloadCommand extends BaseCommand
             /** @var IOInterface $io */
             $io = $this->getIO();
 
-            $packagesToProcess = $this->optionPackagesToProcess($input);
-            $packages = $this->resolvePackages($packagesToProcess);
-
             $plugin = new Plugin();
             $plugin->activate($composer, $io);
+
+            $packages = $plugin->availablePackages($composer);
+            $packagesToProcess = $this->optionPackagesToProcess($input);
+            $packages = array_filter(
+                $packages,
+                static function (PackageInterface $package) use ($packagesToProcess): bool {
+                    return in_array($package->getName(), $packagesToProcess, true);
+                }
+            );
+
             $plugin->doUpdatePackages($packages);
 
             return 0;
@@ -95,37 +102,5 @@ class DownloadCommand extends BaseCommand
         $packagesToProcess = array_filter($packagesToProcess);
 
         return $packagesToProcess;
-    }
-
-    /**
-     * Searches for packages in composer.json by a given list of packageNames.
-     *
-     * @param array $packagesToProcess
-     *
-     * @return PackageInterface[]
-     * @throws \RuntimeException
-     */
-    private function resolvePackages(array $packagesToProcess): array
-    {
-        /** @var Composer $composer */
-        $composer = $this->getComposer(true, false);
-
-        /** @var PackageInterface[] $packages */
-        $packages = $composer->getRepositoryManager()
-            ->getLocalRepository()->getPackages();
-
-        // Add root level package as well.
-        $packages[] = $composer->getPackage();
-
-        if (count($packagesToProcess) > 0) {
-            $packages = array_filter(
-                $packages,
-                static function (PackageInterface $package) use ($packagesToProcess): bool {
-                    return in_array($package->getName(), $packagesToProcess, true);
-                }
-            );
-        }
-
-        return $packages;
     }
 }
