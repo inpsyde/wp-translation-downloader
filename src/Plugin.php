@@ -141,9 +141,6 @@ final class Plugin implements
     public function activate(Composer $composer, IOInterface $io)
     {
         $this->io = $io;
-
-        $this->logo();
-
         $config = $composer->getConfig();
 
         $this->cache = new Cache($this->io, $config->get('cache-dir') . '/translations');
@@ -206,7 +203,7 @@ final class Plugin implements
         if (!$this->pluginConfig->autorun()) {
             // phpcs:disable Inpsyde.CodeQuality.LineLength.TooLong
             $this->io->write(
-                '    Configuration "auto-run" is set to "false". You need to run wp-translation-downloader manually.'
+                '<info>Configuration "auto-run" is set to "false". You need to run wp-translation-downloader manually.</info>'
             );
 
             return;
@@ -225,6 +222,8 @@ final class Plugin implements
         if ($this->pluginConfig === null) {
             return;
         }
+
+        $this->io->logo();
 
         $allowedLanguages = $this->pluginConfig->allowedLanguages();
         // We keep track of package which are already
@@ -290,6 +289,8 @@ final class Plugin implements
             if($this->pluginConfig === null){
                 return;
             }
+
+            $this->io->logo();
             $this->io->write('Starting to empty the directories...');
             $directory = $this->pluginConfig->languageRootDir();
             $this->filesystem->emptyDirectory($directory);
@@ -311,6 +312,7 @@ final class Plugin implements
             if($this->pluginConfig === null){
                 return;
             }
+            $this->io->logo();
             $this->io->write('Starting to clean cache directory.');
             $this->cache->clear()
                 ? $this->io->write('<info>Cache folder was emptied successfully.</info>')

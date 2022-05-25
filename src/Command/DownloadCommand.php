@@ -65,13 +65,18 @@ class DownloadCommand extends BaseCommand
             $plugin->activate($composer, $io);
 
             $packages = $plugin->availablePackages($composer);
+
             $packagesToProcess = $this->optionPackagesToProcess($input);
-            $packages = array_filter(
-                $packages,
-                static function (PackageInterface $package) use ($packagesToProcess): bool {
-                    return in_array($package->getName(), $packagesToProcess, true);
-                }
-            );
+            // If we have packages defined within the command, we
+            // restrict the collection by those names.
+            if (count($packagesToProcess) > 0) {
+                $packages = array_filter(
+                    $packages,
+                    static function (PackageInterface $package) use ($packagesToProcess): bool {
+                        return in_array($package->getName(), $packagesToProcess, true);
+                    }
+                );
+            }
 
             $plugin->doUpdatePackages($packages);
 
