@@ -223,7 +223,7 @@ final class Plugin implements
             return;
         }
 
-        $this->io->logo();
+        $this->logo();
 
         $allowedLanguages = $this->pluginConfig->allowedLanguages();
         // We keep track of package which are already
@@ -290,7 +290,7 @@ final class Plugin implements
                 return;
             }
 
-            $this->io->logo();
+            $this->logo();
             $this->io->write('Starting to empty the directories...');
             $directory = $this->pluginConfig->languageRootDir();
             $this->filesystem->emptyDirectory($directory);
@@ -312,7 +312,7 @@ final class Plugin implements
             if($this->pluginConfig === null){
                 return;
             }
-            $this->io->logo();
+            $this->logo();
             $this->io->write('Starting to clean cache directory.');
             $this->cache->clear()
                 ? $this->io->write('<info>Cache folder was emptied successfully.</info>')
