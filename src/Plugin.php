@@ -50,11 +50,6 @@ final class Plugin implements
     private $io;
 
     /**
-     * @var Composer
-     */
-    private $composer;
-
-    /**
      * @var Downloader
      */
     private $downloader;
@@ -146,27 +141,10 @@ final class Plugin implements
     public function activate(Composer $composer, IOInterface $io)
     {
         $this->io = $io;
-        $this->composer = $composer;
-    }
-
-    /**
-     * Internal function to lazy bootstrap services, when Plugin is executed.
-     *
-     * @return bool
-     * @throws \InvalidArgumentException
-     * @throws \RuntimeException
-     * @throws \Throwable
-     */
-    private function bootstrap(): bool
-    {
-        if ($this->booted) {
-            return false;
-        }
-        $this->booted = true;
 
         $this->logo();
 
-        $config = $this->composer->getConfig();
+        $config = $composer->getConfig();
 
         $this->cache = new Cache($this->io, $config->get('cache-dir') . '/translations');
         if (!$this->cache->isEnabled()) {
@@ -184,10 +162,10 @@ final class Plugin implements
 
         $pluginConfigBuilder = new PluginConfigurationBuilder($this->io);
         /** @var PluginConfiguration|null pluginConfig */
-        $this->pluginConfig = $pluginConfigBuilder->build($this->composer->getPackage()->getExtra());
+        $this->pluginConfig = $pluginConfigBuilder->build($composer->getPackage()->getExtra());
 
         if ($this->pluginConfig === null) {
-            return false;
+            return;
         }
 
         $this->translatablePackageFactory = new TranslatablePackageFactory($this->pluginConfig);
@@ -211,7 +189,6 @@ final class Plugin implements
 
         $this->ensureDirectoryExists($this->pluginConfig->languageRootDir());
 
-        return true;
     }
 
     /**
@@ -222,7 +199,7 @@ final class Plugin implements
      */
     public function onPostInstallAndUpdate(Event $event)
     {
-        if (!$this->bootstrap()) {
+        if ($this->pluginConfig === null) {
             return;
         }
 
@@ -245,8 +222,6 @@ final class Plugin implements
      */
     public function doUpdatePackages(array $packages)
     {
-        $this->bootstrap();
-
         if ($this->pluginConfig === null) {
             return;
         }
@@ -295,7 +270,7 @@ final class Plugin implements
      */
     public function onPackageUninstall(PackageEvent $event)
     {
-        if (!$this->bootstrap()) {
+        if($this->pluginConfig === null){
             return;
         }
 
@@ -312,7 +287,9 @@ final class Plugin implements
     public function doCleanUpDirectories()
     {
         try {
-            $this->bootstrap();
+            if($this->pluginConfig === null){
+                return;
+            }
             $this->io->write('Starting to empty the directories...');
             $directory = $this->pluginConfig->languageRootDir();
             $this->filesystem->emptyDirectory($directory);
@@ -331,7 +308,9 @@ final class Plugin implements
     public function doCleanCache()
     {
         try {
-            $this->bootstrap();
+            if($this->pluginConfig === null){
+                return;
+            }
             $this->io->write('Starting to clean cache directory.');
             $this->cache->clear()
                 ? $this->io->write('<info>Cache folder was emptied successfully.</info>')
