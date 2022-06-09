@@ -27,11 +27,18 @@ final class PluginConfigurationBuilder
     private $io;
 
     /**
-     * @param IOInterface $io
+     * @var string
      */
-    public function __construct(IOInterface $io)
+    private $schemaFile;
+
+    /**
+     * @param IOInterface $io
+     * @param string $resourcedDir
+     */
+    public function __construct(IOInterface $io, string $resourcedDir)
     {
         $this->io = $io;
+        $this->schemaFile = "{$resourcedDir}/wp-translation-downloader-schema.json";
     }
 
     /**
@@ -63,49 +70,51 @@ final class PluginConfigurationBuilder
             $config = $file->read();
         }
 
-        if (!$this->validateSchema($config)) {
+        if (!is_array($config)) {
+            $this->io->writeError(
+                '<error>[ERROR]</error> wp-translation-downloader configuration must be an array '
+                . 'or the path to a JSON configuration file.'
+            );
+
             return null;
         }
 
-        return new PluginConfiguration($config);
+        return $this->validateSchema($config)
+            ? new PluginConfiguration($config)
+            : null;
     }
 
     /**
      * Validates the wp-translation-downloader configuration against the JSON Schema.
      *
      * @param array $input
-     *
      * @return bool
      */
     public function validateSchema(array $input): bool
     {
-        // phpcs:disable Inpsyde.CodeQuality.LineLength.TooLong
-        $schema = [
-            '$ref' => 'file://' . realpath(__DIR__ . '/../../resources/wp-translation-downloader-schema.json'),
-        ];
+        $schema = ['$ref' => "file://{$this->schemaFile}"];
 
         $validator = new Validator();
 
-        $input = (object) json_decode(json_encode($input));
+        $input = (object) json_decode(json_encode($input) ?: '{}');
 
         $validator->validate($input, $schema);
 
-        $isValid = $validator->isValid();
+        $isValid = (bool)$validator->isValid();
 
         if (!$isValid) {
             // phpcs:disable Inpsyde.CodeQuality.LineLength.TooLong
             $this->io->writeError(
-                "<error>[ERROR]</error> validation of wp-translation-downloader configuration failed:"
+                "<error>[ERROR]</error> Failed validating wp-translation-downloader configuration:"
             );
 
-            foreach ($validator->getErrors() as $error) {
-                $this->io->writeError(
-                    sprintf(
-                        '   <fg=yellow>%1$s</> - %2$s.',
-                        $error['pointer'],
-                        $error['message']
-                    )
-                );
+            foreach ((array)$validator->getErrors() as $error) {
+                assert(is_array($error));
+                $pointer = $error['pointer'] ?? '';
+                $message = $error['message'] ?? '';
+                $prefix = is_string($pointer) ? "   <fg=yellow>{$pointer}</> - " : '   ';
+                is_string($message) or $message = 'Generic error';
+                $this->io->writeError($prefix . $message);
             }
         }
 

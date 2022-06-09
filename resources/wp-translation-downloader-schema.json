@@ -2,6 +2,54 @@
     "$schema": "http://json-schema.org/draft-07/schema#",
     "title": "wp-translation-downloader",
     "type": "object",
+    "definitions": {
+        "customEndpoint": {
+            "type": "object",
+            "required": [
+                "url"
+            ],
+            "additionalProperties": false,
+            "properties": {
+                "url": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string",
+                    "enum": [
+                        "zip",
+                        "rar",
+                        "tar",
+                        "gzip",
+                        "xz",
+                        "mo",
+                        "json"
+                    ]
+                }
+            }
+        },
+        "directories": {
+            "type": "object",
+            "additionalProperties": {
+                "type": [
+                    "string",
+                    "boolean"
+                ]
+            }
+        },
+        "endpoints": {
+            "oneOf": [
+                {
+                    "$ref": "#/definitions/directories"
+                },
+                {
+                    "type": "object",
+                    "additionalProperties": {
+                        "$ref": "#/definitions/customEndpoint"
+                    }
+                }
+            ]
+        }
+    },
     "required": [
         "languages"
     ],
@@ -38,77 +86,53 @@
         "directories": {
             "title": "Custom directories mapped by 'type' or 'name'",
             "type": "object",
-            "additionalProperties": false,
             "properties": {
                 "names": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": [
-                            "string",
-                            "boolean"
-                        ]
-                    }
+                    "$ref": "#/definitions/directories"
                 },
                 "types": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": [
-                            "string",
-                            "boolean"
-                        ]
-                    }
+                    "$ref": "#/definitions/directories"
                 }
             }
         },
         "api": {
             "title": "Custom API Endpoints mapped by 'type' or 'name'",
             "type": "object",
-            "additionalProperties": false,
             "properties": {
                 "names": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": [
-                            "string",
-                            "boolean"
-                        ]
-                    }
+                    "$ref": "#/definitions/endpoints"
                 },
                 "types": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": [
-                            "string",
-                            "boolean"
-                        ]
-                    }
+                    "$ref": "#/definitions/endpoints"
                 }
             }
         },
         "virtual-packages": {
             "title": "Allows to define already installed dependencies without going through require/require-dev.",
             "type": "array",
-            "items": [
-                {
-                    "type": "object",
-                    "additionalProperties": false,
-                    "properties": {
-                        "name": {
-                            "type": "string"
-                        },
-                        "type": {
-                            "type": "string"
-                        },
-                        "version": {
-                            "type": "string"
-                        }
+            "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                    "name": {
+                        "type": "string"
                     },
-                    "required": [
-                        "name",
-                        "type"
-                    ]
-                }
-            ]
+                    "type": {
+                        "type": "string"
+                    },
+                    "version": {
+                        "type": [
+                            "integer",
+                            "number",
+                            "string"
+                        ]
+                    }
+                },
+                "required": [
+                    "name",
+                    "type"
+                ]
+            }
         }
     }
 }

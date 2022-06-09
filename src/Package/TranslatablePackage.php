@@ -15,21 +15,22 @@ namespace Inpsyde\WpTranslationDownloader\Package;
 
 use Composer\Package\Package;
 use Composer\Package\PackageInterface;
-use Inpsyde\WpTranslationDownloader\PackageNameResolver;
 
 class TranslatablePackage extends Package implements TranslatablePackageInterface
 {
+    use NameResolverTrait;
+
     /**
      * All translations from the API.
      *
-     * @var array
+     * @var list<ProjectTranslation>
      */
     protected $translations = [];
 
     /**
-     * @var string
+     * @var string|null
      */
-    protected $projectName;
+    protected $projectName = null;
 
     /**
      * @var string
@@ -47,21 +48,36 @@ class TranslatablePackage extends Package implements TranslatablePackageInterfac
     private $translationLoaded = false;
 
     /**
+     * @var string|null
+     */
+    private $endpointFileType;
+
+    /**
      * @param PackageInterface $package
      * @param string $directory
      * @param string $endpoint
+     * @param string|null $endpointFileType
      */
-    public function __construct(PackageInterface $package, string $directory, string $endpoint)
-    {
-        parent::__construct($package->getName(), $package->getVersion(), $package->getPrettyVersion());
+    public function __construct(
+        PackageInterface $package,
+        string $directory,
+        string $endpoint,
+        ?string $endpointFileType = null
+    ) {
+
+        parent::__construct(
+            $package->getName(),
+            $package->getVersion(),
+            $package->getPrettyVersion()
+        );
 
         // Type is not set by constructor, so we have to set it manually
         // in case we want to access it again.
         // Otherwise, it will fall back to "library".
-        $this->setType($package->getType());
-
+        $this->type = $package->getType();
         $this->endpoint = $endpoint;
         $this->languageDirectory = $directory;
+        $this->endpointFileType = $endpointFileType;
     }
 
     /**
@@ -75,37 +91,43 @@ class TranslatablePackage extends Package implements TranslatablePackageInterfac
             return $this->translations;
         }
 
-        return array_filter(
-            $this->translations,
-            static function (array $trans) use ($allowedLanguages): bool {
-                return in_array($trans['language'], $allowedLanguages, true);
+        $filtered = [];
+        foreach ($this->translations as $translation) {
+            if (in_array($translation->language(), $allowedLanguages, true)) {
+                $filtered[] = $translation;
             }
-        );
+        }
+
+        return $filtered;
     }
 
+    /**
+     * @return bool
+     */
     protected function loadTranslations(): bool
     {
         if ($this->translationLoaded) {
             return false;
         }
-        $this->translationLoaded = [];
+        $this->translationLoaded = true;
 
         $apiUrl = $this->apiEndpoint();
         if ($apiUrl === '') {
             return false;
         }
 
-        $result = @file_get_contents($this->apiEndpoint());
+        $result = @file_get_contents($apiUrl);
         if (!$result) {
             return false;
         }
 
         $result = json_decode($result, true);
-        if (!isset($result['translations']) || count($result['translations']) < 1) {
+        $translations = is_array($result) ? ($result['translations'] ?? null) : null;
+        if (!is_array($translations) || (count($translations) < 1)) {
             return false;
         }
 
-        $this->translations = $result['translations'];
+        $this->translations = $this->parseTranslations($translations);
 
         return true;
     }
@@ -123,8 +145,8 @@ class TranslatablePackage extends Package implements TranslatablePackageInterfac
      */
     public function projectName(): string
     {
-        if (!$this->projectName) {
-            [$vendorName, $projectName] = PackageNameResolver::resolve($this->getName());
+        if ($this->projectName === null) {
+            [, $projectName] = $this->resolveName($this->getName());
             $this->projectName = $projectName;
         }
 
@@ -137,5 +159,25 @@ class TranslatablePackage extends Package implements TranslatablePackageInterfac
     public function languageDirectory(): string
     {
         return $this->languageDirectory;
+    }
+
+    /**
+     * @param array $translationsData
+     * @return list<ProjectTranslation>
+     */
+    protected function parseTranslations(array $translationsData): array
+    {
+        $validTranslations = [];
+        foreach ($translationsData as $translationData) {
+            $translation = is_array($translationData)
+                ? ProjectTranslation::load($translationData, $this->projectName())
+                : null;
+            if ($translation && $translation->isValid()) {
+                $this->endpointFileType and $translation->withFileType($this->endpointFileType);
+                $validTranslations[] = $translation;
+            }
+        }
+
+        return $validTranslations;
     }
 }

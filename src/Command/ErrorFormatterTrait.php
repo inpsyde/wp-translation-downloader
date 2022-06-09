@@ -43,6 +43,7 @@ trait ErrorFormatterTrait
 
         $line and $lines[] = "  {$line}  ";
 
+        /** @psalm-suppress ArgumentTypeCoercion */
         $lenMax = max(array_map('strlen', $lines));
         $empty = '<error>' . str_repeat(' ', $lenMax) . '</error>';
         $errors = ['', $empty];
@@ -59,7 +60,6 @@ trait ErrorFormatterTrait
             $output = $output->getErrorOutput();
         }
 
-        /** @psalm-suppress MixedMethodCall */
         $output->writeln($errors);
     }
 }

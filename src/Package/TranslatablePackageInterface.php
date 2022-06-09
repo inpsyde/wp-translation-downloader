@@ -28,14 +28,13 @@ interface TranslatablePackageInterface extends PackageInterface
     /**
      * Collection of translations filtered by allowed languages.
      *
-     * @param array $allowedLanguages
-     *
-     * @return array
+     * @param list<string> $allowedLanguages
+     * @return list<ProjectTranslation>
      */
     public function translations(array $allowedLanguages = []): array;
 
     /**
-     * Endpoint url to download translation files from GlotPress.
+     * Endpoint url to download translation files from Glotpress.
      *
      * @return string
      */

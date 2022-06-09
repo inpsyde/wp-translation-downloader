@@ -14,9 +14,6 @@ declare(strict_types=1);
 namespace Inpsyde\WpTranslationDownloader\Command;
 
 use Composer\Command\BaseCommand;
-use Composer\Composer;
-use Composer\IO\IOInterface;
-use Inpsyde\WpTranslationDownloader\Plugin;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
@@ -27,7 +24,7 @@ class CleanCacheCommand extends BaseCommand
     /**
      * @throws \Symfony\Component\Console\Exception\InvalidArgumentException
      */
-    protected function configure()
+    protected function configure(): void
     {
         $this
             ->setName('wp-translation-downloader:clean-cache')
@@ -45,15 +42,12 @@ class CleanCacheCommand extends BaseCommand
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         try {
-            /** @var Composer $composer */
-            $composer = $this->getComposer(true, false);
-
-            /** @var IOInterface $io */
-            $io = $this->getIO();
-
-            $plugin = new Plugin();
-            $plugin->activate($composer, $io);
-            $plugin->doCleanCache();
+            $this->getIO()->write(
+                [
+                    'The wp-translation-downloader:clean-cache command is deprecated,',
+                    'and it does nothing now.',
+                ]
+            );
 
             return 0;
         } catch (\Throwable $throwable) {

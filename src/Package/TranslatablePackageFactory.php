@@ -17,20 +17,23 @@ use Composer\DependencyResolver\Operation\InstallOperation;
 use Composer\DependencyResolver\Operation\OperationInterface;
 use Composer\DependencyResolver\Operation\UninstallOperation;
 use Composer\DependencyResolver\Operation\UpdateOperation;
+use Composer\Package\CompletePackage;
 use Composer\Package\PackageInterface;
-use Inpsyde\WpTranslationDownloader\PackageNameResolver;
+use Composer\Package\RootPackage;
+use Composer\Package\Version\VersionParser;
 use Inpsyde\WpTranslationDownloader\Config\PluginConfiguration;
+use Inpsyde\WpTranslationDownloader\Util\FnMatcher;
 
 class TranslatablePackageFactory
 {
+    use NameResolverTrait;
+
     /**
      * @var PluginConfiguration
      */
     protected $pluginConfiguration;
 
     /**
-     * TranslatablePackageFactory constructor.
-     *
      * @param PluginConfiguration $pluginConfiguration
      */
     public function __construct(PluginConfiguration $pluginConfiguration)
@@ -40,13 +43,17 @@ class TranslatablePackageFactory
 
     /**
      * @param UninstallOperation|UpdateOperation|InstallOperation|OperationInterface $operation
-     *
      * @return null|TranslatablePackageInterface
      * @throws \InvalidArgumentException
      */
-    public function createFromOperation(OperationInterface $operation): ?TranslatablePackageInterface
-    {
-        /** @var PackageInterface $package */
+    public function createFromOperation(
+        OperationInterface $operation
+    ): ?TranslatablePackageInterface {
+
+        /**
+         * @var PackageInterface $package
+         * @psalm-suppress PossiblyUndefinedMethod
+         */
         $package = ($operation instanceof UpdateOperation)
             ? $operation->getTargetPackage()
             : $operation->getPackage();
@@ -56,7 +63,6 @@ class TranslatablePackageFactory
 
     /**
      * @param PackageInterface $package
-     *
      * @return TranslatablePackageInterface|null
      */
     public function create(PackageInterface $package): ?TranslatablePackageInterface
@@ -66,66 +72,63 @@ class TranslatablePackageFactory
             return null;
         }
 
-        $endpoint = $this->resolveEndpoint($package);
-        if ($endpoint === null) {
+        $endpointData = $this->resolveEndpoint($package);
+        if ($endpointData === null) {
             return null;
         }
 
-        return new TranslatablePackage($package, $directory, $endpoint);
+        [$endpoint, $endpointType] = $endpointData;
+
+        return new TranslatablePackage($package, $directory, $endpoint, $endpointType);
     }
 
     /**
      * Resolves for a given Package the api endpoint to download translations.
      *
      * @param PackageInterface $package
-     *
-     * @return string|null
+     * @return array{string, string|null}|null
      */
-    public function resolveEndpoint(PackageInterface $package): ?string
+    public function resolveEndpoint(PackageInterface $package): ?array
     {
-        $packageName = $package->getName();
-        $packageType = $package->getType();
+        $byName = $this->pluginConfiguration->endpointsByName();
+        $byType = $this->pluginConfiguration->endpointsByType();
 
-        $byName = $this->pluginConfiguration->apiBy(PluginConfiguration::BY_NAME);
-        $byType = $this->pluginConfiguration->apiBy(PluginConfiguration::BY_TYPE);
+        $endpointData = $this->findByName($package->getName(), $byName)
+            ?? $this->findByType($package->getType(), $byType);
 
-        $endpoint = $this->findByName($packageName, $byName) ?? $this->findByType($packageType, $byType);
-
-        if ($endpoint === null) {
+        if ($endpointData === null) {
             return null;
         }
 
-        $endpoint = $this->replacePlaceholders($endpoint, $package);
+        $endpointUrl = $this->replacePlaceholders($endpointData['url'], $package);
+        $endpointUrl = $this->removeEmptyQueryParams($endpointUrl);
 
-        return $this->removeEmptyQueryParams($endpoint);
+        return [$endpointUrl, $endpointData['type']];
     }
 
     /**
      * Resolves for a given Package the directory.
      *
      * @param PackageInterface $package
-     *
      * @return string|null
      */
     public function resolveDirectory(PackageInterface $package): ?string
     {
-        $packageName = $package->getName();
-        $packageType = $package->getType();
+        $byName = $this->pluginConfiguration->directoriesByName();
+        $byType = $this->pluginConfiguration->directoriesByType();
 
-        $byName = $this->pluginConfiguration->directoryBy(PluginConfiguration::BY_NAME);
-        $byType = $this->pluginConfiguration->directoryBy(PluginConfiguration::BY_TYPE);
+        $directoryData = $this->findByName($package->getName(), $byName)
+            ?? $this->findByType($package->getType(), $byType);
 
-        $directory = $this->findByName($packageName, $byName) ?? $this->findByType($packageType, $byType);
-
-        if ($directory === null) {
+        if ($directoryData === null) {
             return null;
         }
 
-        $directory = trim($directory, "\\/");
+        $directory = trim($directoryData['url'], "\\/");
         $resolvedDir = $this->pluginConfiguration->languageRootDir();
 
         if ($directory !== '') {
-            $resolvedDir .= $directory . DIRECTORY_SEPARATOR;
+            $resolvedDir .= "{$directory}/";
         }
 
         return $this->replacePlaceholders($resolvedDir, $package, true);
@@ -133,19 +136,19 @@ class TranslatablePackageFactory
 
     /**
      * Removes empty query params from a given URL. This is necessary since WP will
-     * fail when sending ?version= to GlotPress API:
+     * fail when sending ?version= to Glotpress API:
      *
      * ✗   https://api.wordpress.org/translations/core/1.0/?version=
      * ✓   https://api.wordpress.org/translations/core/1.0/?version=5.9
      *
      * @param string $url
-     *
      * @return string
      */
     protected function removeEmptyQueryParams(string $url): string
     {
-        $parsedUrl = parse_url($url);
-        $query = $parsedUrl['query'] ?? '';
+        $urlSplit = explode('?', $url);
+        $query = $urlSplit[1] ?? '';
+
         if ($query === '') {
             return $url;
         }
@@ -153,8 +156,7 @@ class TranslatablePackageFactory
         parse_str($query, $parameters);
         $cleanedParams = array_filter($parameters);
 
-        $base = strtok($url, '?');
-
+        $base = $urlSplit[0];
         if (count($cleanedParams) > 0) {
             $base .= '?' . http_build_query($cleanedParams);
         }
@@ -168,7 +170,6 @@ class TranslatablePackageFactory
      * @param bool $allowDevVersion If set to true it will replace %packageVersion% with "dev-*".
      *                              For api endpoints this is set to false.
      *                              It causes problems on https://api.wordpress.org/translations/
-     *
      * @return string
      */
     protected function replacePlaceholders(
@@ -177,10 +178,11 @@ class TranslatablePackageFactory
         bool $allowDevVersion = false
     ): string {
 
-        [$vendorName, $projectName] = PackageNameResolver::resolve($package->getName());
+        [$vendorName, $projectName] = $this->resolveName($package->getName());
 
         $version = $package->getPrettyVersion();
-        if (!$allowDevVersion && strpos($version, "dev-") === 0) {
+        $stability = VersionParser::parseStability($version);
+        if (!$allowDevVersion && ($stability !== 'stable')) {
             $version = '';
         }
 
@@ -192,43 +194,60 @@ class TranslatablePackageFactory
             '%packageVersion%' => $version,
         ];
 
-        return str_replace(
-            array_keys($replacements),
-            array_values($replacements),
-            $input
-        );
+        return strtr($input, $replacements);
     }
 
-    protected function findByName(string $packageName, array $byName): ?string
+    /**
+     * @param string $packageName
+     * @param array<string, mixed> $byName
+     * @return array{url:string, type: string|null}|null
+     */
+    protected function findByName(string $packageName, array $byName): ?array
     {
-        $directory = null;
-        foreach ($byName as $name => $dir) {
-            $pattern = '/' . $this->pluginConfiguration->prepareRegex($name) . '/';
-            if (preg_match($pattern, $packageName) === 1) {
-                $directory = $dir;
-                break;
-            };
+        foreach ($byName as $name => $value) {
+            if (!FnMatcher::isMatching($name, $packageName)) {
+                continue;
+            }
+            if (is_string($value)) {
+                return ['url' => $value, 'type' => null];
+            }
+            is_object($value) and $value = (array)$value;
+            if (!is_array($value) || !is_string($value['url'] ?? null)) {
+                continue;
+            }
+            /** @var string $url */
+            $url = $value['url'];
+            /** @var string|null $type */
+            $type = is_string($value['type'] ?? null) ? $value['type'] : null;
+
+            return compact('url', 'type');
         }
 
-        // phpcs:disable Squiz.PHP.CommentedOutCode.Found
-        // In case, someone set ["name" => ["inpsyde/google-tag-manager" => false]]
-        if ($directory === false) {
-            $directory = null;
-        }
-
-        return $directory;
+        return null;
     }
 
-    protected function findByType(string $packageType, array $byType): ?string
+    /**
+     * @param string $packageType
+     * @param array<string, mixed> $byType
+     * @return array{url:string, type: string|null}|null
+     */
+    protected function findByType(string $packageType, array $byType): ?array
     {
-        $directory = $byType[$packageType] ?? null;
-
-        // phpcs:disable Squiz.PHP.CommentedOutCode.Found
-        // In case, someone set ["type" => ["wordpress-plugin" => false]]
-        if ($directory === false) {
-            $directory = null;
+        $value = $byType[$packageType] ?? null;
+        if (is_string($value)) {
+            return ['url' => $value, 'type' => null];
         }
 
-        return $directory;
+        is_object($value) and $value = (array)$value;
+        if (!is_array($value) || !is_string($value['url'] ?? null)) {
+            return null;
+        }
+
+        /** @var string $url */
+        $url = $value['url'];
+        /** @var string|null $type */
+        $type = is_string($value['type'] ?? null) ? $value['type'] : null;
+
+        return compact('url', 'type');
     }
 }

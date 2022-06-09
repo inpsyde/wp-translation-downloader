@@ -13,30 +13,29 @@ declare(strict_types=1);
 
 namespace Inpsyde\WpTranslationDownloader;
 
-use Composer\Cache;
+use Composer\Command\BaseCommand;
 use Composer\Composer;
 use Composer\EventDispatcher\EventSubscriberInterface;
 use Composer\Installer\PackageEvent;
 use Composer\IO\IOInterface;
-use Composer\Package\Package;
+use Composer\Package\CompletePackage;
 use Composer\Package\PackageInterface;
+use Composer\Package\RootPackage;
 use Composer\Plugin\Capability\CommandProvider;
 use Composer\Plugin\Capable;
 use Composer\Plugin\PluginInterface;
 use Composer\Script\Event;
 use Composer\Util\Filesystem;
-use Composer\Util\RemoteFilesystem;
 use Inpsyde\WpTranslationDownloader\Command\CleanCacheCommand;
 use Inpsyde\WpTranslationDownloader\Command\CleanUpCommand;
 use Inpsyde\WpTranslationDownloader\Command\DownloadCommand;
 use Inpsyde\WpTranslationDownloader\Config\PluginConfiguration;
 use Inpsyde\WpTranslationDownloader\Config\PluginConfigurationBuilder;
-use Inpsyde\WpTranslationDownloader\Package\TranslatablePackageInterface;
+use Inpsyde\WpTranslationDownloader\Util\ArchiveDownloaderFactory;
 use Inpsyde\WpTranslationDownloader\Util\Downloader;
 use Inpsyde\WpTranslationDownloader\Package\TranslatablePackageFactory;
 use Inpsyde\WpTranslationDownloader\Util\Locker;
 use Inpsyde\WpTranslationDownloader\Util\Remover;
-use Inpsyde\WpTranslationDownloader\Util\Unzipper;
 
 final class Plugin implements
     PluginInterface,
@@ -45,86 +44,79 @@ final class Plugin implements
     CommandProvider
 {
     /**
-     * @var IOInterface
+     * @var IOInterface|null
      */
-    private $io;
+    private $io = null;
 
     /**
-     * @var Downloader
+     * @var PluginConfiguration|null
      */
-    private $downloader;
+    private $pluginConfig = null;
 
     /**
-     * @var Remover
+     * @var TranslatablePackageFactory|null
      */
-    private $remover;
+    private $translatablePackageFactory = null;
 
     /**
-     * @var PluginConfiguration
+     * @var Filesystem|null
      */
-    private $pluginConfig;
+    private $filesystem = null;
 
     /**
-     * @var TranslatablePackageFactory
+     * @var Locker|null
      */
-    private $translatablePackageFactory;
+    private $locker = null;
 
     /**
-     * @var Filesystem
+     * @var ArchiveDownloaderFactory|null
      */
-    private $filesystem;
-
-    /**
-     * @var Locker
-     */
-    private $locker;
-
-    /**
-     * @var Cache
-     */
-    private $cache;
-
-    /**
-     * @var bool
-     */
-    private $booted = false;
+    private $archiveDownloaderFactory = null;
 
     /**
      * Subscribe to Composer events.
      *
-     * @return array The events and callbacks.
+     * @return array<string, list<array{string, int}>> The events and callbacks.
      *
-     * phpcs:disable Inpsyde.CodeQuality.NoAccessors.NoGetter
-     * phpcs:disable Inpsyde.CodeQuality.ReturnTypeDeclaration.NoReturnType
+     * phpcs:disable Inpsyde.CodeQuality.NoAccessors
+     * phpcs:disable Inpsyde.CodeQuality.ReturnTypeDeclaration
      */
     public static function getSubscribedEvents()
     {
+        // phpcs:enable Inpsyde.CodeQuality.NoAccessors
+        // phpcs:enable Inpsyde.CodeQuality.ReturnTypeDeclaration
         return [
             "post-install-cmd" => [
                 ['onPostInstallAndUpdate', 0],
             ],
             "post-update-cmd" => [
-                ['onPostInstallAndUpdate', 0],
+                ["onPostInstallAndUpdate", 0],
             ],
             'post-package-uninstall' => [
-                ['onPackageUninstall', 0],
+                ["onPackageUninstall", 0],
             ],
         ];
     }
 
     /**
-     * @return array
+     * @return array<class-string, class-string>
+     *
+     * phpcs:disable Inpsyde.CodeQuality.NoAccessors
      */
     public function getCapabilities(): array
     {
+        // phpcs:enable Inpsyde.CodeQuality.NoAccessors
         return [CommandProvider::class => __CLASS__];
     }
 
     /**
-     * @return array
+     * @return non-empty-list<BaseCommand>
+     *
+     * phpcs:disable Inpsyde.CodeQuality.NoAccessors
      */
     public function getCommands(): array
     {
+        // phpcs:enable Inpsyde.CodeQuality.NoAccessors
         return [
             new DownloadCommand(),
             new CleanUpCommand(),
@@ -141,24 +133,14 @@ final class Plugin implements
     public function activate(Composer $composer, IOInterface $io)
     {
         $this->io = $io;
-        $config = $composer->getConfig();
-
-        $this->cache = new Cache($this->io, $config->get('cache-dir') . '/translations');
-        if (!$this->cache->isEnabled()) {
-            $this->io->error("Composer Cache folder is not enabled.");
-
-            return false;
-        }
-
         $this->filesystem = new Filesystem();
 
-        $rootDir = getcwd() . '/';
+        $rootDir = $this->filesystem->normalizePath(getcwd() ?: '.') . '/';
 
-        /** @var Locker $locker */
         $this->locker = new Locker($this->io, $rootDir);
 
-        $pluginConfigBuilder = new PluginConfigurationBuilder($this->io);
-        /** @var PluginConfiguration|null pluginConfig */
+        $resourcedDir = $this->filesystem->normalizePath(dirname(__DIR__) . '/resources');
+        $pluginConfigBuilder = new PluginConfigurationBuilder($this->io, $resourcedDir);
         $this->pluginConfig = $pluginConfigBuilder->build($composer->getPackage()->getExtra());
 
         if ($this->pluginConfig === null) {
@@ -166,25 +148,11 @@ final class Plugin implements
         }
 
         $this->translatablePackageFactory = new TranslatablePackageFactory($this->pluginConfig);
-
-        $this->downloader = new Downloader(
+        $this->archiveDownloaderFactory = new ArchiveDownloaderFactory(
             $this->io,
-            new Unzipper($this->io),
-            new RemoteFilesystem($this->io, $config),
-            $this->locker,
-            $this->cache->getRoot()
+            $composer,
+            $this->filesystem
         );
-        $this->remover = new Remover(
-            $this->io,
-            $this->filesystem,
-            $this->locker
-        );
-
-        if ($this->cache->gcIsNecessary()) {
-            $this->cache->gc($config->get('cache-files-ttl'), $config->get('cache-files-maxsize'));
-        }
-
-        $this->ensureDirectoryExists($this->pluginConfig->languageRootDir());
     }
 
     /**
@@ -193,68 +161,83 @@ final class Plugin implements
      * @event post-update-cmd
      * @event post-install-cmd
      */
-    public function onPostInstallAndUpdate(Event $event)
+    public function onPostInstallAndUpdate(Event $event): void
     {
         if ($this->pluginConfig === null) {
             return;
         }
 
+        $this->assertActivated();
+
         if (!$this->pluginConfig->autorun()) {
-            // phpcs:disable Inpsyde.CodeQuality.LineLength.TooLong
             $this->io->write(
-                '<info>Configuration "auto-run" is set to "false". You need to run wp-translation-downloader manually.</info>'
+                '<info>Configuration "auto-run" is set to "false". '
+                . 'You need to run wp-translation-downloader manually.</info>',
+                true,
+                IOInterface::VERBOSE
             );
 
             return;
         }
 
-        $packages = $this->availablePackages($event->getComposer());
-
-        $this->doUpdatePackages($packages);
+        $this->doUpdatePackages(...$this->availablePackages($event->getComposer()));
     }
 
     /**
-     * @param PackageInterface[] $packages
+     * @param PackageInterface ...$packages
+     * @return void
      */
-    public function doUpdatePackages(array $packages)
+    public function doUpdatePackages(PackageInterface ...$packages): void
     {
         if ($this->pluginConfig === null) {
             return;
         }
 
+        $this->assertActivated();
+
         $this->logo();
 
         $allowedLanguages = $this->pluginConfig->allowedLanguages();
+        if (!$allowedLanguages) {
+            $this->io->write('Nothing to do: no languages defined.');
+
+            return;
+        }
+
         // We keep track of package which are already
         // processed, to skip duplicate entries in $packages.
         $processedPackages = [];
-        // We keep track of folders which are already
-        // created, to skip duplicated is_dir() calls.
-        $processedFolders = [];
 
-        /** @var PackageInterface $package */
+        $downloader = new Downloader(
+            $this->io,
+            $this->locker,
+            $this->archiveDownloaderFactory,
+            $this->filesystem
+        );
+
+        $collector = (object)['downloaded' => 0, 'locked' => 0, 'errors' => 0, 'packages' => 0];
+
         foreach ($packages as $package) {
             $packageName = $package->getName();
-            if ($this->pluginConfig->doExclude($packageName)) {
+            if (
+                isset($processedPackages[$packageName])
+                || $this->pluginConfig->shouldExclude($packageName)
+            ) {
                 continue;
             }
 
-            $transPackage = isset($processedPackages[$packageName])
-                ? null
-                : $this->translatablePackageFactory->create($package);
-            if ($transPackage === null) {
+            $translatablePackage = $this->translatablePackageFactory->create($package);
+            if ($translatablePackage === null) {
                 continue;
             }
 
-            $languageDir = $transPackage->languageDirectory();
-            if (!isset($processedFolders[$languageDir])) {
-                $this->ensureDirectoryExists($languageDir);
-                $processedFolders[$languageDir] = true;
-            }
-
-            $this->downloader->download($transPackage, $allowedLanguages);
+            $downloader->download($translatablePackage, $allowedLanguages, $collector);
             $processedPackages[$packageName] = true;
+            /** @psalm-suppress MixedOperand */
+            $collector->packages++;
         }
+
+        $this->printOverallStats($collector);
 
         $this->locker->writeLockFile();
     }
@@ -266,36 +249,42 @@ final class Plugin implements
      *
      * @event post-package-uninstall
      */
-    public function onPackageUninstall(PackageEvent $event)
+    public function onPackageUninstall(PackageEvent $event): void
     {
         if ($this->pluginConfig === null) {
             return;
         }
 
-        /** @var PackageInterface|TranslatablePackageInterface|null $transPackage */
-        $transPackage = $this->translatablePackageFactory->createFromOperation($event->getOperation());
-        if ($transPackage) {
-            $this->remover->remove($transPackage);
+        $this->assertActivated();
+
+        $remover = new Remover($this->io, $this->filesystem, $this->locker);
+
+        $operation = $event->getOperation();
+        $translatablePackage = $this->translatablePackageFactory->createFromOperation($operation);
+        if ($translatablePackage) {
+            $remover->remove($translatablePackage);
         }
     }
 
     /**
      * @return void
      */
-    public function doCleanUpDirectories()
+    public function doCleanUpDirectories(): void
     {
-        try {
-            if ($this->pluginConfig === null) {
-                return;
-            }
+        if ($this->pluginConfig === null) {
+            return;
+        }
 
+        $this->assertActivated();
+
+        try {
             $this->logo();
             $this->io->write('Starting to empty the directories...');
             $directory = $this->pluginConfig->languageRootDir();
             $this->filesystem->emptyDirectory($directory);
             $this->io->write(sprintf('  <info>✓</info> %s', $directory));
         } catch (\Throwable $exception) {
-            $this->io->write(sprintf('  <fg=red>✗</> %s', $directory));
+            $this->io->write(sprintf('  <fg=red>✗</> %s', $directory ?? 'N/D'));
             $this->io->writeError($exception->getMessage());
         }
 
@@ -303,29 +292,10 @@ final class Plugin implements
     }
 
     /**
-     * @return void
-     */
-    public function doCleanCache()
-    {
-        try {
-            if ($this->pluginConfig === null) {
-                return;
-            }
-            $this->logo();
-            $this->io->write('Starting to clean cache directory.');
-            $this->cache->clear()
-                ? $this->io->write('<info>Cache folder was emptied successfully.</info>')
-                : $this->io->writeError('Could not empty cache dir.');
-        } catch (\Throwable $exception) {
-            $this->io->writeError($exception->getMessage());
-        }
-    }
-
-    /**
      * @param Composer $composer
      * @param IOInterface $io
      */
-    public function deactivate(Composer $composer, IOInterface $io)
+    public function deactivate(Composer $composer, IOInterface $io): void
     {
     }
 
@@ -333,21 +303,8 @@ final class Plugin implements
      * @param Composer $composer
      * @param IOInterface $io
      */
-    public function uninstall(Composer $composer, IOInterface $io)
+    public function uninstall(Composer $composer, IOInterface $io): void
     {
-    }
-
-    private function ensureDirectoryExists(string $dir): bool
-    {
-        try {
-            $this->filesystem->ensureDirectoryExists($dir);
-
-            return true;
-        } catch (\Throwable $exception) {
-            $this->io->error($exception->getMessage());
-
-            return false;
-        }
     }
 
     /**
@@ -356,7 +313,7 @@ final class Plugin implements
      *
      * @param Composer $composer
      *
-     * @return PackageInterface[]
+     * @return non-empty-list<PackageInterface>
      */
     public function availablePackages(Composer $composer): array
     {
@@ -365,30 +322,114 @@ final class Plugin implements
             ->getLocalRepository()->getPackages();
 
         // Add root package.
-        $packages[] = $composer->getPackage();
+        $packages[] = $this->packageForRoot($composer);
 
         // Add virtual packages from wp-translation-downloader config.
-        foreach ($this->pluginConfig->virtualPackages() as $package) {
+        $virtualPackages = $this->pluginConfig
+            ? $this->pluginConfig->virtualPackages()
+            : [];
+        foreach ($virtualPackages as $package) {
             $packages[] = $package;
         }
 
-        return $packages;
+        return array_values($packages);
+    }
+
+    /**
+     * @param Composer $composer
+     * @return PackageInterface
+     */
+    private function packageForRoot(Composer $composer): PackageInterface
+    {
+        $root = $composer->getPackage();
+        // Composer < v2.0.2 used "No version set (parsed as 1.0.0)"
+        // Composer >= v2.0.2 uses "1.0.0+no-version-set"
+        $prettyVersion = strtolower(str_replace(' ', '-', $root->getPrettyVersion()));
+        if (strpos($prettyVersion, 'no-version') === 0) {
+            // A rare case root package has a real version, go for it
+            return $root;
+        }
+
+        // Composer created a fake version for root package, we need to remove it, or we're going
+        // to have issues passing `?version=1.0.0+no-version-set` to APIs, when the real version
+        // is very different from that.
+        // For plugins and themes, in theory we could parse main plugin file/style.css to check
+        // version... maybe later. For now, we create a new package but with empty version
+
+        $package = new CompletePackage($root->getName(), '', '');
+        $package->setType($root->getType());
+        $package->setDescription($root->getDescription());
+        $package->setRequires($root->getRequires());
+        $package->setDevRequires($root->getDevRequires());
+        $package->setExtra($root->getExtra());
+
+        return $package;
+    }
+
+    /**
+     * @param \stdClass $collector
+     * @return void
+     */
+    private function printOverallStats(\stdClass $collector): void
+    {
+        $this->assertActivated();
+
+        $this->io->write(
+            [
+                '  <options=bold>Overall stats</>: ',
+                sprintf(
+                    "   - %d package(s) processed\n" .
+                    "   - %d translation(s) downloaded\n" .
+                    "   - %d translation(s) locked\n" .
+                    "   - %d translation(s) failed",
+                    (int)$collector->packages,
+                    (int)$collector->downloaded,
+                    (int)$collector->locked,
+                    (int)$collector->errors
+                ),
+            ]
+        );
     }
 
     /**
      * @return void
      */
-    public function logo(): void
+    private function logo(): void
     {
-        // phpcs:disable
-        $logo = <<<LOGO
-    <fg=white;bg=green>                        </>
-    <fg=white;bg=green>        Inpsyde         </>
-    <fg=white;bg=green>                        </>
-    <fg=magenta>WP Translation Downloader</>
-LOGO;
-        // phpcs:enable
+        $this->assertActivated();
 
-        $this->io->write("\n{$logo}\n");
+        $logo = 'Inpsyde';
+        $catchline = 'WP Translation Downloader';
+        $length = strlen($catchline);
+        $padding = ($length - strlen($logo)) / 2;
+        $paddingLeft = str_repeat(' ', (int)floor($padding));
+        $paddingRight = str_repeat(' ', (int)ceil($padding));
+
+        $lines = [
+            '',
+            "  <fg=green>{$paddingLeft}{$logo}{$paddingRight}</>  ",
+            "  <fg=magenta>{$catchline}</>  ",
+            '',
+        ];
+
+        $this->io->write($lines);
+    }
+
+    /**
+     * @return void
+     *
+     * @psalm-assert IOInterface $this->io
+     * @psalm-assert TranslatablePackageFactory $this->translatablePackageFactory
+     * @psalm-assert Filesystem $this->filesystem
+     * @psalm-assert Locker $this->locker
+     * @psalm-assert ArchiveDownloaderFactory $this->archiveDownloaderFactory
+     */
+    private function assertActivated(): void
+    {
+        assert($this->io instanceof IOInterface);
+        assert($this->translatablePackageFactory instanceof TranslatablePackageFactory);
+        assert($this->filesystem instanceof Filesystem);
+        assert($this->locker instanceof Locker);
+        assert($this->archiveDownloaderFactory instanceof ArchiveDownloaderFactory);
     }
 }
