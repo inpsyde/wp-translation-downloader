@@ -14,7 +14,7 @@ declare(strict_types=1);
 namespace Inpsyde\WpTranslationDownloader\Tests\Unit\Config;
 
 use Inpsyde\WpTranslationDownloader\Config\PluginConfiguration;
-use Inpsyde\WpTranslationDownloader\Package\TranslatablePackage;
+use Inpsyde\WpTranslationDownloader\Package\TranslatablePackageInterface;
 use PHPUnit\Framework\TestCase;
 
 class PluginConfigurationTest extends TestCase
@@ -31,13 +31,13 @@ class PluginConfigurationTest extends TestCase
         static::assertTrue($testee->autorun());
 
         // Default API configuration
-        static::assertEmpty($testee->apiBy(PluginConfiguration::BY_NAME));
-        static::assertNotEmpty($testee->apiBy(PluginConfiguration::BY_TYPE));
+        static::assertEmpty($testee->endpointsByName());
+        static::assertNotEmpty($testee->endpointsByType());
 
         // Default directory configuration
         static::assertNotEmpty($testee->languageRootDir());
-        static::assertEmpty($testee->directoryBy(PluginConfiguration::BY_NAME));
-        static::assertNotEmpty($testee->directoryBy(PluginConfiguration::BY_TYPE));
+        static::assertEmpty($testee->directoriesByName());
+        static::assertNotEmpty($testee->directoriesByType());
     }
 
     /**
@@ -84,16 +84,15 @@ class PluginConfigurationTest extends TestCase
     /**
      * @test
      * @dataProvider provideExcludes
-     * @throws \Throwable
      */
-    public function testExcludes(array $excludes, array $expectedResults)
+    public function testExcludes(array $excludes, array $expectedResults): void
     {
         $testee = new PluginConfiguration(["excludes" => $excludes]);
 
         foreach ($expectedResults as $packageName => $expected) {
             static::assertSame(
                 $expected,
-                $testee->doExclude($packageName),
+                $testee->shouldExclude($packageName),
                 sprintf(
                     'Tested %s to be %s',
                     $packageName,
@@ -105,6 +104,9 @@ class PluginConfigurationTest extends TestCase
         }
     }
 
+    /**
+     * @return \Generator
+     */
     public function provideExcludes(): \Generator
     {
         yield 'Exclude wildcard' => [
@@ -139,7 +141,7 @@ class PluginConfigurationTest extends TestCase
         ];
         $testee = new PluginConfiguration($apiInput);
 
-        $apiResult = $testee->apiBy(PluginConfiguration::BY_NAME);
+        $apiResult = $testee->endpointsByName();
 
         static::assertSame($expected, $apiResult);
     }
@@ -153,15 +155,15 @@ class PluginConfigurationTest extends TestCase
         $apiInput = [
             'api' => [
                 PluginConfiguration::BY_TYPE => [
-                    TranslatablePackage::TYPE_PLUGIN => $expected,
+                    TranslatablePackageInterface::TYPE_PLUGIN => $expected,
                 ],
             ],
         ];
 
         $testee = new PluginConfiguration($apiInput);
 
-        $apiResult = $testee->apiBy(PluginConfiguration::BY_TYPE);
-        static::assertSame($expected, $apiResult[TranslatablePackage::TYPE_PLUGIN]);
+        $apiResult = $testee->endpointsByType();
+        static::assertSame($expected, $apiResult[TranslatablePackageInterface::TYPE_PLUGIN]);
     }
 
     /**
@@ -178,22 +180,22 @@ class PluginConfigurationTest extends TestCase
         $input = [
             'directories' => [
                 PluginConfiguration::BY_TYPE => [
-                    TranslatablePackage::TYPE_CORE => $expectedCore,
-                    TranslatablePackage::TYPE_PLUGIN => $expectedPlugin,
-                    TranslatablePackage::TYPE_THEME => $expectedTheme,
-                    TranslatablePackage::TYPE_LIBRARY => $expectedLibrary,
+                    TranslatablePackageInterface::TYPE_CORE => $expectedCore,
+                    TranslatablePackageInterface::TYPE_PLUGIN => $expectedPlugin,
+                    TranslatablePackageInterface::TYPE_THEME => $expectedTheme,
+                    TranslatablePackageInterface::TYPE_LIBRARY => $expectedLibrary,
                     'custom' => $expectedCustom,
                 ],
             ],
         ];
         $testee = new PluginConfiguration($input);
 
-        $directories = $testee->directoryBy(PluginConfiguration::BY_TYPE);
+        $dirs = $testee->directoriesByType();
 
-        static::assertSame($expectedCore, $directories[TranslatablePackage::TYPE_CORE]);
-        static::assertSame($expectedLibrary, $directories[TranslatablePackage::TYPE_LIBRARY]);
-        static::assertSame($expectedPlugin, $directories[TranslatablePackage::TYPE_PLUGIN]);
-        static::assertSame($expectedTheme, $directories[TranslatablePackage::TYPE_THEME]);
-        static::assertSame($expectedCustom, $directories['custom']);
+        static::assertSame($expectedCore, $dirs[TranslatablePackageInterface::TYPE_CORE]);
+        static::assertSame($expectedLibrary, $dirs[TranslatablePackageInterface::TYPE_LIBRARY]);
+        static::assertSame($expectedPlugin, $dirs[TranslatablePackageInterface::TYPE_PLUGIN]);
+        static::assertSame($expectedTheme, $dirs[TranslatablePackageInterface::TYPE_THEME]);
+        static::assertSame($expectedCustom, $dirs['custom']);
     }
 }

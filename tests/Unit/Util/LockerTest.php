@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Inpsyde\WpTranslationDownloader\Tests\Unit\Util;
 
 use Composer\IO\IOInterface;
-use Inpsyde\WpTranslationDownloader\Io;
+use Inpsyde\WpTranslationDownloader\Package\ProjectTranslation;
 use Inpsyde\WpTranslationDownloader\Util\Locker;
 use PHPUnit\Framework\TestCase;
 use org\bovigo\vfs\vfsStream;
@@ -18,6 +18,9 @@ class LockerTest extends TestCase
      */
     private $root;
 
+    /**
+     * @return void
+     */
     public function setUp(): void
     {
         $this->root = vfsStream::setup('tmp');
@@ -29,7 +32,7 @@ class LockerTest extends TestCase
      */
     public function testBasic(): void
     {
-        $testee = $this->locker();
+        $testee = $this->factoryLocker();
         static::assertEmpty($testee->lockData());
     }
 
@@ -40,20 +43,20 @@ class LockerTest extends TestCase
     public function testIsLocked(
         array $lockData,
         string $projectName,
-        string $language,
-        string $lastUpdated,
-        string $version,
+        array $translationData,
         bool $expected
     ): void {
-        $this->mockLockFile($lockData);
-        $testee = $this->locker();
 
-        static::assertSame(
-            $expected,
-            $testee->isLocked($projectName, $language, (string) $lastUpdated, $version)
-        );
+        $this->mockLockFile($lockData);
+        $testee = $this->factoryLocker();
+        $translation = ProjectTranslation::load($translationData, $projectName);
+
+        static::assertSame($expected, $testee->isLocked($translation));
     }
 
+    /**
+     * @return \Generator
+     */
     public function provideLockData(): \Generator
     {
         $now = date('c', time());
@@ -65,12 +68,17 @@ class LockerTest extends TestCase
         $projectName = 'project-name';
         $language = 'de';
 
+        $translationData = [
+            'language' => $language,
+            'version' => $version,
+            'updated' => $now,
+            'package' => 'https://example.com/languages/de_DE.zip',
+        ];
+
         yield 'No lock data written yet' => [
             [],
             $projectName,
-            $language,
-            $now,
-            $version,
+            $translationData,
             false,
         ];
 
@@ -86,9 +94,7 @@ class LockerTest extends TestCase
                 ],
             ],
             $projectName,
-            $language,
-            $now,
-            $version,
+            $translationData,
             true,
         ];
 
@@ -104,9 +110,7 @@ class LockerTest extends TestCase
                 ],
             ],
             $projectName,
-            $language,
-            $now,
-            $version,
+            $translationData,
             false,
         ];
 
@@ -122,9 +126,7 @@ class LockerTest extends TestCase
                 ],
             ],
             $projectName,
-            $language,
-            $now,
-            $version,
+            $translationData,
             false,
         ];
     }
@@ -134,16 +136,19 @@ class LockerTest extends TestCase
      */
     public function testRemoveLockData(): void
     {
-        $testee = $this->locker();
+        $testee = $this->factoryLocker();
 
-        static::assertTrue(
-            $testee->addProjectLock(
-                'project-name',
-                'de',
-                date('c', time() - 1),
-                '1.0'
-            )
+        $translation = ProjectTranslation::load(
+            [
+                'language' => 'de',
+                'updated' => date('c', time() - 1),
+                'version' => '1.0',
+                'package' => 'https://example.com/de.zip'
+            ],
+            'project-name'
         );
+
+        static::assertTrue($testee->lockTranslation($translation));
         $testee->writeLockFile();
 
         static::assertTrue($testee->removeLockFile());
@@ -152,31 +157,31 @@ class LockerTest extends TestCase
     /**
      * @test
      */
-    public function testAddProjectLockData(): void
+    public function testLockTranslation(): void
     {
         $expectedProjectName = 'project-name';
         $expectedLanguage = 'de';
         $expectedVersion = '1.0';
         $expectedUpdated = date('c', time() - 1);
 
-        $testee = $this->locker();
-
-        static::assertTrue(
-            $testee->addProjectLock(
-                $expectedProjectName,
-                $expectedLanguage,
-                $expectedUpdated,
-                $expectedVersion
-            )
-        );
-        static::assertTrue(
-            $testee->isLocked($expectedProjectName, $expectedLanguage, $expectedUpdated, $expectedVersion)
+        $translation = ProjectTranslation::load(
+            [
+                'language' => $expectedLanguage,
+                'updated' => $expectedUpdated,
+                'version' => $expectedVersion,
+                'package' => 'https://example.com/de.zip',
+            ],
+            $expectedProjectName
         );
 
+        $testee = $this->factoryLocker();
+
+        static::assertTrue($testee->lockTranslation($translation));
+        static::assertTrue($testee->isLocked($translation));
         static::assertTrue($testee->writeLockFile());
 
         // re-access the written file.
-        $testee = $this->locker();
+        $testee = $this->factoryLocker();
         static::assertSame(
             [
                 $expectedProjectName => [
@@ -215,24 +220,30 @@ class LockerTest extends TestCase
             ]
         );
 
-        $testee = $this->locker();
+        $testee = $this->factoryLocker();
         static::assertTrue($testee->removeProjectLock($expectedProjectName));
     }
 
-    private function locker(): Locker
+    /**
+     * @return Locker
+     */
+    private function factoryLocker(): Locker
     {
         $ioStub = \Mockery::mock(IOInterface::class);
-        $ioStub->expects('writeOnVerbose')->andReturns();
-        $ioStub->expects('write')->andReturns();
+        $ioStub->allows('write');
+        $ioStub->allows('writeError');
 
         return new Locker($ioStub, $this->root->url() . '/');
     }
 
-    private function mockLockFile(array $json): string
+    /**
+     * @param array $json
+     * @return void
+     */
+    private function mockLockFile(array $json): void
     {
-        return vfsStream::newFile(Locker::LOCK_FILE)
+        vfsStream::newFile(Locker::LOCK_FILE)
             ->withContent(json_encode($json))
-            ->at($this->root)
-            ->url();
+            ->at($this->root);
     }
 }

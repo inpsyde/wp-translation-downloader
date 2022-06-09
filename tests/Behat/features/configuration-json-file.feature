@@ -6,3 +6,4 @@ Feature: Testing if the given example from README.md with configuration
 	Given I am using the fixtures "configuration-json-file"
 	When I run composer install
 	Then I should see the folder "languages" exists
+    And I should see the file "languages/de_DE.mo" exists

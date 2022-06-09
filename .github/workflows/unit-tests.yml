@@ -1,12 +1,20 @@
 name: Unit Tests
+
 on:
   workflow_dispatch:
   pull_request:
     paths:
       - '**.php'
+      - 'phpunit*'
   push:
     paths:
       - '**.php'
+      - 'phpunit*'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   tests-unit-php:
     uses: inpsyde/reusable-workflows/.github/workflows/tests-unit-php.yml@main

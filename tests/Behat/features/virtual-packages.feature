@@ -5,6 +5,6 @@ Feature: Testing if virtual packages translations are downloaded as well.
     Given I am using the fixtures "virtual-packages"
     When I run composer install
     Then I should see the folder "languages" exists
-	Then I should see in console "backwpup: found 1 translations"
-	And I should see in console "wordpress: found 1 translations"
+	Then I should see in console "backwpup: found 1 translation"
+	And I should see in console "wordpress: found 1 translation"
 	And I should see the file "languages/de_DE.mo" exists

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Inpsyde\WpTranslationDownloader\Tests\Unit\Config;
 
 use Composer\IO\IOInterface;
+use Composer\IO\NullIO;
 use Inpsyde\WpTranslationDownloader\Config\PluginConfiguration;
 use Inpsyde\WpTranslationDownloader\Config\PluginConfigurationBuilder;
 use PHPUnit\Framework\TestCase;
@@ -14,26 +15,20 @@ class PluginConfigurationBuilderTest extends TestCase
     /**
      * @test
      */
-    public function testBasic(): void
+    public function testConfigIsNullIfNoConfig(): void
     {
-        $ioStub = \Mockery::mock(IOInterface::class);
-        $ioStub->allows('write');
-
-        $result = (new PluginConfigurationBuilder($ioStub))->build([]);
+        $result = $this->factoryBuilder()->build([]);
         static::assertNull($result);
     }
 
     /**
      * @test
      */
-    public function testBuildFromExtra(): void
+    public function testBuildFromEmptyExtra(): void
     {
         $extra = [PluginConfigurationBuilder::KEY => []];
+        $result = $this->factoryBuilder()->build($extra);
 
-        $ioStub = \Mockery::mock(IOInterface::class);
-        $ioStub->allows('writeError');
-
-        $result = (new PluginConfigurationBuilder($ioStub))->build($extra);
         static::assertNull($result);
     }
 
@@ -48,9 +43,7 @@ class PluginConfigurationBuilderTest extends TestCase
             ],
         ];
 
-        $ioStub = \Mockery::mock(IOInterface::class);
-
-        $result = (new PluginConfigurationBuilder($ioStub))->build($extra);
+        $result = $this->factoryBuilder()->build($extra);
         static::assertInstanceOf(PluginConfiguration::class, $result);
     }
 
@@ -64,13 +57,7 @@ class PluginConfigurationBuilderTest extends TestCase
      */
     public function testValidateSchema(array $input, bool $expected): void
     {
-        $ioStub = \Mockery::mock(IOInterface::class);
-        $ioStub->allows('writeError');
-
-        static::assertSame(
-            $expected,
-            (new PluginConfigurationBuilder($ioStub))->validateSchema($input)
-        );
+        static::assertSame($expected, $this->factoryBuilder()->validateSchema($input));
     }
 
     /**
@@ -109,6 +96,21 @@ class PluginConfigurationBuilderTest extends TestCase
             [
                 'languages' => ['de_DE'],
                 'api' => ['names' => ['inpsyde/google-tag-manager' => 'https://www.inpsyde.com/']],
+            ],
+            true,
+        ];
+
+        yield 'api.names with custom type' => [
+            [
+                'languages' => ['de_DE'],
+                'api' => [
+                    'names' => [
+                        'inpsyde/google-tag-manager' => [
+                            'url' => 'https://www.inpsyde.com/',
+                            'type' => 'tar'
+                        ]
+                    ]
+                ],
             ],
             true,
         ];
@@ -160,5 +162,28 @@ class PluginConfigurationBuilderTest extends TestCase
             ['languages' => ['de_DE'], 'virtual-packages' => [['name' => 'wordpress/core']]],
             false
         ];
+
+        yield 'api.names with incorrect schema' => [
+            [
+                'languages' => ['de_DE'],
+                'api' => [
+                    'names' => [
+                        'inpsyde/google-tag-manager' => [
+                            'url' => 'https://www.inpsyde.com/',
+                            'ext' => 'tar'
+                        ]
+                    ]
+                ],
+            ],
+            false,
+        ];
+    }
+
+    /**
+     * @return PluginConfigurationBuilder
+     */
+    private function factoryBuilder(): PluginConfigurationBuilder
+    {
+        return new PluginConfigurationBuilder(new NullIO(), getenv('RESOURCES_DIR') ?: '');
     }
 }
