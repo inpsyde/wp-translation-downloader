@@ -20,7 +20,6 @@ use Composer\Installer\PackageEvent;
 use Composer\IO\IOInterface;
 use Composer\Package\CompletePackage;
 use Composer\Package\PackageInterface;
-use Composer\Package\RootPackage;
 use Composer\Plugin\Capability\CommandProvider;
 use Composer\Plugin\Capable;
 use Composer\Plugin\PluginInterface;
@@ -373,22 +372,24 @@ final class Plugin implements
     private function printOverallStats(\stdClass $collector): void
     {
         $this->assertActivated();
-
-        $this->io->write(
-            [
-                '  <options=bold>Overall stats</>: ',
-                sprintf(
-                    "   - %d package(s) processed\n" .
-                    "   - %d translation(s) downloaded\n" .
-                    "   - %d translation(s) locked\n" .
-                    "   - %d translation(s) failed",
-                    (int)$collector->packages,
-                    (int)$collector->downloaded,
-                    (int)$collector->locked,
-                    (int)$collector->errors
-                ),
-            ]
+        $lines = $this->io->isVerbose() ? [] : [''];
+        $lines[] = '  <options=bold>Overall stats</>: ';
+        $lines[] = sprintf(
+            "   - %d package%s processed\n" .
+            "   - %d translation%s downloaded\n" .
+            "   - %d translation%s locked\n" .
+            "   - %d translation%s failed",
+            (int)$collector->packages,
+            $collector->packages === 1 ? '' : 's',
+            (int)$collector->downloaded,
+            $collector->downloaded === 1 ? '' : 's',
+            (int)$collector->locked,
+            $collector->locked === 1 ? '' : 's',
+            (int)$collector->errors,
+            $collector->errors === 1 ? '' : 's'
         );
+
+        $this->io->write($lines);
     }
 
     /**

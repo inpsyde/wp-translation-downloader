@@ -6,7 +6,7 @@ Feature: Testing, if translations are downloaded for a root-package as well.
   Scenario: Installing "root package" translations
 	Given I am using the fixtures "root-package"
 	When I run composer install
-	Then I should see in console "backwpup: found 1 translation"
+	Then I should see in console "backwpup: found one translation"
 	And I should see the file "languages/plugins/backwpup-de_DE.mo" exists
-	Then I should see in console "wordpress-core: found 1 translation"
+	Then I should see in console "wordpress-core: found one translation"
 	And I should see the file "languages/de_DE.mo" exists

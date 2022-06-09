@@ -21,8 +21,6 @@ use Inpsyde\WpTranslationDownloader\Package\ProjectTranslation;
 
 class Downloader
 {
-    private const SUPPORTED_ARCHIVES = ['zip', 'rar', 'tar', 'gzip', 'xz'];
-
     /**
      * @var IOInterface
      */
@@ -73,17 +71,13 @@ class Downloader
         \stdClass $globalCollector
     ): void {
 
-        $translations = $transPackage->translations($allowedLanguages);
         $projectName = $transPackage->projectName();
+        $translations = $transPackage->translations($allowedLanguages);
         $endpoint = $transPackage->apiEndpoint();
-        $translationCount = count($translations);
 
-        $this->io->write("  <info>{$projectName}</info>: found {$translationCount} translation(s)");
-        if ($translationCount < 1) {
+        if (!$this->countTranslations($projectName, $translations, $endpoint)) {
             return;
         }
-
-        $this->io->write("  - Endpoint: {$endpoint}", true, IOInterface::VERBOSE);
 
         $collector = (object)['downloaded' => 0, 'locked' => 0, 'errors' => 0];
         $directory = $this->filesystem->normalizePath($transPackage->languageDirectory());
@@ -115,7 +109,7 @@ class Downloader
     ): void {
 
         $packageDesc = sprintf(
-            "%s | %s",
+            "<fg=magenta>%s</> | %s",
             $translation->language() ?? '',
             $translation->version() ?? ''
         );
@@ -187,6 +181,34 @@ class Downloader
     }
 
     /**
+     * @param string $projectName
+     * @param array $translations
+     * @param string $endpoint
+     * @return bool
+     */
+    private function countTranslations(
+        string $projectName,
+        array $translations,
+        string $endpoint
+    ): bool {
+
+        $count = count($translations);
+
+        if ($count < 1) {
+            $this->io->write("  - <info>{$projectName}</info>: found no translations.");
+            $this->io->write('', true, IOInterface::VERBOSE);
+
+            return false;
+        }
+
+        $label = $count === 1 ? 'one translation' : sprintf('%d translations', $count);
+        $this->io->write("  - <info>{$projectName}</info>: found {$label}. Installing...");
+        $this->io->write("    <fg=yellow>Endpoint</>: {$endpoint}", true, IOInterface::VERBOSE);
+
+        return true;
+    }
+
+    /**
      * @param \stdClass $collector
      * @param string $packageDesc
      * @return void
@@ -221,7 +243,8 @@ class Downloader
     {
         $this->io->write(
             sprintf(
-                "    <options=bold>Translations stats</>: %d downloaded, %d locked, %d failed.\n",
+                "    <options=bold>Package's translations stats</>:" .
+                " %d downloaded, %d locked, %d failed.\n",
                 (int)$collector->downloaded,
                 (int)$collector->locked,
                 (int)$collector->errors

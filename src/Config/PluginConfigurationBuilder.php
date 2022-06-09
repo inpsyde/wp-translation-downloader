@@ -108,7 +108,7 @@ final class PluginConfigurationBuilder
                 "<error>[ERROR]</error> Failed validating wp-translation-downloader configuration:"
             );
 
-            foreach ((array)$validator->getErrors() as $error) {
+            foreach ($validator->getErrors() as $error) {
                 assert(is_array($error));
                 $pointer = $error['pointer'] ?? '';
                 $message = $error['message'] ?? '';

@@ -196,7 +196,7 @@ class ProjectTranslation
             '~[^a-zA-Z0-9_/]~',
             '-',
             sprintf(
-                '%s-%s-%s',
+                'wp-translations-downloader/%s-%s-%s',
                 $this->projectName(),
                 $this->language() ?? '',
                 $this->lastUpdated()

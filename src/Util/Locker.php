@@ -76,7 +76,7 @@ class Locker
         if ($isLocked) {
             $this->io->write(
                 sprintf(
-                    '    <info>[LOCKED]</info> %1$s | %2$s | %3$s',
+                    '    <info>[LOCKED]</info> <fg=magenta>%1$s</> | %2$s | %3$s',
                     $language,
                     $translation->lastUpdated(),
                     $translation->version() ?? ''

@@ -34,7 +34,7 @@ interface TranslatablePackageInterface extends PackageInterface
     public function translations(array $allowedLanguages = []): array;
 
     /**
-     * Endpoint url to download translation files from Glotpress.
+     * Endpoint URL to download translation files from Glotpress.
      *
      * @return string
      */
