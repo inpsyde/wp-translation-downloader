@@ -54,8 +54,6 @@ jobs:
 
       - name: Install Composer dependencies
         uses: ramsey/composer-install@v2
-        with:
-          composer-options: "--prefer-dist --no-dev"
 
       - name: Run Behat
         run: ./vendor/bin/behat --colors
