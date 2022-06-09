@@ -4,16 +4,16 @@ on:
   workflow_dispatch:
   pull_request:
     paths:
+      - '**/static-analysis.yml'
       - 'composer.*'
       - '**.php'
       - 'psalm*'
-      - 'phpcs*'
   push:
     paths:
+      - '**/static-analysis.yml'
       - 'composer.*'
       - '**.php'
       - 'psalm*'
-      - 'phpcs*'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -21,6 +21,6 @@ concurrency:
 
 jobs:
   static-code-analysis-php:
-    uses: inpsyde/reusable-workflows/.github/workflows/coding-standards-php.yml@main
+    uses: inpsyde/reusable-workflows/.github/workflows/static-analysis-php.yml@main
     with:
       PSALM_ARGS: '--output-format=github --no-cache --find-unused-psalm-suppress'

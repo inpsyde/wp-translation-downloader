@@ -4,7 +4,6 @@ namespace Inpsyde\WpTranslationDownloader\Tests\Behat;
 
 use Behat\Behat\Context\Context;
 use Composer\Util\Filesystem;
-use Composer\Util\ProcessExecutor;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Process\ExecutableFinder;
 use Symfony\Component\Process\Process;

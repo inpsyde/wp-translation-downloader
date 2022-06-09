@@ -4,6 +4,7 @@ on:
   workflow_dispatch:
   pull_request:
     paths:
+      - '**/behat.yml'
       - 'composer.*'
       - 'behat.*'
       - 'src/**'
@@ -12,6 +13,7 @@ on:
       - 'tests/fixtures/**'
   push:
     paths:
+      - '**/behat.yml'
       - 'composer.*'
       - 'behat.*'
       - 'src/**'
@@ -49,11 +51,6 @@ jobs:
           tools: composer:${{ matrix.composer-version }}
           coverage: none
           ini-values: zend.assertions=1, error_reporting=-1, display_errors=On
-
-      - name: Use Behat as regular dependency so we can run Composer with --no-dev
-        run: |
-          composer remove behat/behat ondram/ci-detector --dev --no-update
-          composer require behat/behat:^3.10 ondram/ci-detector:^4.1 --no-update
 
       - name: Install Composer dependencies
         uses: ramsey/composer-install@v2

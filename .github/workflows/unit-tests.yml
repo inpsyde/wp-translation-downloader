@@ -4,10 +4,12 @@ on:
   workflow_dispatch:
   pull_request:
     paths:
+      - '**/unit-tests.yml'
       - '**.php'
       - 'phpunit*'
   push:
     paths:
+      - '**/unit-tests.yml'
       - '**.php'
       - 'phpunit*'
 
