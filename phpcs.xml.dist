@@ -2,6 +2,7 @@
 <ruleset>
 
     <file>./src</file>
+    <file>./tests/Unit</file>
 
     <arg value="sp"/>
 
@@ -12,10 +13,14 @@
             <property
                     name="psr4"
                     type="array"
-                    value="Inpsyde\WpTranslationDownloader=>src"/>
+                    value="
+                        Inpsyde\WpTranslationDownloader=>src,
+                        Inpsyde\WpTranslationDownloader\Tests=>tests"/>
         </properties>
+    </rule>
 
-        <exclude name="Inpsyde.CodeQuality.ElementNameMinimalLength.TooShort" />
+    <rule ref="Inpsyde.CodeQuality.FunctionLength">
+        <exclude-pattern>tests/Unit/**</exclude-pattern>
     </rule>
 
 </ruleset>

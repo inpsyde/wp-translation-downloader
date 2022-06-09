@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace Inpsyde\WpTranslationDownloader\Tests\Unit\Config;
 
+use Composer\Package\PackageInterface;
 use Inpsyde\WpTranslationDownloader\Config\PluginConfiguration;
 use Inpsyde\WpTranslationDownloader\Package\TranslatablePackageInterface;
 use PHPUnit\Framework\TestCase;
@@ -24,20 +25,20 @@ class PluginConfigurationTest extends TestCase
      */
     public function testBasic(): void
     {
-        $testee = new PluginConfiguration([]);
+        $configuration = new PluginConfiguration([]);
 
-        static::assertEmpty($testee->allowedLanguages());
-        static::assertEmpty($testee->virtualPackages());
-        static::assertTrue($testee->autorun());
+        static::assertEmpty($configuration->allowedLanguages());
+        static::assertEmpty($configuration->virtualPackages());
+        static::assertTrue($configuration->autorun());
 
         // Default API configuration
-        static::assertEmpty($testee->endpointsByName());
-        static::assertNotEmpty($testee->endpointsByType());
+        static::assertEmpty($configuration->endpointsByName());
+        static::assertNotEmpty($configuration->endpointsByType());
 
         // Default directory configuration
-        static::assertNotEmpty($testee->languageRootDir());
-        static::assertEmpty($testee->directoriesByName());
-        static::assertNotEmpty($testee->directoriesByType());
+        static::assertNotEmpty($configuration->languageRootDir());
+        static::assertEmpty($configuration->directoriesByName());
+        static::assertNotEmpty($configuration->directoriesByType());
     }
 
     /**
@@ -45,40 +46,28 @@ class PluginConfigurationTest extends TestCase
      */
     public function testVirtualPackages(): void
     {
-        $expectedName1 = 'name1';
-        $expectedType1 = 'type1';
-        $expectedVersion1 = '1.0';
-        $expectedName2 = 'name2';
-        $expectedType2 = 'type2';
-        $expectedName3 = 'name3';
-        $expectedType3 = 'type3';
+        $expected = [];
+        for ($i = 1; $i < random_int(3, 8); $i++) {
+            $expected[] = [
+                'name' => sprintf('foo/name-%d', $i),
+                'type' => sprintf('type-%d', $i),
+                'version' => sprintf('%d.0.0', $i),
+            ];
+        }
 
-        $testee = new PluginConfiguration([
-            'virtual-packages' => [
-                ['name' => $expectedName1, 'type' => $expectedType1, 'version' => $expectedVersion1],
-                ['name' => $expectedName2, 'type' => $expectedType2, 'version' => ''],
-                ['name' => $expectedName3, 'type' => $expectedType3],
-            ],
-        ]);
+        $configuration = new PluginConfiguration(
+            [PluginConfiguration::VIRTUAL_PACKAGES => $expected]
+        );
 
-        $virtualPackages= $testee->virtualPackages();
-        static::assertCount(3, $virtualPackages);
+        $virtualPackages = $configuration->virtualPackages();
+        static::assertSame(count($expected), count($virtualPackages));
 
-        $package1 = $virtualPackages[0];
-        static::assertSame($expectedName1, $package1->getName());
-        static::assertSame($expectedType1, $package1->getType());
-        static::assertSame($expectedVersion1, $package1->getVersion());
-
-        $package2 = $virtualPackages[1];
-        static::assertSame($expectedName2, $package2->getName());
-        static::assertSame($expectedType2, $package2->getType());
-        static::assertSame('', $package2->getVersion());
-
-
-        $package3 = $virtualPackages[2];
-        static::assertSame($expectedName3, $package3->getName());
-        static::assertSame($expectedType3, $package3->getType());
-        static::assertSame('', $package3->getVersion());
+        foreach ($virtualPackages as $i => $virtualPackage) {
+            static::assertTrue($virtualPackage instanceof PackageInterface);
+            static::assertSame($expected[$i]['name'], $virtualPackage->getName());
+            static::assertSame($expected[$i]['type'], $virtualPackage->getType());
+            static::assertSame($expected[$i]['version'], $virtualPackage->getVersion());
+        }
     }
 
     /**
@@ -87,12 +76,12 @@ class PluginConfigurationTest extends TestCase
      */
     public function testExcludes(array $excludes, array $expectedResults): void
     {
-        $testee = new PluginConfiguration(["excludes" => $excludes]);
+        $configuration = new PluginConfiguration([PluginConfiguration::EXCLUDES => $excludes]);
 
         foreach ($expectedResults as $packageName => $expected) {
             static::assertSame(
                 $expected,
-                $testee->shouldExclude($packageName),
+                $configuration->shouldExclude($packageName),
                 sprintf(
                     'Tested %s to be %s',
                     $packageName,
@@ -135,13 +124,13 @@ class PluginConfigurationTest extends TestCase
     {
         $expected = ['foo' => 'bar'];
         $apiInput = [
-            "api" => [
+            PluginConfiguration::API => [
                 PluginConfiguration::BY_NAME => $expected,
             ],
         ];
-        $testee = new PluginConfiguration($apiInput);
+        $configuration = new PluginConfiguration($apiInput);
 
-        $apiResult = $testee->endpointsByName();
+        $apiResult = $configuration->endpointsByName();
 
         static::assertSame($expected, $apiResult);
     }
@@ -153,16 +142,16 @@ class PluginConfigurationTest extends TestCase
     {
         $expected = 'foo';
         $apiInput = [
-            'api' => [
+            PluginConfiguration::API => [
                 PluginConfiguration::BY_TYPE => [
                     TranslatablePackageInterface::TYPE_PLUGIN => $expected,
                 ],
             ],
         ];
 
-        $testee = new PluginConfiguration($apiInput);
+        $configuration = new PluginConfiguration($apiInput);
 
-        $apiResult = $testee->endpointsByType();
+        $apiResult = $configuration->endpointsByType();
         static::assertSame($expected, $apiResult[TranslatablePackageInterface::TYPE_PLUGIN]);
     }
 
@@ -178,7 +167,7 @@ class PluginConfigurationTest extends TestCase
         $expectedCustom = '5';
 
         $input = [
-            'directories' => [
+            PluginConfiguration::DIRECTORIES => [
                 PluginConfiguration::BY_TYPE => [
                     TranslatablePackageInterface::TYPE_CORE => $expectedCore,
                     TranslatablePackageInterface::TYPE_PLUGIN => $expectedPlugin,
@@ -188,9 +177,9 @@ class PluginConfigurationTest extends TestCase
                 ],
             ],
         ];
-        $testee = new PluginConfiguration($input);
+        $configuration = new PluginConfiguration($input);
 
-        $dirs = $testee->directoriesByType();
+        $dirs = $configuration->directoriesByType();
 
         static::assertSame($expectedCore, $dirs[TranslatablePackageInterface::TYPE_CORE]);
         static::assertSame($expectedLibrary, $dirs[TranslatablePackageInterface::TYPE_LIBRARY]);

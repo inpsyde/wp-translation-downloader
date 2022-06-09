@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Inpsyde\WpTranslationDownloader\Tests\Unit\Util;
 
-use Composer\IO\IOInterface;
+use Composer\IO\NullIO;
 use Inpsyde\WpTranslationDownloader\Package\ProjectTranslation;
 use Inpsyde\WpTranslationDownloader\Util\Locker;
 use PHPUnit\Framework\TestCase;
@@ -32,13 +32,13 @@ class LockerTest extends TestCase
      */
     public function testBasic(): void
     {
-        $testee = $this->factoryLocker();
-        static::assertEmpty($testee->lockData());
+        $locker = $this->factoryLocker();
+        static::assertEmpty($locker->lockData());
     }
 
     /**
-     * @dataProvider provideLockData
      * @test
+     * @dataProvider provideLockData
      */
     public function testIsLocked(
         array $lockData,
@@ -48,10 +48,10 @@ class LockerTest extends TestCase
     ): void {
 
         $this->mockLockFile($lockData);
-        $testee = $this->factoryLocker();
+        $locker = $this->factoryLocker();
         $translation = ProjectTranslation::load($translationData, $projectName);
 
-        static::assertSame($expected, $testee->isLocked($translation));
+        static::assertSame($expected, $locker->isLocked($translation));
     }
 
     /**
@@ -136,22 +136,22 @@ class LockerTest extends TestCase
      */
     public function testRemoveLockData(): void
     {
-        $testee = $this->factoryLocker();
+        $locker = $this->factoryLocker();
 
         $translation = ProjectTranslation::load(
             [
                 'language' => 'de',
                 'updated' => date('c', time() - 1),
                 'version' => '1.0',
-                'package' => 'https://example.com/de.zip'
+                'package' => 'https://example.com/de.zip',
             ],
             'project-name'
         );
 
-        static::assertTrue($testee->lockTranslation($translation));
-        $testee->writeLockFile();
+        static::assertTrue($locker->lockTranslation($translation));
+        $locker->writeLockFile();
 
-        static::assertTrue($testee->removeLockFile());
+        static::assertTrue($locker->removeLockFile());
     }
 
     /**
@@ -174,14 +174,14 @@ class LockerTest extends TestCase
             $expectedProjectName
         );
 
-        $testee = $this->factoryLocker();
+        $locker = $this->factoryLocker();
 
-        static::assertTrue($testee->lockTranslation($translation));
-        static::assertTrue($testee->isLocked($translation));
-        static::assertTrue($testee->writeLockFile());
+        static::assertTrue($locker->lockTranslation($translation));
+        static::assertTrue($locker->isLocked($translation));
+        static::assertTrue($locker->writeLockFile());
 
         // re-access the written file.
-        $testee = $this->factoryLocker();
+        $locker = $this->factoryLocker();
         static::assertSame(
             [
                 $expectedProjectName => [
@@ -193,7 +193,7 @@ class LockerTest extends TestCase
                     ],
                 ],
             ],
-            $testee->lockData()
+            $locker->lockData()
         );
     }
 
@@ -220,8 +220,8 @@ class LockerTest extends TestCase
             ]
         );
 
-        $testee = $this->factoryLocker();
-        static::assertTrue($testee->removeProjectLock($expectedProjectName));
+        $locker = $this->factoryLocker();
+        static::assertTrue($locker->removeProjectLock($expectedProjectName));
     }
 
     /**
@@ -229,11 +229,7 @@ class LockerTest extends TestCase
      */
     private function factoryLocker(): Locker
     {
-        $ioStub = \Mockery::mock(IOInterface::class);
-        $ioStub->allows('write');
-        $ioStub->allows('writeError');
-
-        return new Locker($ioStub, $this->root->url() . '/');
+        return new Locker(new NullIO(), $this->root->url() . '/');
     }
 
     /**

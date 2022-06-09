@@ -16,8 +16,8 @@ class ProjectTranslationTest extends TestCase
      */
     public function testDistType(array $data, ?string $fileType, ?string $expected): void
     {
-        $translatable = new class($fileType, $data) extends TranslatablePackage {
-
+        $translatable = new class ($fileType, $data) extends TranslatablePackage
+        {
             /** @var array */
             protected $data;
 
@@ -58,7 +58,7 @@ class ProjectTranslationTest extends TestCase
                     'package' => 'https://example.com/test-me',
                 ],
                 null,
-                'zip'
+                'zip',
             ],
             [
                 [
@@ -67,7 +67,7 @@ class ProjectTranslationTest extends TestCase
                     'package' => 'https://example.com/test-me.rar',
                 ],
                 null,
-                'rar'
+                'rar',
             ],
             [
                 [
@@ -76,7 +76,7 @@ class ProjectTranslationTest extends TestCase
                     'package' => 'https://example.com/test-me.7z',
                 ],
                 null,
-                'zip'
+                'zip',
             ],
             [
                 [
@@ -85,7 +85,7 @@ class ProjectTranslationTest extends TestCase
                     'package' => 'https://example.com/test-me.mo',
                 ],
                 null,
-                'file'
+                'file',
             ],
             [
                 [
@@ -94,7 +94,7 @@ class ProjectTranslationTest extends TestCase
                     'package' => 'https://example.com/test-me.json',
                 ],
                 null,
-                'file'
+                'file',
             ],
             [
                 [
@@ -103,7 +103,7 @@ class ProjectTranslationTest extends TestCase
                     'package' => 'https://example.com/test-me.exe',
                 ],
                 null,
-                null
+                null,
             ],
             [
                 [
@@ -112,7 +112,7 @@ class ProjectTranslationTest extends TestCase
                     'package' => 'https://example.com/test-me',
                 ],
                 'rar',
-                'rar'
+                'rar',
             ],
             [
                 [
@@ -121,7 +121,7 @@ class ProjectTranslationTest extends TestCase
                     'package' => 'https://example.com/test-me.gzip',
                 ],
                 'xz',
-                'xz'
+                'xz',
             ],
             [
                 [
@@ -130,7 +130,7 @@ class ProjectTranslationTest extends TestCase
                     'package' => 'https://example.com/test-me.GZIP',
                 ],
                 null,
-                'gzip'
+                'gzip',
             ],
             [
                 [
@@ -139,7 +139,7 @@ class ProjectTranslationTest extends TestCase
                     'package' => 'https://example.com/test-me.TaR',
                 ],
                 null,
-                'tar'
+                'tar',
             ],
             [
                 [
@@ -148,7 +148,7 @@ class ProjectTranslationTest extends TestCase
                     'package' => 'https://example.com/test-me.TAR.GZ',
                 ],
                 null,
-                'tar'
+                'tar',
             ],
             [
                 [
@@ -157,7 +157,7 @@ class ProjectTranslationTest extends TestCase
                     'package' => 'https://example.com/test-me.TAR.GZ',
                 ],
                 null,
-                'tar'
+                'tar',
             ],
             [
                 [
@@ -166,7 +166,7 @@ class ProjectTranslationTest extends TestCase
                     'package' => 'https://example.com/test-me.TGZ',
                 ],
                 null,
-                'tar'
+                'tar',
             ],
             [
                 [
@@ -175,7 +175,7 @@ class ProjectTranslationTest extends TestCase
                     'package' => 'https://example.com/test-me.tar.bz2',
                 ],
                 null,
-                'tar'
+                'tar',
             ],
         ];
     }

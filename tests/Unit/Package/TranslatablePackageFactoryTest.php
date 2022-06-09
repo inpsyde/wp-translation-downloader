@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 namespace Inpsyde\WpTranslationDownloader\Tests\Unit\Package;
 
-use Composer\DependencyResolver\Operation\OperationInterface;
+use Composer\DependencyResolver\Operation\InstallOperation;
 use Composer\Package\Loader\ArrayLoader;
 use Composer\Package\Package;
-use Composer\Package\PackageInterface;
 use Inpsyde\WpTranslationDownloader\Config\PluginConfiguration;
 use Inpsyde\WpTranslationDownloader\Package\TranslatablePackageFactory;
 use Inpsyde\WpTranslationDownloader\Package\TranslatablePackageInterface;
@@ -21,22 +20,15 @@ class TranslatablePackageFactoryTest extends TestCase
     public function testCreateFromOperation(): void
     {
         $pluginConfiguration = new PluginConfiguration([]);
-        $testee = new TranslatablePackageFactory($pluginConfiguration);
+        $packageFactory = new TranslatablePackageFactory($pluginConfiguration);
 
         $expectedName = 'inpsyde/google-tag-manager';
         $expectedType = 'wordpress-plugin';
         $expectedVersion = '1.0.0';
 
-        $packageStub = \Mockery::mock(PackageInterface::class);
-        $packageStub->expects('getName')->andReturn($expectedName);
-        $packageStub->expects('getType')->andReturn($expectedType);
-        $packageStub->expects('getPrettyVersion')->andReturn($expectedVersion);
-        $packageStub->expects('getVersion')->andReturn($expectedVersion);
-
-        $operationStub = \Mockery::mock(OperationInterface::class);
-        $operationStub->expects('getPackage')->andReturn($packageStub);
-
-        $result = $testee->createFromOperation($operationStub);
+        $package = new Package($expectedName, $expectedVersion, $expectedVersion);
+        $package->setType($expectedType);
+        $result = $packageFactory->createFromOperation(new InstallOperation($package));
 
         static::assertInstanceOf(TranslatablePackageInterface::class, $result);
         static::assertSame($expectedName, $result->getName());
@@ -47,20 +39,20 @@ class TranslatablePackageFactoryTest extends TestCase
     /**
      * @test
      * @dataProvider provideEndpointData
-     *
-     * @param array $expectedApi
-     * @param array $packageData
-     * @param array|null $expected
      */
-    public function testResolveEndpoint(array $expectedApi, array $packageData, ?array $expected): void
-    {
+    public function testResolveEndpoint(
+        array $expectedApi,
+        array $packageData,
+        ?array $expected
+    ): void {
+
         $loader = new ArrayLoader();
         $pluginConfiguration = new PluginConfiguration($expectedApi);
 
-        $testee = new TranslatablePackageFactory($pluginConfiguration);
+        $packageFactory = new TranslatablePackageFactory($pluginConfiguration);
         $package = $loader->load($packageData);
 
-        static::assertSame($expected, $testee->resolveEndpoint($package));
+        static::assertSame($expected, $packageFactory->resolveEndpoint($package));
     }
 
     /**
@@ -79,8 +71,8 @@ class TranslatablePackageFactoryTest extends TestCase
             ],
             [
                 'https://api.wordpress.org/translations/plugins/1.0/?slug=google-tag-manager&version=1.0',
-                null
-            ]
+                null,
+            ],
         ];
 
         yield "Default unsupported type" => [
@@ -90,7 +82,7 @@ class TranslatablePackageFactoryTest extends TestCase
                 'version' => '1.0',
                 'type' => 'bar',
             ],
-            null
+            null,
         ];
 
         yield "custom API URL for a matching name" => [
@@ -108,8 +100,8 @@ class TranslatablePackageFactoryTest extends TestCase
             ],
             [
                 'https://inpsyde.com/google-tag-manager',
-                null
-            ]
+                null,
+            ],
         ];
 
         yield "custom API URL and file type for a matching name" => [
@@ -130,8 +122,8 @@ class TranslatablePackageFactoryTest extends TestCase
             ],
             [
                 'https://inpsyde.com/google-tag-manager.rar',
-                'rar'
-            ]
+                'rar',
+            ],
         ];
 
         yield "custom API URL by type" => [
@@ -149,8 +141,8 @@ class TranslatablePackageFactoryTest extends TestCase
             ],
             [
                 "https://inpsyde.com/{$plugin}/inpsyde/google-tag-manager",
-                null
-            ]
+                null,
+            ],
         ];
 
         yield "Test disable API" => [
@@ -166,7 +158,7 @@ class TranslatablePackageFactoryTest extends TestCase
                 'version' => '1.0',
                 'type' => $plugin,
             ],
-            null
+            null,
         ];
     }
 
@@ -178,7 +170,11 @@ class TranslatablePackageFactoryTest extends TestCase
         $api = [
             PluginConfiguration::API => [
                 PluginConfiguration::BY_NAME => [
-                    '*' => '%vendorName%-%projectName%-%packageName%-%packageType%-%packageVersion%',
+                    '*' => '%vendorName%'
+                        . '-%projectName%'
+                        . '-%packageName%'
+                        . '-%packageType%'
+                        . '-%packageVersion%',
                 ],
             ],
         ];
@@ -203,32 +199,28 @@ class TranslatablePackageFactoryTest extends TestCase
 
         $pluginConfiguration = new PluginConfiguration($api);
 
-        $testee = new TranslatablePackageFactory($pluginConfiguration);
+        $packageFactory = new TranslatablePackageFactory($pluginConfiguration);
 
-        static::assertSame([$expectedUrl, null], $testee->resolveEndpoint($package));
+        static::assertSame([$expectedUrl, null], $packageFactory->resolveEndpoint($package));
     }
 
     /**
      * @test
      * @dataProvider provideDirectoryData
-     *
-     * @param array $input
-     * @param array $packages
      */
     public function testResolveDirectory(array $input, array $packages): void
     {
         $pluginConfiguration = new PluginConfiguration($input);
 
-        $testee = new TranslatablePackageFactory($pluginConfiguration);
-        foreach ($packages as $package) {
-            $packageStub = \Mockery::mock(PackageInterface::class);
-            $packageStub->expects('getName')->andReturn($package['name']);
-            $packageStub->expects('getType')->andReturn($package['type']);
-            $packageStub->expects('getPrettyVersion')->andReturn($package['version'] ?? '1.0');
+        $packageFactory = new TranslatablePackageFactory($pluginConfiguration);
+        foreach ($packages as $packageData) {
+            $version = $packageData['version'] ?? '1.0';
+            $package = new Package($packageData['name'], $version, $version);
+            $package->setType($packageData['type']);
 
             static::assertSame(
-                $package['expected'],
-                $testee->resolveDirectory($packageStub)
+                $packageData['expected'],
+                $packageFactory->resolveDirectory($package)
             );
         }
     }
@@ -300,7 +292,7 @@ class TranslatablePackageFactoryTest extends TestCase
      */
     public function testRemoveEmptyQueryParams(string $expected, string $input): void
     {
-        $testee = new class extends TranslatablePackageFactory {
+        $packageFactory = new class extends TranslatablePackageFactory {
             /** @noinspection PhpMissingParentConstructorInspection */
             public function __construct()
             {
@@ -312,7 +304,7 @@ class TranslatablePackageFactoryTest extends TestCase
             }
         };
 
-        static::assertSame($expected, $testee->removeEmptyQueryParams($input));
+        static::assertSame($expected, $packageFactory->removeEmptyQueryParams($input));
     }
 
     /**

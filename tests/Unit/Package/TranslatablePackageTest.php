@@ -11,12 +11,8 @@ use PHPUnit\Framework\TestCase;
 class TranslatablePackageTest extends TestCase
 {
     /**
-     * @dataProvider providePackageNames
-     *
-     * @param string $input
-     * @param string $expected
-     *
      * @test
+     * @dataProvider providePackageNames
      */
     public function testProjectName(string $input, string $expected): void
     {
@@ -38,12 +34,12 @@ class TranslatablePackageTest extends TestCase
 
         yield [
             'inpsyde-google-tag-manager',
-            'inpsyde-google-tag-manager'
+            'inpsyde-google-tag-manager',
         ];
 
         yield [
             'inpsyde/this-is/pretty-wrong',
-            'this-is-pretty-wrong'
+            'this-is-pretty-wrong',
         ];
     }
 }
