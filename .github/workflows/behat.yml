@@ -32,13 +32,8 @@ jobs:
 
     strategy:
       matrix:
-        php-version: [ '7.2', '7.3', '7.4' ]
-        composer-version: [ 'v1', 'v2' ]
-        include:
-          - php-version: '8.0'
-            composer-version: 'v2'
-          - php-version: '8.1'
-            composer-version: 'v2'
+        php-version: [ '7.2', '7.3', '7.4', '8.0', '8.1' ]
+        composer-version: [ 'v2.0', 'v2.1', 'v2.2', 'v2.3' ]
 
     steps:
       - name: Checkout
