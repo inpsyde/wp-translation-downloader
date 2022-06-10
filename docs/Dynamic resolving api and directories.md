@@ -1,17 +1,31 @@
 # Dynamic resolving `api` and `directories`
 
-Both configurations of `directories` and `api` are supporting dynamic resolving with placeholders. You can use in `types` and `names` configuration following placeholders:
+The `directories` and `api` configurations support dynamic resolving with placeholders, both in
+their `types` and `names` sub-keys.
 
-- `%vendorName%` - the vendor name: `inpsyde`
-- `%projectName%` - the project name: `wp-translation-downloader`.
-- `%packageName%` - the full name of the package: `inpsyde/wp-translation-downloader`.
-- `%packageType%` - the type of package, like ´wordpress-core`.
-- `%packageVersion%` - calls `$package->getPrettyVersion()` from Composer.
+Here's the summary of all supported placeholders:
 
-> :information_source: For resolving the API-Endpoint, the `%packageVersion%` will be set to `''` when containing a `dev-*`-version.
-> This change was made due incompatibility of WordPress.org GlotPress API when sending a `dev-*`-version: https://api.wordpress.org/translations/core/1.0/?version=dev-master
+| Placeholder        | Description                                                                                          |
+|--------------------|------------------------------------------------------------------------------------------------------|
+| `%projectName%`    | Project name, e.g. `"wp-translation-downloader"` for the package `inpsyde/wp-translation-downloader` |
+| `%vendorName%`     | Vendor name, e.g. `"inpsyde"` for the package `inpsyde/wp-translation-downloader`                    |
+| `%packageName%`    | Full package name, e.g. `"inpsyde/wp-translation-downloader"`                                        |
+| `%packageType%`    | Package type, e.g. `"wordpress-plugin"`                                                              |
+| `%packageVersion%` | Package version, e.g. `"13.0"`                                                                       |
 
-Here is a short example of using the dynamic placeholders:
+:information_source: **Notes:**
+
+- `%packageVersion%` is resolved with the "pretty" package version (as Composer calls it)<sup>1</sup>
+  that usually exactly matches the Git tag. In the case of ["virtual packages"](./Configuration.md#virtual-packages)
+  it will match exactly what's defined in virtual package's definition.
+- When resolving the API endpoint, `%packageVersion%` will be set to and empty string when the
+  package is installed from using a "dev" requirement like `dev-master`. The reason is Glotpress 
+  does not understand that versioning (that's Composer-specific) and would return no results.
+- When resolving the API endpoint, any query variable with an empty value will be removed.
+  For example, having a URL like `http://example.com?ver=%packageVersion%` and an empty version will
+  result in `http://example.com` and not `http://example.com?ver=`
+
+## Usage example
 
 ```json
 {
@@ -34,3 +48,9 @@ Here is a short example of using the dynamic placeholders:
     }
 }
 ```
+
+---
+
+<sup>1</sup> Composer defines two versions for each package: a "pretty" version that matches what's
+defined in version control, and a "canonical" version that is obtained by "normalizing" the pretty
+version. For example a "pretty" version `1.0` corresponds to a `1.0.0.0` "canonical" version.

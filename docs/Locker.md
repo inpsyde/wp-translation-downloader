@@ -1,6 +1,9 @@
 # Locker
 
-WP Translation Downloader will generate on installation a `wp-translation-downloader.lock` file. This file will contain all installed packages with translations by languages like following:
+After having downloaded translations, WP Translation Downloader generates a `wp-translation-downloader.lock` 
+file. It will contain information about all installed packages translations.
+
+Here's how its content looks like:
 
 ```json
 {
@@ -15,16 +18,22 @@ WP Translation Downloader will generate on installation a `wp-translation-downlo
 }
 ```
 
-On second install WP Translation Downloader will check if for a given packageName a translation is available and determine if the translation is locked.
+Using WP Translation Downloader to downloaded translations in the presence of that lock file will
+result in locked packages _not_ be installed again.
 
-A locked translations will be identified by following:
+In fact, WP Translation Downloader will:
 
-1. The current packageName-language entry will be searched in `.lock`-file.
-2. If available, then following checks will be done:
-    - The lock version is greater or equal then current version.
-    - The lock lastUpdated is greater or equal then current lastUpdated.
+1. Check if target package name is available in the lock file
+2. if so, check if the info for target language is present in the locked package data
+3. If so, check:
+    - locked version is greater or equal to current version
+    - locked `updated` is greater or equal to translation's `lastUpdated` info coming from Glotpress
 
---> If both of those checks are matching, then the current packageName-language is locked and will **not** updated.
+If **all** the above checks above pass, the package is considered locked and not installed/updated, 
+otherwise will be downloaded as usual.
 
---> If one of those is **not** matching, then the current packageName-language is **not** locked and will be updated.
+## Lock file version control
 
+Please note no check is made if the locked packages' translation files are _actually_ 
+present in the target directory. For that reason `wp-translation-downloader.lock` **should be
+git-ignored** if the translation files are git-ignored.
