@@ -24,7 +24,6 @@ use Symfony\Component\Console\Output\OutputInterface;
 class DownloadCommand extends BaseCommand
 {
     use ErrorFormatterTrait;
-    use ComposerGetterTrait;
 
     public const OPTION_PACKAGES = 'packages';
 
@@ -52,7 +51,7 @@ class DownloadCommand extends BaseCommand
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         try {
-            $composer = $this->obtainComposerFromCommand($this);
+            $composer = $this->requireComposer();
 
             $plugin = new Plugin();
             $plugin->activate($composer, $this->getIO());

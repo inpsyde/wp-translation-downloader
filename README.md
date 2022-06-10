@@ -17,9 +17,6 @@ compatibility table:
 | 1.x      | 1.x                       |
 | 2.x      | 2.x                       |
 
-:warning: WP Translation Downloader v2 _might_ work with Composer v1, but is not officially supported.
-So we're recommending to stick with the recommendation above.
-
 ## Installation
 
 ```

@@ -35,6 +35,7 @@ use Inpsyde\WpTranslationDownloader\Util\Downloader;
 use Inpsyde\WpTranslationDownloader\Package\TranslatablePackageFactory;
 use Inpsyde\WpTranslationDownloader\Util\Locker;
 use Inpsyde\WpTranslationDownloader\Util\Remover;
+use Inpsyde\WpTranslationDownloader\Util\TranslationPackageDownloader;
 
 final class Plugin implements
     PluginInterface,
@@ -68,9 +69,9 @@ final class Plugin implements
     private $locker = null;
 
     /**
-     * @var ArchiveDownloaderFactory|null
+     * @var TranslationPackageDownloader|null
      */
-    private $archiveDownloaderFactory = null;
+    private $translationsDownloader = null;
 
     /**
      * Subscribe to Composer events.
@@ -147,9 +148,11 @@ final class Plugin implements
         }
 
         $this->translatablePackageFactory = new TranslatablePackageFactory($this->pluginConfig);
-        $this->archiveDownloaderFactory = new ArchiveDownloaderFactory(
+
+        $this->translationsDownloader = new TranslationPackageDownloader(
+            $composer->getLoop(),
+            $composer->getDownloadManager(),
             $this->io,
-            $composer,
             $this->filesystem
         );
     }
@@ -210,7 +213,7 @@ final class Plugin implements
         $downloader = new Downloader(
             $this->io,
             $this->locker,
-            $this->archiveDownloaderFactory,
+            $this->translationsDownloader,
             $this->filesystem
         );
 
@@ -423,7 +426,7 @@ final class Plugin implements
      * @psalm-assert TranslatablePackageFactory $this->translatablePackageFactory
      * @psalm-assert Filesystem $this->filesystem
      * @psalm-assert Locker $this->locker
-     * @psalm-assert ArchiveDownloaderFactory $this->archiveDownloaderFactory
+     * @psalm-assert TranslationPackageDownloader $this->translationsDownloader
      */
     private function assertActivated(): void
     {
@@ -431,6 +434,6 @@ final class Plugin implements
         assert($this->translatablePackageFactory instanceof TranslatablePackageFactory);
         assert($this->filesystem instanceof Filesystem);
         assert($this->locker instanceof Locker);
-        assert($this->archiveDownloaderFactory instanceof ArchiveDownloaderFactory);
+        assert($this->translationsDownloader instanceof TranslationPackageDownloader);
     }
 }

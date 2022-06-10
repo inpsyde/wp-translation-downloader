@@ -12,7 +12,7 @@
     "require": {
         "php": ">=7.2",
         "ext-json": "*",
-        "composer-plugin-api": "^1.0 || ^2.0",
+        "composer-plugin-api": "^2.0",
         "composer/installers": "^1.0 || ^2.0"
     },
     "require-dev": {

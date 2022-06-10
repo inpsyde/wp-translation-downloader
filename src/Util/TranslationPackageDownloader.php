@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace Inpsyde\WpTranslationDownloader\Util;
 
-use Composer\Downloader\DownloaderInterface;
+use Composer\Downloader\DownloadManager;
 use Composer\IO\IOInterface;
 use Composer\Package\PackageInterface;
 use Composer\Util\Filesystem;
@@ -21,13 +21,8 @@ use Composer\Util\Loop;
 use Composer\Util\SyncHelper;
 use Symfony\Component\Finder\Finder;
 
-class ArchiveDownloader
+class TranslationPackageDownloader
 {
-    /**
-     * @var callable(PackageInterface,string):void
-     */
-    private $downloadCallback;
-
     /**
      * @var IOInterface
      */
@@ -44,67 +39,30 @@ class ArchiveDownloader
     private $directories = [];
 
     /**
+     * @var Loop
+     */
+    private $loop;
+
+    /**
+     * @var DownloadManager
+     */
+    private $downloaderManager;
+
+    /**
      * @param Loop $loop
-     * @param DownloaderInterface $downloader
+     * @param DownloadManager $downloaderManager
      * @param IOInterface $io
      * @param Filesystem $filesystem
-     * @return ArchiveDownloader
      */
-    public static function viaLoop(
+    public function __construct(
         Loop $loop,
-        DownloaderInterface $downloader,
-        IOInterface $io,
-        Filesystem $filesystem
-    ): ArchiveDownloader {
-
-        $downloadCallback = static function (
-            PackageInterface $package,
-            string $path
-        ) use (
-            $loop,
-            $downloader
-        ): void {
-
-            SyncHelper::downloadAndInstallPackageSync($loop, $downloader, $path, $package);
-        };
-
-        return new self($downloadCallback, $io, $filesystem);
-    }
-
-    /**
-     * @param DownloaderInterface $downloader
-     * @param IOInterface $io
-     * @param Filesystem $filesystem
-     * @return ArchiveDownloader
-     */
-    public static function forV1(
-        DownloaderInterface $downloader,
-        IOInterface $io,
-        Filesystem $filesystem
-    ): ArchiveDownloader {
-
-        $downloadCallback = static function (
-            PackageInterface $package,
-            string $path
-        ) use ($downloader): void {
-            $downloader->download($package, $path);
-        };
-
-        return new self($downloadCallback, $io, $filesystem);
-    }
-
-    /**
-     * @param callable(PackageInterface,string):void $downloadCallback
-     * @param IOInterface $io
-     * @param Filesystem $filesystem
-     */
-    private function __construct(
-        callable $downloadCallback,
+        DownloadManager $downloaderManager,
         IOInterface $io,
         Filesystem $filesystem
     ) {
 
-        $this->downloadCallback = $downloadCallback;
+        $this->loop = $loop;
+        $this->downloaderManager = $downloaderManager;
         $this->io = $io;
         $this->filesystem = $filesystem;
     }
@@ -122,7 +80,7 @@ class ArchiveDownloader
                 throw new \Error("Package URL '{$distUrl}' is invalid.");
             }
 
-            // Download callback makes use of Composer downloader, and will empty the target path.
+            // Composer downloader will empty the target path.
             // When target does not exist, that's irrelevant, and we can unpack directly there.
             if (!file_exists($path)) {
                 return $this->directDownload($package, $path, $distUrl);
@@ -132,8 +90,8 @@ class ArchiveDownloader
                 throw new \Error("Could not use '{$path}' as target for unpacking '{$distUrl}'.");
             }
 
-            // If here, target path is an existing directory. We can't use download callback to
-            // download there, or Composer will delete every existing file in it.
+            // If here, target path is an existing directory. We can't use Composer downloader
+            // to download directly in target path, or it will delete every existing file in it.
             // So we first unpack in a temporary folder and then move unpacked files from the temp
             // dir to final target dir. That's surely slower, but necessary.
             $tempDir = $this->downloadInTempDir($package, $path, $distUrl);
@@ -160,7 +118,13 @@ class ArchiveDownloader
     {
         $this->ensureDirectoryExists($path);
         $this->io->debug("Downloading and unpacking '{$distUrl}' in new directory '{$path}'...");
-        ($this->downloadCallback)($package, $path);
+
+        SyncHelper::downloadAndInstallPackageSync(
+            $this->loop,
+            $this->downloaderManager->getDownloader($package->getDistType() ?? ''),
+            $path,
+            $package
+        );
 
         return true;
     }
@@ -181,7 +145,12 @@ class ArchiveDownloader
         $this->io->debug("Archive target path '{$targetPath}' is an existing directory.");
         $this->io->debug("Downloading and unpacking '{$distUrl}' in the temp dir: '{$tempDir}'.");
         $this->filesystem->ensureDirectoryExists($tempDir);
-        ($this->downloadCallback)($package, $tempDir);
+        SyncHelper::downloadAndInstallPackageSync(
+            $this->loop,
+            $this->downloaderManager->getDownloader($package->getDistType() ?? ''),
+            $tempDir,
+            $package
+        );
         $this->ensureDirectoryExists($targetPath);
 
         return $tempDir;

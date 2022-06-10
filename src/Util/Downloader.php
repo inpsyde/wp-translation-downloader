@@ -32,9 +32,9 @@ class Downloader
     private $locker;
 
     /**
-     * @var ArchiveDownloaderFactory
+     * @var TranslationPackageDownloader
      */
-    private $downloaderFactory;
+    private $downloader;
 
     /**
      * @var Filesystem
@@ -44,19 +44,19 @@ class Downloader
     /**
      * @param IOInterface $io
      * @param Locker $locker
-     * @param ArchiveDownloaderFactory $downloaderFactory
+     * @param TranslationPackageDownloader $downloader
      * @param Filesystem $filesystem
      */
     public function __construct(
         IOInterface $io,
         Locker $locker,
-        ArchiveDownloaderFactory $downloaderFactory,
+        TranslationPackageDownloader $downloader,
         Filesystem $filesystem
     ) {
 
         $this->io = $io;
         $this->locker = $locker;
-        $this->downloaderFactory = $downloaderFactory;
+        $this->downloader = $downloader;
         $this->filesystem = $filesystem;
     }
 
@@ -122,12 +122,7 @@ class Downloader
             }
 
             $languagePackage = $this->createTranslationPackage($translation);
-
-            /** @var string $distType */
-            $distType = $languagePackage->getDistType();
-            $downloader = $this->downloaderFactory->create($distType);
-
-            if (!$downloader->download($languagePackage, $directory)) {
+            if (!$this->downloader->download($languagePackage, $directory)) {
                 $this->packageError('Download error', $collector, $packageDesc);
                 return;
             }
