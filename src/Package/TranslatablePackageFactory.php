@@ -179,8 +179,7 @@ class TranslatablePackageFactory
         [$vendorName, $projectName] = $this->resolveName($package->getName());
 
         $version = $package->getPrettyVersion();
-        $stability = VersionParser::parseStability($version);
-        if (!$allowDevVersion && ($stability !== 'stable')) {
+        if (!$allowDevVersion && strpos($version, 'dev-') === 0) {
             $version = '';
         }
 
