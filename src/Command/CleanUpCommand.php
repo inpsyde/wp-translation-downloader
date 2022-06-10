@@ -21,6 +21,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 class CleanUpCommand extends BaseCommand
 {
     use ErrorFormatterTrait;
+    use ComposerGetterTrait;
 
     /**
      * @return void
@@ -41,7 +42,7 @@ class CleanUpCommand extends BaseCommand
     {
         try {
             $plugin = new Plugin();
-            $plugin->activate($this->requireComposer(), $this->getIO());
+            $plugin->activate($this->obtainComposerFromCommand($this), $this->getIO());
             $plugin->doCleanUpDirectories();
 
             return 0;
