@@ -200,8 +200,8 @@ final class Plugin implements
         $this->logo();
 
         $allowedLanguages = $this->pluginConfig->allowedLanguages();
-        if (!$allowedLanguages) {
-            $this->io->write('Nothing to do: no languages defined.');
+        if (count($allowedLanguages) < 1) {
+            $this->io->write('  Nothing to do: no translation languages defined.');
 
             return;
         }

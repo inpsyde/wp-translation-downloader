@@ -28,13 +28,21 @@
             }
         },
         "directories": {
-            "type": "object",
-            "additionalProperties": {
-                "type": [
-                    "string",
-                    "boolean"
-                ]
-            }
+            "oneOf": [
+                {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": [
+                            "string",
+                            "boolean"
+                        ]
+                    }
+                },
+                {
+                    "type": "array",
+                    "maxItems": 0
+                }
+            ]
         },
         "endpoints": {
             "oneOf": [
@@ -108,7 +116,7 @@
             }
         },
         "virtual-packages": {
-            "title": "Allows to define already installed dependencies without going through require/require-dev.",
+            "title": "Already installed packages to download translations for, without going through require/require-dev.",
             "type": "array",
             "items": {
                 "type": "object",
