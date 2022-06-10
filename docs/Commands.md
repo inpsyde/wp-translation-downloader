@@ -1,6 +1,6 @@
 # Commands
 
-You can also use WP Translation Downloader via Composer CLI. Following commands are available:
+WP Translation Downloader integrates with Composer adding following custom commands to it.
 
 ## Download translations
 
@@ -14,7 +14,7 @@ Downloads for packages translations.
 By default, when no packages are passed via `--packages` flag, _all_ installed packages will be 
 processed.
 
-Note: `--packages` flag must be a comma separated list of package names, with support glob patterns,
+Note: `--packages` flag must be a comma-separated list of package names (glob patterns supported),
 e.g. `--packages="foo/bar,inpsyde/*"`.
 
 ## Clean-up Translations

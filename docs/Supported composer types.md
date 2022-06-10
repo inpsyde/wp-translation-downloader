@@ -1,17 +1,17 @@
 # Support Composer types
 
-WP Translation Downloader will map Composer packages' `type`, defined in package's `composer.json` 
+WP Translation Downloader will map Composer packages' `type`, defined in packages' `composer.json` 
 to folders within WordPress installation `languages` folder.
 
 ## WordPress types
 
-WordPress-specific types like following:
+The following WordPress-specific types are supported out-of-the-box:
 
 - `worpdress-plugin`
 - `wordpress-theme`
 - `wordpress-core`
 
-are supported out-of-the-box and will be placed in the corresponding folder defined by WordPress.
+and their translation files will be placed in the folders WordPress expect them to be.
 
 ## `library` type
 
@@ -26,7 +26,7 @@ To enable this behavior `"api.types"` [configuration](./Configuration.md) must b
 WordPress has [functions](https://developer.wordpress.org/?s=_textdomain&post_type%5B%5D=wp-parser-function) 
 to load translations for its "standard" types, but it does not provide helpers for the "library" type.
 
-A simple yet flexible helper function could look like so:
+A simple yet flexible helper function (that mimics core functions) could look like so:
 
 ```php
 <?php

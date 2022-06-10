@@ -18,12 +18,12 @@ Here's the summary of all supported placeholders:
 - `%packageVersion%` is resolved with the "pretty" package version (as Composer calls it)<sup>1</sup>
   that usually exactly matches the Git tag. In the case of ["virtual packages"](./Configuration.md#virtual-packages)
   it will match exactly what's defined in virtual package's definition.
-- When resolving the API endpoint, `%packageVersion%` will be set to and empty string when the
-  package is installed from using a "dev" requirement like `dev-master`. The reason is Glotpress 
-  does not understand that versioning (that's Composer-specific) and would return no results.
+- When resolving the API endpoint, `%packageVersion%` will be set to an empty string when the
+  package is installed from using a "dev" requirement like `dev-master`. The reason being Glotpress 
+  not understanding that kind of versioning (that's Composer-specific) and would return no results.
 - When resolving the API endpoint, any query variable with an empty value will be removed.
-  For example, having a URL like `http://example.com?ver=%packageVersion%` and an empty version will
-  result in `http://example.com` and not `http://example.com?ver=`
+  For example, having a URL like `http://example.com?ver=%packageVersion%` in the case of an empty 
+  version will result in `http://example.com` and not `http://example.com?ver=`
 
 ## Usage example
 

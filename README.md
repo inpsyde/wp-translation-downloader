@@ -5,19 +5,20 @@
 [![Downloads](https://img.shields.io/packagist/dt/inpsyde/wp-translation-downloader.svg)](https://packagist.org/packages/inpsyde/wp-translation-downloader)
 [![License](https://img.shields.io/packagist/l/inpsyde/wp-translation-downloader.svg)](https://packagist.org/packages/inpsyde/wp-translation-downloader)
 
-Composer plugin to download translations from the WordPress.org API or from custom Glotpress installations.
+A Composer plugin to download translations from the WordPress.org API or from custom Glotpress installations.
 
 ## Composer v1 and v2
-Since Composer v2 introduced various changes in public API, we had to separate some logic and refactor code in our Plugin.
 
-To ensure no failures and best compatibility, we recommend following:
+To ensure the best compatibility, we recommend the following Composer to WP Translation Downloader
+compatibility table:
 
 | Composer | WP Translation Downloader |
 |----------|---------------------------|
 | 1.x      | 1.x                       |
-| 2.x      | 2.x, 3.x                  |
- 
-**[!]** Composer v1 _might_ work in WP Translation Downloader v2 (and v3), but is not officially supported. We're recommending to stick with WP Translation Downloader v1 as defined in the matrix above.
+| 2.x      | 2.x                       |
+
+:warning: WP Translation Downloader v2 _might_ work with Composer v1, but is not officially supported.
+So we're recommending to stick with the recommendation above.
 
 ## Installation
 
