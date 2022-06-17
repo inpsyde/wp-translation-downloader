@@ -116,12 +116,7 @@ class TranslatablePackage extends Package implements TranslatablePackageInterfac
             return false;
         }
 
-        $result = @file_get_contents($apiUrl);
-        if (!$result) {
-            return false;
-        }
-
-        $result = json_decode($result, true);
+        $result = $this->readEndpointContent($apiUrl);
         $translations = is_array($result) ? ($result['translations'] ?? null) : null;
         if (!is_array($translations) || (count($translations) < 1)) {
             return false;
@@ -159,6 +154,22 @@ class TranslatablePackage extends Package implements TranslatablePackageInterfac
     public function languageDirectory(): string
     {
         return $this->languageDirectory;
+    }
+
+    /**
+     * @param string $apiUrl
+     * @return array|null
+     */
+    protected function readEndpointContent(string $apiUrl): ?array
+    {
+        $result = @file_get_contents($apiUrl);
+        if (!$result) {
+            return null;
+        }
+
+        $result = json_decode($result, true);
+
+        return is_array($result) ? $result : null;
     }
 
     /**

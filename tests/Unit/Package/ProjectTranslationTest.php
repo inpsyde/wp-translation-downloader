@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Inpsyde\WpTranslationDownloader\Tests\Unit\Package;
 
 use Composer\Package\CompletePackage;
+use Composer\Package\Package;
+use Inpsyde\WpTranslationDownloader\Package\ProjectTranslation;
 use Inpsyde\WpTranslationDownloader\Package\TranslatablePackage;
 use PHPUnit\Framework\TestCase;
 
@@ -178,5 +180,67 @@ class ProjectTranslationTest extends TestCase
                 'tar',
             ],
         ];
+    }
+
+    /**
+     * @test
+     */
+    public function testGenerationFromParsedJson(): void
+    {
+        $json = <<<JSON
+{
+	"translations": [
+		{
+			"language": "de_DE",
+			"version": "2.0.5",
+			"updated": "2020-07-01T14:15:26+00:00",
+			"english_name": "German",
+			"native_name": "Deutsch",
+			"package": "https://translate.example.com/traduttore/test-de_DE-2.0.5.zip",
+			"iso": [
+				"de"
+			]
+		},
+		{
+			"language": "de_AT",
+			"version": "2.0.5",
+			"updated": "2020-07-01T14:15:39+00:00",
+			"english_name": "German (Austria)",
+			"native_name": "Deutsch (Österreich)",
+			"package": "https:\/\/translate.example.com\/traduttore\/test-de_AT-2.0.5.zip",
+			"iso": [
+				"de"
+			]
+		}
+	]
+}
+JSON;
+        $translatablePackage = new class ($json) extends TranslatablePackage
+        {
+            private $json;
+            public function __construct(string $json)
+            {
+                $this->json = $json;
+                parent::__construct(
+                    new Package('test/test', '2.0.5.0', '1.2.0.5'),
+                    __DIR__,
+                    'https://example.com'
+                );
+            }
+
+            protected function readEndpointContent(string $apiUrl): ?array
+            {
+                $result = json_decode($this->json, true);
+
+                return is_array($result) ? $result : null;
+            }
+        };
+
+        $languages = ['de_DE', 'de_AT'];
+        $parsedTranslations = $translatablePackage->translations($languages);
+        foreach ($parsedTranslations as $projectTranslation) {
+            static::assertSame('zip', $projectTranslation->distType());
+            static::assertTrue(in_array($projectTranslation->language(), $languages, true));
+        }
     }
 }

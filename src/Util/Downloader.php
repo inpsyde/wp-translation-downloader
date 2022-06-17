@@ -168,8 +168,19 @@ class Downloader
     {
         $distType = $translation->distType();
         if (!$distType) {
-            $name = $translation->projectName();
-            throw new \Error("Invalid translations file type for project '{$name}'");
+            $ext = $translation->packageUrlExtensions();
+            $oneType = count($ext) === 1;
+            throw new \Error(
+                sprintf(
+                    "Invalid translations file type for project '%s': "
+                    . "extracted file type%s '%s', from package URL '%s', %s not supported.",
+                    $translation->projectName(),
+                    $oneType ? '' : 's',
+                    implode("' and '", $ext),
+                    $translation->packageUrl() ?? '""',
+                    $oneType ? 'is' : 'are'
+                )
+            );
         }
 
         return $distType;

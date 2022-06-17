@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Inpsyde\WpTranslationDownloader\Tests\Unit\Package;
 
 use Composer\Package\Package;
+use Composer\Package\PackageInterface;
 use Inpsyde\WpTranslationDownloader\Package\TranslatablePackage;
 use PHPUnit\Framework\TestCase;
 

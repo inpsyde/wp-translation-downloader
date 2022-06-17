@@ -165,25 +165,24 @@ class ProjectTranslation
      */
     public function distType(): ?string
     {
-        $distType = $this->fileType;
-        if (!is_string($distType)) {
-            $distUrl = $this->packageUrl();
-            if (!$distUrl) {
-                return null;
-            }
-            if (preg_match('~\.((?:[a-z0-9_-]+\.)?[a-z0-9_-]+)$~i', $distUrl, $matches)) {
-                $distType = $matches[1];
-            }
-        }
-        $ext = strtolower($distType ?? 'zip');
-        $distType = self::EXTENSION_MAP[$ext] ?? $ext;
+        $extensions = $this->fileType
+            ? [$this->fileType]
+            : $this->packageUrlExtensions();
 
-        if (in_array($distType, self::SUPPORTED_ARCHIVES, true)) {
-            return $distType;
+        if (!$extensions) {
+            // No extension in the URL, and no file type... let's assume zip.
+            return 'zip';
         }
 
-        if (in_array($distType, self::SUPPORTED_FILES, true)) {
-            return 'file';
+        foreach ($extensions as $extension) {
+            $ext = strtolower($extension);
+            $distType = self::EXTENSION_MAP[$ext] ?? $ext;
+            if (in_array($distType, self::SUPPORTED_ARCHIVES, true)) {
+                return $distType;
+            }
+            if (in_array($distType, self::SUPPORTED_FILES, true)) {
+                return 'file';
+            }
         }
 
         return null;
@@ -228,5 +227,24 @@ class ProjectTranslation
             $this->language() ?? '',
             $this->lastUpdated()
         );
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function packageUrlExtensions(): array
+    {
+        $distUrl = $this->packageUrl();
+        if (!$distUrl) {
+            return [];
+        }
+
+        $extensions = [];
+        if (preg_match('~\.((?:[a-z0-9_-]+\.)?([a-z0-9_-]+))$~i', $distUrl, $matches)) {
+            $extensions = [$matches[1]];
+            is_string($matches[2] ?? null) and $extensions[] = $matches[2];
+        }
+
+        return $extensions;
     }
 }
