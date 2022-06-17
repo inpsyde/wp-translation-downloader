@@ -16,7 +16,7 @@ namespace Inpsyde\WpTranslationDownloader\Package;
 class ProjectTranslation
 {
     private const SUPPORTED_ARCHIVES = ['zip', 'rar', 'tar', 'gzip', 'xz'];
-    private const SUPPORTED_FILES = ['mo', 'json'];
+    private const SUPPORTED_FILES = ['mo', 'po', 'json'];
     private const EXTENSION_MAP = [
         '7z' => 'zip',
         '7zz' => 'zip',
