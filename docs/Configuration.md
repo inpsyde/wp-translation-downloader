@@ -2,27 +2,28 @@
 
 The following configuration properties are available:
 
-| name                | type       | required | description                                                                      |
-|---------------------|------------|----------|----------------------------------------------------------------------------------|
-| `auto-run`          | `bool`     |          | By default `true`. If `false`, the Plugin will not run on install/update command |
-| `languages`         | `string[]` | x        | The iso codes you want to download                                               |
-| `excludes`          | `string[]` |          | Array of excluded package names                                                  |
-| `api.names`         | `array`    |          | Array of package names mapped to a GlotPress API endpoint                        |
-| `api.types`         | `array`    |          | Array of package types mapped to a GlotPress API endpoint                        |
-| `directory`         | `string`   |          | :warning: **deprecated:** The relative path to the `languages` directory.        |
-| `languageRootDir`   | `string`   | x        | The relative path to the `languages` directory - replaces `directory`-key.       |
-| `directories.names` | `array`    | x        | Array of package names mapped to `language`sub-folders.                          |
-| `directories.types` | `array`    | x        | Array of package types mapped to `language` sub-folder.                          |
-| `virtual-packages`  | `array`    |          | An array of objects with `name`, `type` and optionally `version`.                |
+| Name                | Type           | Required | Description                                                                               |
+|---------------------|----------------|----------|-------------------------------------------------------------------------------------------|
+| `auto-run`          | `bool`         |          | By default `true`. If `false`, the plugin will not run on Composer install/update command |
+| `languages`         | `list<string>` | x        | The languages ISO codes to download                                                       |
+| `excludes`          | `list<string>` |          | Array of excluded package names                                                           |
+| `api.names`         | `array`        |          | Array of package names mapped to a Glotpress API endpoint                                 |
+| `api.types`         | `array`        |          | Array of package types mapped to a Glotpress API endpoint                                 |
+| `directory`         | `string`       |          | :warning: **deprecated:** The relative path to the `languages` directory.                 |
+| `languageRootDir`   | `string`       | x        | The relative path to the `languages` directory. Replaces deprecated `directory`.          |
+| `directories.names` | `array`        | x        | Array of package names mapped to `language` sub-folders.                                  |
+| `directories.types` | `array`        | x        | Array of package types mapped to `language` sub-folder.                                   |
+| `virtual-packages`  | `array`        |          | An array of objects with `name`, `type` and optionally `version`.                         |
 
-> **[!] Note:** You can use `*` as wildcard in the `exclude`, `api.names`, `api.types`, `directories.names`
-> and `directories.types` properties.
+> :information_source: **Note:** The `*` wildcard to target multiple package names is supported for 
+> `exclude`, `api.names`, `directories.names`.
 
-The configuration object has to be placed in `composer.json` in the `extra.wp-translation-downloader` property.
+The configuration object has to be placed in `composer.json` in the `extra.wp-translation-downloader` 
+property.
 
 ## Configuration in `composer.json`
 
-Following is the minimum configuration to download translations from the WordPress.org API:
+The following is the minimum configuration to download translations from the WordPress.org API:
 
 ```json
 {
@@ -40,13 +41,17 @@ Following is the minimum configuration to download translations from the WordPre
 
 ## Configuration in custom file
 
-For better readability and portability, it is also possible to use a different file which contains only the WP
-Translation Downloader configuration (everything that would go in the `extra.wp-translation-downloader` object).
+For better readability and portability, it is also possible to use a different file to hold just
+WP Translation Downloader configuration, so everything that would go in the 
+`extra.wp-translation-downloader` object.
 
-One use case could be to reuse the same configuration for many websites that are located in the same parent folder.
+That enables the reuse of the same configuration for multiple websites located under the same parent 
+folder.
 
-For this it's necessary to use the configuration `"extra.wp-translation-downloader"` in `composer.json` to set the path
-of the custom file. The path must be relative to the folder containing `composer.json`:
+To store configuration in a separate file, the `"extra.wp-translation-downloader"` in 
+`composer.json` must be set the path of the file, relative to `composer.json`'s folder.
+
+For example:
 
 ```json
 {
@@ -56,27 +61,27 @@ of the custom file. The path must be relative to the folder containing `composer
 }
 ```
 
-This also allows you to load the configuration file from a custom Composer package and make it available to WP
-Translation Manager by pointing to the file in the vendor folder:
+An interesting application of this functionality is to place the configuration file in its own 
+Composer package and then reference it by path in the root package:
 
 ```json
 {
     "extra": {
-        "wp-translation-downloader": "./vendor/my-company/wp-translation-downloader-shared/config.json"
+        "wp-translation-downloader": "./vendor/acme/translation-downloader-config/config.json"
     }
 }
 ```
 
 ## Exclude specific packages
 
-To exclude specific packages you can use the following configuration:
+It is possible to exclude packages from being processed. Takethe following example:
 
 ```json
 {
     "name": "vendor/my-package",
     "require": {
         "inpsyde/wp-translation-downloader": "dev-master",
-        "johnpbloch/wordpress": "5.3.*@stable",
+        "roots/wordpress": "5.3.*@stable",
         "inpsyde/google-tag-manager": "1.0",
         "wpackagist-plugin/wordpress-seo": "13.0"
     },
@@ -94,30 +99,33 @@ To exclude specific packages you can use the following configuration:
 }
 ```
 
-This will map to the following matrix:
+The behavior of the above configuration is summarized in the following matrix:
 
-| package                             | type               | downloaded                     |
-|-------------------------------------|--------------------|--------------------------------|
-| `johnpbloch/wordpress`              | `wordpress-core`   | yes                            |
-| `inpsyde/wp-translation-downloader` | `composer-plugin`  | no - not matching package type |
-| `inpsyde/google-tag-manager`        | `wordpress-plugin` | no - matching with `"exclude"` |
-| `wpackagist-plugin/wordpress-seo`   | `wordpress-plugin` | yes                            |
+| Package                             | Type               | Downloaded?                  |
+|-------------------------------------|--------------------|------------------------------|
+| `johnpbloch/wordpress`              | `wordpress-core`   | Yes                          |
+| `inpsyde/wp-translation-downloader` | `composer-plugin`  | No: unsupported package type |
+| `inpsyde/google-tag-manager`        | `wordpress-plugin` | No: matching `"exclude"`     |
+| `wpackagist-plugin/wordpress-seo`   | `wordpress-plugin` | Yes                          |
 
-## API - Custom GlotPress API endpoints
+## API - Custom Glotpress API endpoints
 
-WP Translation Downloader supports custom [GlotPress](https://github.com/GlotPress/GlotPress-WP) installations if you
-want to install e.g. private plugins or themes or if you don't want to use the official translation for a package.
+WP Translation Downloader supports custom [Glotpress](https://github.com/GlotPress/GlotPress-WP) 
+installations. That's useful to install _private_ plugins or themes which can't use "official" 
+wp.org translation channels.
 
-The GlotPress APIs are mapped to package names or package types via the `"api.names"` and `"api.types"` objects.
-The following placeholders are provided for this:
+Custom Glotpress API endpoints are "resolved" from package names or types by the mean of the 
+`"api.names"` and `"api.types"` configurations.
 
-| placeholder        | description                                                 |
+In those configurations, is possible to define custom endpoint URLs leveraging following placeholders:
+
+| Placeholder        | Description                                                 |
 |--------------------|-------------------------------------------------------------|
-| `%projectName%`    | project name, e.g. `"wordpress-seo"`                        |
-| `%vendorName%`     | vendor name, e.g. `"wpackagist-plugin"`                     |
-| `%packageName%`    | full package name, e.g. `"wpackagist-plugin/wordpress-seo"` |
-| `%packageType%`    | package type, e.g. `"wordpress-plugin"`                     |
-| `%packageVersion%` | package version, e.g. `"13.0"`                              |
+| `%projectName%`    | Project name, e.g. `"wordpress-seo"`                        |
+| `%vendorName%`     | Vendor name, e.g. `"wpackagist-plugin"`                     |
+| `%packageName%`    | Full package name, e.g. `"wpackagist-plugin/wordpress-seo"` |
+| `%packageType%`    | Package type, e.g. `"wordpress-plugin"`                     |
+| `%packageVersion%` | Package version, e.g. `"13.0"`                              |
 
 Example `composer.json` file:
 
@@ -150,19 +158,22 @@ Example `composer.json` file:
 }
 ```
 
-This will map to the following matrix:
+The behavior caused by the configuration above is summarized in the following matrix:
 
-| package                             | API url                                                                |
+| Package                             | API URL                                                                |
 |-------------------------------------|------------------------------------------------------------------------|
 | `johnpbloch/wordpress`              | `https://my-glotpress-instance.tld/core/5.3`                           |
-| `inpsyde/wp-translation-downloader` | skipped - not matching `packageType`                                   |
+| `inpsyde/wp-translation-downloader` | Skipped: unsupported package type (`composer-plugin`)                  |
 | `wpackagist-plugin/wordpress-seo`   | `https://my-glotpress-instance.tld/plugins/wordpress-seo?version=13.0` |
 | `wpackagist-theme/twentytwenty`     | `https://my-glotpress-instance.tld/theme/twentytwenty?version=1.1`     |
 
-**[!] Notes:**
+More info on dynamic resolving URLs with placeholders can be found [here](./Dynamic%20resolving%20api%20and%20directories.md)
 
-1. The `"api"` list checks from top to bottom for the first matching result
-2. Package names will be checked first. Then it is checked whether there is a matching package type:
+:information_source: **Notes:**
+
+1. `api.names` takes precedence over `api.types`.
+2. The `api.names` list is processed top-to-bottom, the first matching result is used. Take the 
+   following configuration:
 
 ```json
 {
@@ -175,37 +186,28 @@ This will map to the following matrix:
 }
 ```
 
-The rule for `wpackagist-plugin/wordpress-seo` won't match because the `wpackagist-plugin/*` rule matches first. You'll
-need to have following order:
-
-```json
-{
-    "api": {
-        "names": {
-            "wpackagist-plugin/wordpress-seo": "https://someting-different.tld/…",
-            "wpackagist-plugin/*": "https://my-glotpress-instance.tld/plugins/%1$s?version=%2$s"
-        }
-    }
-}
-```
+The API endpoint for `wpackagist-plugin/wordpress-seo` won't match because `wpackagist-plugin/*`
+matches first. To make it match, it is necessary to invert the order.
 
 ## `languageRootDir` and `directories`
 
-WP Translation Downloader supports custom language directory locations for your package.
+WP Translation Downloader supports custom target directory for translations files.
 
-The sub-folders within `languageRootDir` are mapped to package names or package types via the `"directories.names"`
-and `"directories.types"` objects. By default, following package types will be mapped into following sub-folders:
+Sub-folders within languages root (configured in `languageRootDir`) are mapped from package names or 
+types via, respectively, the `"directories.names"` and `"directories.types"` objects. 
 
-| package type       | sub-folder  | note                                                                     |
+The default package type to sub-folders map is summarized in the following table:
+
+| Package type       | Sub-folder  | Note                                                                     |
 |--------------------|-------------|--------------------------------------------------------------------------|
 | `wordpress-core`   | `/`         | WP core translations will be placed directly into `languageRootDir`      |
 | `wordpress-plugin` | `/plugins/` |                                                                          | 
 | `wordpress-theme`  | `/themes/`  |                                                                          | 
 | `library`          | `/library/` | Not supported by WP, but we will place those also into `languageRootDir` |
 
-### Configure by `type`
+### Configuration by package type
 
-To change the directories by type do following:
+Target directories can be configured by package type, for example:
 
 ```json
 {
@@ -219,12 +221,14 @@ To change the directories by type do following:
 }
 ```
 
-Which will resolve your path for type `library` into `/{root path}/public/languages/some-folder/` and for `custom-type`
-into `/{root path}/public/languages/custom/`.
+By using the above configuration, any package having `library` type will have translations installed in
+`./public/languages/some-folder/`.
+And any package having `custom-type` type will have translations installed in `./public/languages/custom/`.
+(Paths relative to root package's root folder).
 
-### Configure by `name`
+### Configuration by package name
 
-To change the directory for a specific package by name you can do following:
+Target directories can be configured by package name, for example:
 
 ```json
 {
@@ -237,14 +241,25 @@ To change the directory for a specific package by name you can do following:
 }
 ```
 
-This will place the package with `"name": "my/package-name"` in composer.json
-into `/{root path}/public/languages/some-folder/`.
+By using the above configuration the package `my/package-name` will have translations installed in
+`./public/languages/some-folder/` (relative to root package's root folder).
+
+### Dynamic configuration
+
+The `directories` configuration, both by name and by type, supports dynamic resolving via placeholders 
+as better described [here](./Dynamic%20resolving%20api%20and%20directories.md).
 
 
 ## Virtual Packages
-Sometimes it is required to not define a dependency in `composer.json` via `require` or `require-dev` but still need the translations to be installed. That can be the case in the WordPress-world for hosting solutions or dockerized enviornments like https://hub.docker.com/_/wordpress which already shipping WordPress pre-installed.
 
-To install translations for "pre-installed platform dependencies", we introduced `virtual-packages` as part of the `wp-translation-downloader`-configuration. The following example will download additionally to all `require`-dependencies of `composer.json` the WordPress core translations:
+It might be desirable to install translations for packages that are *not* required in Composer.
+One example might be a hosting pre-installing WordPress/plugins/themes, or dockerized environments.
+
+In such scenarios, WP Translation Downloader support "virtual packages" in configuration: a 
+bare-minimum packages definition enough for WP Translation Downloader to know what translations 
+to download.
+
+Take the following example:
 
 ```json
 {
@@ -252,7 +267,7 @@ To install translations for "pre-installed platform dependencies", we introduced
     "languages": ["de_DE"],
     "virtual-packages": [
         {
-            "name": "johnpbloch/wordpress",
+            "name": "wordpress/wordpress",
             "type": "wordpress-core",
             "version": "5.8"
         }
@@ -260,19 +275,18 @@ To install translations for "pre-installed platform dependencies", we introduced
 }
 ```
 
-The configuration fields are following:
+Each object in `virtual-packages` array supports following keys:
 
-| field     | required | type     | description                                                                           |
-|-----------|----------|----------|---------------------------------------------------------------------------------------|
-| `name`    | x        | `string` | The packageName of your pre-installed dependency.                                     |
-| `type`    | x        | `string` | The type which is usually defined in `composer.json` to resolve the correct endpoint. |
-| `version` |          | `string` | The string in which version you want to install the translations.                     |
+| Key       | Required | Type     |
+|-----------|----------|----------|
+| `name`    | x        | `string` |
+| `type`    | x        | `string` |
+| `version` |          | `string` |
 
-We allow to lock a version optionally, since WordPress.org Translation API resolves translations dynamically via `?version={version}`. When the field is being empty the latest translations will be downloaded.
+The `name` and `type` properties are those that normally would be defined in package's `composer.json`.
 
-| version string | endpoint                                                       |
-|----------------|----------------------------------------------------------------|
-| `"5.9"`        | https://api.wordpress.org/translations/core/1.0/?version=5.9   |
-| `"5.9.3"`      | https://api.wordpress.org/translations/core/1.0/?version=5.9.3 |
-| `""`           | https://api.wordpress.org/translations/core/1.0/               |
-| _none set_     | https://api.wordpress.org/translations/core/1.0/               |
+The `version` property is optional considering that wp.org API does not require a version to be 
+passed, assuming latest version if none is passed.
+
+In any case, all the three properties (if defined and not empty), will be used when building the
+API endpoint (no matter if default or customized by name/type).

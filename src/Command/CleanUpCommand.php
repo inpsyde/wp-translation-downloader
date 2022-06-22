@@ -14,8 +14,6 @@ declare(strict_types=1);
 namespace Inpsyde\WpTranslationDownloader\Command;
 
 use Composer\Command\BaseCommand;
-use Composer\Composer;
-use Composer\IO\IOInterface;
 use Inpsyde\WpTranslationDownloader\Plugin;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -23,11 +21,12 @@ use Symfony\Component\Console\Output\OutputInterface;
 class CleanUpCommand extends BaseCommand
 {
     use ErrorFormatterTrait;
+    use ComposerGetterTrait;
 
     /**
-     * @throws \Symfony\Component\Console\Exception\InvalidArgumentException
+     * @return void
      */
-    protected function configure()
+    protected function configure(): void
     {
         $this
             ->setName('wp-translation-downloader:clean-up')
@@ -37,22 +36,13 @@ class CleanUpCommand extends BaseCommand
     /**
      * @param InputInterface $input
      * @param OutputInterface $output
-     *
      * @return int
-     *
-     * phpcs:disable Inpsyde.CodeQuality.ReturnTypeDeclaration
      */
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         try {
-            /** @var Composer $composer */
-            $composer = $this->getComposer(true, false);
-
-            /** @var IOInterface $io */
-            $io = $this->getIO();
-
             $plugin = new Plugin();
-            $plugin->activate($composer, $io);
+            $plugin->activate($this->obtainComposerFromCommand($this), $this->getIO());
             $plugin->doCleanUpDirectories();
 
             return 0;

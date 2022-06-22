@@ -13,198 +13,174 @@ declare(strict_types=1);
 
 namespace Inpsyde\WpTranslationDownloader\Config;
 
+use Composer\Package\CompletePackage;
 use Composer\Package\PackageInterface;
-use Inpsyde\WpTranslationDownloader\Package;
-use Inpsyde\WpTranslationDownloader\Package\TranslatablePackage;
+use Composer\Util\Filesystem;
+use Inpsyde\WpTranslationDownloader\Package\TranslatablePackageInterface;
+use Inpsyde\WpTranslationDownloader\Util\FnMatcher;
 
+/**
+ * @psalm-type virtual-package = array{name: string, type: string, version?: int|float|string}
+ */
 final class PluginConfiguration
 {
-    public const KEY = 'wp-translation-downloader';
     /**
      * Configuration selectors for "api" and "directory".
      */
     public const BY_NAME = 'names';
     public const BY_TYPE = 'types';
+
+    public const AUTO_RUN = 'auto-run';
+    public const EXCLUDES = 'excludes';
+    public const LANGUAGES = 'languages';
+    public const LANGUAGES_ROOT_DIR = 'languageRootDir';
+    public const DIRECTORIES = 'directories';
+    public const API = 'api';
+    public const VIRTUAL_PACKAGES = 'virtual-packages';
+
+    private const TYPE_CORE = TranslatablePackageInterface::TYPE_CORE;
+    private const TYPE_PLUGIN = TranslatablePackageInterface::TYPE_PLUGIN;
+    private const TYPE_THEME = TranslatablePackageInterface::TYPE_THEME;
+    private const TYPE_LIBRARY = TranslatablePackageInterface::TYPE_LIBRARY;
+
+    private const WPORG_API_PREFIX = 'https://api.wordpress.org/translations';
+    private const API_CORE_URI = '/core/1.0/?version=%packageVersion%';
+    private const API_PLUGIN_URI = '/plugins/1.0/?slug=%projectName%&version=%packageVersion%';
+    private const API_THEME_URI = '/themes/1.0/?slug=%projectName%&version=%packageVersion%';
+
     /**
      * @var array
      */
     private const DEFAULTS = [
-        'auto-run' => true,
-        'excludes' => [],
-        'languages' => [],
-        'languageRootDir' => '',
-        'directories' => [
+        self::AUTO_RUN => true,
+        self::EXCLUDES => [],
+        self::LANGUAGES => [],
+        self::LANGUAGES_ROOT_DIR => null,
+        self::DIRECTORIES => [
             self::BY_NAME => [],
             self::BY_TYPE => [
-                TranslatablePackage::TYPE_CORE => '',
-                TranslatablePackage::TYPE_PLUGIN => 'plugins',
-                TranslatablePackage::TYPE_THEME => 'themes',
-                TranslatablePackage::TYPE_LIBRARY => 'library',
+                self::TYPE_CORE => '',
+                self::TYPE_PLUGIN => 'plugins',
+                self::TYPE_THEME => 'themes',
+                self::TYPE_LIBRARY => 'library',
             ],
         ],
-        'api' => [
+        self::API => [
             self::BY_NAME => [],
             self::BY_TYPE => [
-                // phpcs:disable Inpsyde.CodeQuality.LineLength.TooLong
-                Package\TranslatablePackage::TYPE_CORE => 'https://api.wordpress.org/translations/core/1.0/?version=%packageVersion%',
-                Package\TranslatablePackage::TYPE_PLUGIN => 'https://api.wordpress.org/translations/plugins/1.0/?slug=%projectName%&version=%packageVersion%',
-                Package\TranslatablePackage::TYPE_THEME => 'https://api.wordpress.org/translations/themes/1.0/?slug=%projectName%&version=%packageVersion%',
+                self::TYPE_CORE => self::WPORG_API_PREFIX . self::API_CORE_URI,
+                self::TYPE_PLUGIN => self::WPORG_API_PREFIX . self::API_PLUGIN_URI,
+                self::TYPE_THEME => self::WPORG_API_PREFIX . self::API_THEME_URI,
             ],
         ],
-        "virtual-packages" => [],
+        self::VIRTUAL_PACKAGES => [],
     ];
 
     /**
-     * @var array
+     * @var array{
+     *  auto-run: bool,
+     *  excludes: list<string>,
+     *  languages: list<string>,
+     *  languageRootDir: string,
+     *  directories: array<string, array<string, string>>,
+     *  api: array<string, array<string, string>>,
+     *  virtual-packages: list<PackageInterface>
+     * }
      */
-    private $config = [];
+    private $config;
 
-    public function __construct(array $config)
+    /**
+     * @var Filesystem
+     */
+    private $filesystem;
+
+    /**
+     * @param array $config
+     * @param Filesystem|null $filesystem
+     */
+    public function __construct(array $config, ?Filesystem $filesystem = null)
     {
+        $this->filesystem = $filesystem ?? new Filesystem();
+
+        /**
+         * @var array{
+         *  auto-run: bool,
+         *  excludes: array<string>,
+         *  languages: list<string>,
+         *  languageRootDir?: string,
+         *  directories: array<string, array<string, string>>,
+         *  api: array<string, array<string, string>>,
+         *  virtual-packages: array<virtual-package>
+         * } $config
+         */
         $config = array_replace_recursive(self::DEFAULTS, $config);
 
-        $config['auto-run'] = (bool) ($config['auto-run'] ?? true);
-        $config['languageRootDir'] = $this->languageRoot($config);
-        $config['excludes'] = $this->prepareExcludes($config['excludes']);
-        $config['virtual-packages'] = $this->prepareVirtualPackages($config['virtual-packages']);
-
-        $this->config = $config;
+        $this->config = [
+            self::AUTO_RUN => $config[self::AUTO_RUN],
+            self::EXCLUDES => $this->prepareExcludes($config),
+            self::LANGUAGES => $config[self::LANGUAGES],
+            self::LANGUAGES_ROOT_DIR => $this->prepareLanguageRoot($config),
+            self::DIRECTORIES => $config[self::DIRECTORIES],
+            self::API => $config[self::API],
+            self::VIRTUAL_PACKAGES => $this->prepareVirtualPackages($config),
+        ];
     }
 
     /**
-     * @param array<array{title:string, type:string, version?:string}> $packages
-     *
-     * @return PackageInterface
+     * @return array<string, string>
      */
-    private function prepareVirtualPackages(array $packages): array
+    public function directoriesByName(): array
     {
-        return array_map(
-            static function (array $package): PackageInterface {
-                $version = $package['version'] ?? '';
-                $virtualPackage = new \Composer\Package\Package($package['name'], $version, $version);
-                $virtualPackage->setType($package['type']);
-
-                return $virtualPackage;
-            },
-            $packages
-        );
+        return $this->config[self::DIRECTORIES][self::BY_NAME] ?? [];
     }
 
     /**
-     * Resolve the "root" directory for languages with back compat
-     * to previous version where "directory" was a string value as root.
-     *
-     * @param array $config
-     *
+     * @return array<string, string>
+     */
+    public function directoriesByType(): array
+    {
+        return $this->config[self::DIRECTORIES][self::BY_TYPE] ?? [];
+    }
+
+    /**
      * @return string
      */
-    private function languageRoot(array $config): string
-    {
-        $root = getcwd();
-
-        // version 2.0 supported ["directory" => "/path/"]
-        // version 2.1 supports ["languageRootDir" => "/path"]
-        $dir = $config['directory'] ?? $config["languageRootDir"] ?? '';
-        $dir = trim($dir, "\\/");
-        if ($dir === '') {
-            return $root . DIRECTORY_SEPARATOR;
-        }
-
-        return $root . DIRECTORY_SEPARATOR . $dir . DIRECTORY_SEPARATOR;
-    }
-
-    /**
-     * @param array $excludes
-     *
-     * @return string
-     */
-    private function prepareExcludes(array $excludes): string
-    {
-        if (count($excludes) < 1) {
-            return '';
-        }
-
-        $rules = array_map([$this, 'prepareRegex'], $excludes);
-
-        return '/' . implode('|', $rules) . '/';
-    }
-
-    /**
-     * @param string $type
-     *
-     * @return array
-     */
-    public function directoryBy(string $type): array
-    {
-        return $this->config['directories'][$type] ?? [];
-    }
-
-    /**
-     * @return array
-     */
-    public function directories(): array
-    {
-        return $this->config['directories'];
-    }
-
     public function languageRootDir(): string
     {
-        return $this->config['languageRootDir'];
+        return $this->config[self::LANGUAGES_ROOT_DIR];
     }
 
     /**
      * @param string $name
-     *
      * @return bool
      */
-    public function doExclude(string $name): bool
+    public function shouldExclude(string $name): bool
     {
-        $excludes = $this->excludes();
-        if ($excludes === '') {
-            return false;
-        }
-
-        return preg_match($excludes, $name) === 1;
+        return FnMatcher::isMatchingAny($this->config[self::EXCLUDES], $name);
     }
 
     /**
-     * @return string
-     */
-    public function excludes(): string
-    {
-        return $this->config['excludes'];
-    }
-
-    /**
-     * @return array
+     * @return list<string>
      */
     public function allowedLanguages(): array
     {
-        return $this->config['languages'];
-    }
-
-    public function api(): array
-    {
-        return $this->config['api'];
-    }
-
-    public function apiBy(string $type): array
-    {
-        return $this->config['api'][$type] ?? [];
+        return $this->config[self::LANGUAGES];
     }
 
     /**
-     * Replaces from the configuration.json file the packageName with placeholder to valid regex.
-     *
-     * @param string $input
-     *
-     * @return string
-     * @example inpsyde/wp-*    =>  (inpsyde\/wp-.+)
-     *
+     * @return array<string, string>
      */
-    public function prepareRegex(string $input): string
+    public function endpointsByName(): array
     {
-        return '(' . str_replace(['*', '/'], ['.+', '\/'], $input) . ')';
+        return $this->config[self::API][self::BY_NAME] ?? [];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function endpointsByType(): array
+    {
+        return $this->config[self::API][self::BY_TYPE] ?? [];
     }
 
     /**
@@ -212,14 +188,78 @@ final class PluginConfiguration
      */
     public function autorun(): bool
     {
-        return $this->config['auto-run'];
+        return $this->config[self::AUTO_RUN];
     }
 
     /**
-     * @return PackageInterface[]
+     * @return list<PackageInterface>
      */
     public function virtualPackages(): array
     {
-        return $this->config['virtual-packages'];
+        return $this->config[self::VIRTUAL_PACKAGES];
+    }
+
+    /**
+     * Resolve the "root" directory for languages with back compat
+     * to previous version where "directory" was a string value as root.
+     *
+     * @param array $config
+     * @return string
+     */
+    private function prepareLanguageRoot(array $config): string
+    {
+        $root = getcwd();
+
+        // version 2.0 supported ["directory" => "/path/"]
+        // version 2.1 supports ["languageRootDir" => "/path"]
+        $dir = $config[self::LANGUAGES_ROOT_DIR] ?? $config['directory'] ?? '';
+
+        is_string($dir) or $dir = '';
+        $dir = trim($dir, "\\/");
+
+        return $this->filesystem->normalizePath("{$root}/{$dir}") . '/';
+    }
+
+    /**
+     * @param array $config
+     * @return list<string>
+     */
+    private function prepareExcludes(array $config): array
+    {
+        /** @var array<string> $excludes */
+        $excludes = $config[self::EXCLUDES];
+        if ($excludes === []) {
+            return [];
+        }
+
+        return array_values($excludes);
+    }
+
+    /**
+     * @param array $config
+     * @return list<PackageInterface>
+     */
+    private function prepareVirtualPackages(array $config): array
+    {
+        /**
+         * @var array<virtual-package> $packages
+         */
+        $packages = $config[self::VIRTUAL_PACKAGES];
+        if ($packages === []) {
+            return [];
+        }
+
+        $loaded = [];
+        foreach ($packages as $packageData) {
+            $prettyVersion = $packageData['version'] ?? '';
+            $version = (string)$prettyVersion;
+
+            $package = new CompletePackage($packageData['name'], $version, $version);
+            $package->setType($packageData['type']);
+
+            $loaded[] = $package;
+        }
+
+        return $loaded;
     }
 }

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Inpsyde\WpTranslationDownloader\Tests\Unit\Config;
 
-use Composer\IO\IOInterface;
+use Composer\IO\NullIO;
 use Inpsyde\WpTranslationDownloader\Config\PluginConfiguration;
 use Inpsyde\WpTranslationDownloader\Config\PluginConfigurationBuilder;
 use PHPUnit\Framework\TestCase;
@@ -14,26 +14,20 @@ class PluginConfigurationBuilderTest extends TestCase
     /**
      * @test
      */
-    public function testBasic(): void
+    public function testConfigIsNullIfNoConfig(): void
     {
-        $ioStub = \Mockery::mock(IOInterface::class);
-        $ioStub->allows('write');
-
-        $result = (new PluginConfigurationBuilder($ioStub))->build([]);
+        $result = $this->factoryBuilder()->build([]);
         static::assertNull($result);
     }
 
     /**
      * @test
      */
-    public function testBuildFromExtra(): void
+    public function testBuildFromEmptyExtra(): void
     {
         $extra = [PluginConfigurationBuilder::KEY => []];
+        $result = $this->factoryBuilder()->build($extra);
 
-        $ioStub = \Mockery::mock(IOInterface::class);
-        $ioStub->allows('writeError');
-
-        $result = (new PluginConfigurationBuilder($ioStub))->build($extra);
         static::assertNull($result);
     }
 
@@ -44,13 +38,11 @@ class PluginConfigurationBuilderTest extends TestCase
     {
         $extra = [
             PluginConfigurationBuilder::KEY => [
-                "languages" => ["de_DE"],
+                PluginConfiguration::LANGUAGES => ["de_DE"],
             ],
         ];
 
-        $ioStub = \Mockery::mock(IOInterface::class);
-
-        $result = (new PluginConfigurationBuilder($ioStub))->build($extra);
+        $result = $this->factoryBuilder()->build($extra);
         static::assertInstanceOf(PluginConfiguration::class, $result);
     }
 
@@ -58,80 +50,114 @@ class PluginConfigurationBuilderTest extends TestCase
      * @test
      * @dataProvider provideValidValidateSchema
      * @dataProvider provideInvalidValidateSchema
-     *
-     * @param array $input
-     * @param bool $expected
      */
     public function testValidateSchema(array $input, bool $expected): void
     {
-        $ioStub = \Mockery::mock(IOInterface::class);
-        $ioStub->allows('writeError');
-
-        static::assertSame(
-            $expected,
-            (new PluginConfigurationBuilder($ioStub))->validateSchema($input)
-        );
+        static::assertSame($expected, $this->factoryBuilder()->validateSchema($input));
     }
 
     /**
-     * Collection of valid inputs.
-     *
      * @return \Generator
      */
     public function provideValidValidateSchema(): \Generator
     {
         yield 'Minimum requirement' => [
-            ['languages' => ['de_DE']],
+            [PluginConfiguration::LANGUAGES => ['de_DE']],
             true,
         ];
 
         yield 'languages - multiple ones' => [
-            ['languages' => ['de_DE', 'de_CH']],
+            [PluginConfiguration::LANGUAGES => ['de_DE', 'de_CH']],
             true,
         ];
 
         yield 'languageRootDir' => [
-            ['languages' => ['de_DE'], 'languageRootDir' => '/foo/bar/'],
+            [PluginConfiguration::LANGUAGES => ['de_DE'], 'languageRootDir' => '/foo/bar/'],
             true,
         ];
 
         yield 'directories.names' => [
-            ['languages' => ['de_DE'], 'directories' => ['names' => ['inpsyde/google-tag-manager' => '/foo/']]],
+            [
+                PluginConfiguration::LANGUAGES => ['de_DE'],
+                PluginConfiguration::DIRECTORIES => [
+                    PluginConfiguration::BY_NAME => ['inpsyde/google-tag-manager' => '/foo/'],
+                ],
+            ],
             true,
         ];
 
         yield 'directories.types' => [
-            ['languages' => ['de_DE'], 'directories' => ['names' => ['wordpress-plugin' => '/foo/']]],
+            [
+                PluginConfiguration::LANGUAGES => ['de_DE'],
+                PluginConfiguration::DIRECTORIES => [
+                    PluginConfiguration::BY_NAME => ['wordpress-plugin' => '/foo/'],
+                ],
+            ],
             true,
         ];
 
         yield 'api.names' => [
             [
-                'languages' => ['de_DE'],
-                'api' => ['names' => ['inpsyde/google-tag-manager' => 'https://www.inpsyde.com/']],
+                PluginConfiguration::LANGUAGES => ['de_DE'],
+                PluginConfiguration::API => [
+                    PluginConfiguration::BY_NAME => [
+                        'inpsyde/google-tag-manager' => 'https://www.inpsyde.com/',
+                    ],
+                ],
+            ],
+            true,
+        ];
+
+        yield 'api.names with custom type' => [
+            [
+                PluginConfiguration::LANGUAGES => ['de_DE'],
+                PluginConfiguration::API => [
+                    PluginConfiguration::BY_NAME => [
+                        'inpsyde/google-tag-manager' => [
+                            'url' => 'https://www.inpsyde.com/',
+                            'type' => 'tar',
+                        ],
+                    ],
+                ],
             ],
             true,
         ];
 
         yield 'api.types' => [
-            ['languages' => ['de_DE'], 'api' => ['types' => ['wordpress-plugin' => 'https://www.inpsyde.com/']]],
+            [
+                PluginConfiguration::LANGUAGES => ['de_DE'],
+                PluginConfiguration::API => [
+                    PluginConfiguration::BY_TYPE => [
+                        'wordpress-plugin' => 'https://www.inpsyde.com/',
+                    ],
+                ],
+            ],
             true,
         ];
 
         yield 'excludes' => [
-            ['languages' => ['de_DE'], 'excludes' => ['inpsyde/google-tag-manager']],
+            [
+                PluginConfiguration::LANGUAGES => ['de_DE'],
+                PluginConfiguration::EXCLUDES => ['inpsyde/google-tag-manager'],
+            ],
             true,
         ];
 
         yield 'virtual-packages' => [
-            ['languages' => ['de_DE'], 'virtual-packages' => [['name' => 'wordpress/core', 'type' => 'wordpress-core']]],
-            true
+            [
+                PluginConfiguration::LANGUAGES => ['de_DE'],
+                PluginConfiguration::VIRTUAL_PACKAGES => [
+                    [
+                        'name' => 'wordpress/core',
+                        'type' => 'wordpress-core',
+                    ],
+                ],
+            ],
+            true,
         ];
     }
 
     /**
-     * Collection of different invalid inputs.
-     *
      * @return \Generator
      */
     public function provideInvalidValidateSchema(): \Generator
@@ -142,23 +168,55 @@ class PluginConfigurationBuilderTest extends TestCase
         ];
 
         yield 'Missing languages' => [
-            ['languageRootDir' => '/foo/'],
+            [PluginConfiguration::LANGUAGES_ROOT_DIR => '/foo/'],
             false,
         ];
 
         yield 'Incorrect languageRootDir' => [
-            ['languages' => ['de_DE'], 'languageRootDir' => false],
+            [
+                PluginConfiguration::LANGUAGES => ['de_DE'],
+                PluginConfiguration::LANGUAGES_ROOT_DIR => false,
+            ],
             false,
         ];
 
         yield 'Incorrect virtual-packages - missing name' => [
-            ['languages' => ['de_DE'], 'virtual-packages' => [['type' => 'wordpress-core']]],
-            false
+            [
+                PluginConfiguration::LANGUAGES => ['de_DE'],
+                PluginConfiguration::VIRTUAL_PACKAGES => [['type' => 'wordpress-core']],
+            ],
+            false,
         ];
 
         yield 'Incorrect virtual-packages - missing type' => [
-            ['languages' => ['de_DE'], 'virtual-packages' => [['name' => 'wordpress/core']]],
-            false
+            [
+                PluginConfiguration::LANGUAGES => ['de_DE'],
+                PluginConfiguration::VIRTUAL_PACKAGES => [['name' => 'wordpress/core']],
+            ],
+            false,
         ];
+
+        yield 'api.names with incorrect schema' => [
+            [
+                PluginConfiguration::LANGUAGES => ['de_DE'],
+                PluginConfiguration::API => [
+                    PluginConfiguration::BY_NAME => [
+                        'inpsyde/google-tag-manager' => [
+                            'url' => 'https://www.inpsyde.com/',
+                            'ext' => 'tar',
+                        ],
+                    ],
+                ],
+            ],
+            false,
+        ];
+    }
+
+    /**
+     * @return PluginConfigurationBuilder
+     */
+    private function factoryBuilder(): PluginConfigurationBuilder
+    {
+        return new PluginConfigurationBuilder(new NullIO(), getenv('RESOURCES_DIR') ?: '');
     }
 }

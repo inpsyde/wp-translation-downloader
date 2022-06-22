@@ -12,16 +12,18 @@
     "require": {
         "php": ">=7.2",
         "ext-json": "*",
-        "composer-plugin-api": "^1.0 || ^2.0",
+        "composer-plugin-api": "^2.0",
         "composer/installers": "^1.0 || ^2.0"
     },
     "require-dev": {
-        "behat/behat": "^3.7",
-        "brain/monkey": "^2",
-        "mikey179/vfsstream": "^1.6",
-        "composer/composer": "^2.0",
+        "behat/behat": "^v3.10.0",
+        "brain/monkey": "^2.6.1",
+        "mikey179/vfsstream": "^v1.6.10",
+        "composer/composer": "^2.3.7",
         "inpsyde/php-coding-standards": "^1.0.0",
-        "phpunit/phpunit": "^8"
+        "phpunit/phpunit": "^8.5.26",
+        "vimeo/psalm": "^4.23.0",
+        "ondram/ci-detector": "^4.1.0"
     },
     "config": {
         "allow-plugins": {
@@ -45,7 +47,16 @@
     "scripts": {
         "behat": "@php ./vendor/bin/behat",
         "cs": "@php ./vendor/squizlabs/php_codesniffer/bin/phpcs",
+        "psalm": "@php ./vendor/vimeo/psalm/psalm --no-cache --output-format=compact --find-unused-psalm-suppress",
         "tests": "@php ./vendor/phpunit/phpunit/phpunit --coverage-text",
-        "tests:unit": "@php ./vendor/phpunit/phpunit/phpunit --testsuite Unit"
+        "tests:no-coverage": "@php ./vendor/phpunit/phpunit/phpunit --no-coverage",
+        "tests:unit": "@php ./vendor/phpunit/phpunit/phpunit --testsuite Unit",
+        "qa": [
+            "@cs",
+            "@psalm",
+            "@psalm",
+            "@tests:no-coverage",
+            "@behat"
+        ]
     }
 }

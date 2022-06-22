@@ -37,22 +37,21 @@ class Remover
     private $locker;
 
     /**
-     * Remover constructor.
-     *
      * @param IOInterface $io
      * @param Filesystem $filesystem
+     * @param Locker $locker
      */
-    public function __construct(
-        IOInterface $io,
-        Filesystem $filesystem,
-        Locker $locker
-    ) {
-
+    public function __construct(IOInterface $io, Filesystem $filesystem, Locker $locker)
+    {
         $this->io = $io;
         $this->filesystem = $filesystem;
         $this->locker = $locker;
     }
 
+    /**
+     * @param TranslatablePackageInterface $transPackage
+     * @return bool
+     */
     public function remove(TranslatablePackageInterface $transPackage): bool
     {
         try {

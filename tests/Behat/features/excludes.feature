@@ -4,5 +4,4 @@ Feature: Testing if exclude will not download translations for matches
   Scenario: Installing with auto-run disabled
     Given I am using the fixtures "excludes"
     When I run composer install
-    Then I should see the folder "languages" exists
-    And I should see the file "languages/de_DE.mo" does not exist
+    Then I should see the folder "languages" does not exist

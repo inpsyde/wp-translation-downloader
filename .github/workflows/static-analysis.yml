@@ -1,0 +1,26 @@
+name: Static Analysis
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '**/static-analysis.yml'
+      - 'composer.*'
+      - '**.php'
+      - 'psalm*'
+  push:
+    paths:
+      - '**/static-analysis.yml'
+      - 'composer.*'
+      - '**.php'
+      - 'psalm*'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  static-code-analysis-php:
+    uses: inpsyde/reusable-workflows/.github/workflows/static-analysis-php.yml@main
+    with:
+      PSALM_ARGS: '--output-format=github --no-cache --find-unused-psalm-suppress'

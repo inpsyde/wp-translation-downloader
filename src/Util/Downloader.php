@@ -13,10 +13,11 @@ declare(strict_types=1);
 
 namespace Inpsyde\WpTranslationDownloader\Util;
 
-use Composer\Downloader\ZipDownloader;
 use Composer\IO\IOInterface;
-use Composer\Util\RemoteFilesystem;
+use Composer\Package\CompletePackage;
+use Composer\Util\Filesystem;
 use Inpsyde\WpTranslationDownloader\Package\TranslatablePackageInterface;
+use Inpsyde\WpTranslationDownloader\Package\ProjectTranslation;
 
 class Downloader
 {
@@ -26,195 +27,236 @@ class Downloader
     private $io;
 
     /**
-     * @var ZipDownloader
-     */
-    private $unzipper;
-
-    /**
      * @var Locker
      */
     private $locker;
 
     /**
-     * @var string
+     * @var TranslationPackageDownloader
      */
-    private $cacheRoot;
+    private $downloader;
 
     /**
-     * @var RemoteFilesystem
+     * @var Filesystem
      */
-    private $remoteFilesystem;
+    private $filesystem;
 
     /**
-     * TranslationDownloader constructor.
-     *
      * @param IOInterface $io
-     * @param Unzipper $unzipper
-     * @param RemoteFilesystem $remoteFilesystem
      * @param Locker $locker
-     * @param string $cacheRoot
+     * @param TranslationPackageDownloader $downloader
+     * @param Filesystem $filesystem
      */
     public function __construct(
         IOInterface $io,
-        Unzipper $unzipper,
-        RemoteFilesystem $remoteFilesystem,
         Locker $locker,
-        string $cacheRoot
+        TranslationPackageDownloader $downloader,
+        Filesystem $filesystem
     ) {
 
         $this->io = $io;
-        $this->unzipper = $unzipper;
-        $this->remoteFilesystem = $remoteFilesystem;
         $this->locker = $locker;
-        $this->cacheRoot = $cacheRoot;
+        $this->downloader = $downloader;
+        $this->filesystem = $filesystem;
     }
 
     /**
      * @param TranslatablePackageInterface $transPackage
-     * @param array $allowedLanguages
-     *
-     * @return bool
-     *
-     * phpcs:disable
+     * @param list<string> $allowedLanguages
+     * @param \stdClass $globalCollector
      */
-    public function download(TranslatablePackageInterface $transPackage, array $allowedLanguages)
-    {
-        $directory = $transPackage->languageDirectory();
-        $translations = $transPackage->translations($allowedLanguages);
+    public function download(
+        TranslatablePackageInterface $transPackage,
+        array $allowedLanguages,
+        \stdClass $globalCollector
+    ): void {
+
         $projectName = $transPackage->projectName();
+        $translations = $transPackage->translations($allowedLanguages);
+        $endpoint = $transPackage->apiEndpoint();
 
-        $this->io->write(
-            sprintf(
-                '  <info>%2$s:</info> found %1$d translations',
-                count($translations),
-                $projectName
-            )
-        );
-
-        $this->io->write(
-            sprintf(
-                '  - Endpoint: %s',
-                $transPackage->apiEndpoint()
-            ),
-            true,
-            IOInterface::VERBOSE
-        );
-
-        $downloaded = $locked = 0;
-        foreach ($translations as $translation) {
-            try {
-                $packageUrl = $translation['package'];
-                $language = $translation['language'];
-                $lastUpdated = $translation['updated'];
-                $version = $translation['version'];
-                $fileName = sprintf(
-                    '%1$s-%2$s-%3$s.%4$s',
-                    $projectName,
-                    $language,
-                    $version,
-                    pathinfo($packageUrl, PATHINFO_EXTENSION)
-                );
-                $zipFile = $this->cacheRoot . $fileName;
-
-                if ($this->locker->isLocked($projectName, $language, $lastUpdated, $version)) {
-                    $locked++;
-                    continue;
-                }
-
-                $this->downloadZipFile($zipFile, $packageUrl, $lastUpdated);
-
-                // phpcs:disable NeutronStandard.Extract.DisallowExtract.Extract
-                $this->unzipper->extract($zipFile, $directory);
-                $this->io->write(
-                    sprintf(
-                        '    <info>✓</info> %s | %s',
-                        $version,
-                        $language
-                    )
-                );
-
-                $this->locker->addProjectLock($projectName, $language, $lastUpdated, $version);
-                $downloaded++;
-            } catch (\Throwable $exception) {
-                $this->io->write(
-                    sprintf(
-                        '    <fg=red>✗</> %s | %s',
-                        $version,
-                        $language
-                    )
-                );
-                $this->io->writeError($exception->getMessage());
-            }
+        if (!$this->countTranslations($projectName, $translations, $endpoint)) {
+            return;
         }
 
-        $this->io->write(
-            sprintf(
-                '    <options=bold>Stats:</> %1$d downloads, %2$d locked.',
-                $downloaded,
-                $locked
-            )
+        $collector = (object)['downloaded' => 0, 'locked' => 0, 'errors' => 0];
+        $directory = $this->filesystem->normalizePath($transPackage->languageDirectory());
+
+        foreach ($translations as $translation) {
+            $this->downloadTranslation($translation, $directory, $collector);
+        }
+
+        /** @psalm-suppress MixedOperand */
+        $globalCollector->downloaded += $collector->downloaded;
+        /** @psalm-suppress MixedOperand */
+        $globalCollector->locked += $collector->locked;
+        /** @psalm-suppress MixedOperand */
+        $globalCollector->errors += $collector->errors;
+
+        $this->printStatsMessage($collector);
+    }
+
+    /**
+     * @param ProjectTranslation $translation
+     * @param string $directory
+     * @param \stdClass $collector
+     * @return void
+     */
+    private function downloadTranslation(
+        ProjectTranslation $translation,
+        string $directory,
+        \stdClass $collector
+    ): void {
+
+        $packageDesc = sprintf(
+            "<fg=magenta>%s</> | %s",
+            $translation->language() ?? '',
+            $translation->version() ?? ''
         );
+
+        try {
+            if ($this->locker->isLocked($translation)) {
+                /** @psalm-suppress MixedOperand */
+                $collector->locked++;
+                return;
+            }
+
+            $languagePackage = $this->createTranslationPackage($translation);
+            if (!$this->downloader->download($languagePackage, $directory)) {
+                $this->packageError('Download error', $collector, $packageDesc);
+                return;
+            }
+
+            $this->packageSuccess($collector, $packageDesc);
+            $this->locker->lockTranslation($translation);
+        } catch (\Throwable $exception) {
+            $this->packageError($exception->getMessage(), $collector, $packageDesc);
+        }
+    }
+
+    /**
+     * @param ProjectTranslation $translation
+     * @return CompletePackage
+     */
+    private function createTranslationPackage(ProjectTranslation $translation): CompletePackage
+    {
+        $distUrl = $translation->packageUrl();
+        if (!filter_var($distUrl, FILTER_VALIDATE_URL)) {
+            // The URL has a file extension, but it looks wrong.
+            $name = $translation->projectName();
+            throw new \Error("Invalid translations URL for project '{$name}'");
+        }
+
+        /** @var string $distUrl */
+
+        $version = $translation->version() ?? '';
+
+        $package = new CompletePackage($translation->fullyQualifiedName(), $version, $version);
+        $package->setDescription($translation->description());
+        $package->setType('wp-translation-package');
+        $package->setDistType($this->determineProjectDistType($translation));
+        $package->setDistUrl($distUrl);
+
+        return $package;
+    }
+
+    /**
+     * @param ProjectTranslation $translation
+     * @return string
+     */
+    private function determineProjectDistType(ProjectTranslation $translation): string
+    {
+        $distType = $translation->distType();
+        if (!$distType) {
+            $ext = $translation->packageUrlExtensions();
+            $oneType = count($ext) === 1;
+            throw new \Error(
+                sprintf(
+                    "Invalid translations file type for project '%s': "
+                    . "extracted file type%s '%s', from package URL '%s', %s not supported.",
+                    $translation->projectName(),
+                    $oneType ? '' : 's',
+                    implode("' and '", $ext),
+                    $translation->packageUrl() ?? '""',
+                    $oneType ? 'is' : 'are'
+                )
+            );
+        }
+
+        return $distType;
+    }
+
+    /**
+     * @param string $projectName
+     * @param array $translations
+     * @param string $endpoint
+     * @return bool
+     */
+    private function countTranslations(
+        string $projectName,
+        array $translations,
+        string $endpoint
+    ): bool {
+
+        $count = count($translations);
+
+        if ($count < 1) {
+            $this->io->write("  - <info>{$projectName}</info>: found no translations.");
+            $this->io->write('', true, IOInterface::VERBOSE);
+
+            return false;
+        }
+
+        $label = $count === 1 ? 'one translation' : sprintf('%d translations', $count);
+        $this->io->write("  - <info>{$projectName}</info>: found {$label}. Installing...");
+        $this->io->write("    <fg=yellow>Endpoint</>: {$endpoint}", true, IOInterface::VERBOSE);
 
         return true;
     }
 
     /**
-     * Downloads the zipFile if not exists yet or the file was updated in the meantime.
-     *
-     * @param string $zipFile
-     * @param string $packageUrl
-     * @param string $lastUpdated date time in format yyyy-mm-dd hh:ii:ss
-     *
-     * @return bool
+     * @param \stdClass $collector
+     * @param string $packageDesc
+     * @return void
      */
-    private function downloadZipFile(string $zipFile, string $packageUrl, string $lastUpdated): bool
+    private function packageSuccess(\stdClass $collector, string $packageDesc): void
     {
-        $lastUpdated = new \DateTimeImmutable($lastUpdated);
-
-        if (file_exists($zipFile) && filemtime($zipFile) >= $lastUpdated->getTimestamp()) {
-            $this->io->write(
-                sprintf(
-                    '    <info>[CACHED]</info> %s</info> ',
-                    $zipFile
-                )
-            );
-
-            return false;
-        }
-
-        $origin = $this->origin($packageUrl);
-        $result = $this->remoteFilesystem->copy($origin, $packageUrl, $zipFile, false);
-
-        if ($result === false) {
-            return false;
-        }
-
-        // set the "updated" time as file time.
-        return touch($zipFile, $lastUpdated->getTimestamp());
+        $this->io->write("    <info>✓</info> {$packageDesc}");
+        /** @psalm-suppress MixedOperand */
+        $collector->downloaded++;
     }
 
     /**
-     * Internal helper to detect the origin of an URL for RemoteFilesystem.
-     *
-     * @param string $url
-     *
-     * @return string
+     * @param string $message
+     * @param \stdClass $collector
+     * @param string $packageDesc
+     * @return void
      */
-    private function origin(string $url): string
+    private function packageError(string $message, \stdClass $collector, string $packageDesc): void
     {
-        if (0 === strpos($url, 'file://')) {
-            return $url;
-        }
+        $prefix = '    ';
+        $packageDesc and $this->io->write($prefix . "<fg=red>✗</> {$packageDesc}");
+        $this->io->writeError($prefix . $message);
+        /** @psalm-suppress MixedOperand */
+        $collector->errors++;
+    }
 
-        $origin = (string) parse_url($url, PHP_URL_HOST);
-        if ($port = parse_url($url, PHP_URL_PORT)) {
-            $origin .= ':' . $port;
-        }
-
-        if ($origin === '') {
-            $origin = $url;
-        }
-
-        return $origin;
+    /**
+     * @param \stdClass $collector
+     * @return void
+     */
+    private function printStatsMessage(\stdClass $collector): void
+    {
+        $this->io->write(
+            sprintf(
+                "    <options=bold>Package's translations stats</>:" .
+                " %d downloaded, %d locked, %d failed.\n",
+                (int)$collector->downloaded,
+                (int)$collector->locked,
+                (int)$collector->errors
+            ),
+            true,
+            IOInterface::VERBOSE
+        );
     }
 }

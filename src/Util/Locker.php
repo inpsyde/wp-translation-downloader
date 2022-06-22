@@ -16,7 +16,7 @@ namespace Inpsyde\WpTranslationDownloader\Util;
 use Composer\IO\IOInterface;
 use Composer\Json\JsonFile;
 use Composer\Util\Filesystem;
-use Inpsyde\WpTranslationDownloader\Io;
+use Inpsyde\WpTranslationDownloader\Package\ProjectTranslation;
 
 class Locker
 {
@@ -33,7 +33,10 @@ class Locker
     private $file;
 
     /**
-     * @var array
+     * @var array<
+     *  string,
+     *  array<string, array<string, array{'updated': 'string', 'version': 'string'}>>
+     * >
      */
     private $lockedData = [];
 
@@ -55,79 +58,60 @@ class Locker
     /**
      * Check if a translation project for the current language is locked.
      *
-     * @param string $projectName
-     * @param string $language
-     * @param string $lastUpdated
-     * @param string $version
-     *
+     * @param ProjectTranslation $translation
      * @return bool
      */
-    public function isLocked(string $projectName, string $language, string $lastUpdated, string $version): bool
+    public function isLocked(ProjectTranslation $translation): bool
     {
-        // phpcs:disable Inpsyde.CodeQuality.LineLength.TooLong
+        $projectName = $translation->projectName();
+        $language = $translation->language() ?? '';
         $lockedData = $this->lockedData[$projectName]['translations'][$language] ?? null;
-        if (!$lockedData) {
+        /** @psalm-suppress TypeDoesNotContainType */
+        if (!is_array($lockedData) || !$lockedData) {
             return false;
         }
 
-        $lockedLastUpdated = $lockedData['updated'] ?? null;
-        $lockedVersion = $lockedData['version'] ?? null;
-        if (!$lockedLastUpdated && !$lockedVersion) {
-            return false;
-        }
-
-        // A project with a given language is locked when...
-        //
-        //  -> lockedLastUpdated is greater or equal the lastUpdated
-        //  -> lockedVersion is greater or equal the current version
-        $checks = [
-            strtotime($lockedLastUpdated) >= strtotime($lastUpdated),
-            version_compare($lockedVersion, $version, '>='),
-        ];
-        $isLocked = !in_array(false, $checks, true);
+        $isLocked = $this->isLockedTranslation($lockedData, $translation);
 
         if ($isLocked) {
             $this->io->write(
                 sprintf(
-                    '    <info>[LOCKED]</info> %1$s | %2$s | %3$s',
+                    '    <info>[LOCKED]</info> <fg=magenta>%1$s</> | %2$s | %3$s',
                     $language,
-                    $lastUpdated,
-                    $version
+                    $translation->lastUpdated(),
+                    $translation->version() ?? ''
                 ),
                 true,
                 IOInterface::VERBOSE
             );
             // When a project is locked, then we want to add it again
             // to the lock-file.
-            $this->addProjectLock($projectName, $language, $lastUpdated, $version);
-
-            return true;
+            $this->lockTranslation($translation);
         }
 
-        return false;
+        return $isLocked;
     }
 
     /**
      * Lock a translation project for a given language.
      *
-     * @param string $projectName
-     * @param string $language
-     * @param string $lastUpdated
-     * @param string $version
-     *
+     * @param ProjectTranslation $translation
      * @return bool
      */
-    public function addProjectLock(string $projectName, string $language, string $lastUpdated, string $version): bool
+    public function lockTranslation(ProjectTranslation $translation): bool
     {
-        if (!isset($this->lockedData[$projectName])) {
-            $this->lockedData[$projectName] = [
-                'translations' => [],
-            ];
+        $projectName = $translation->projectName();
+        if (!is_array($this->lockedData[$projectName] ?? null)) {
+            $this->lockedData[$projectName] = ['translations' => []];
+        }
+        if (!is_array($this->lockedData[$projectName]['translations'] ?? null)) {
+            $this->lockedData[$projectName]['translations'] = [];
         }
 
+        $language = $translation->language() ?? '';
         $this->lockedData[$projectName]['translations'][$language] = [
-            'updated' => $lastUpdated,
-            'version' => $version,
+            'updated' => $translation->lastUpdated(),
+            'version' => $translation->version() ?? '',
         ];
 
         return true;
@@ -137,7 +121,6 @@ class Locker
      * Remove a given translation project by name from lock data.
      *
      * @param string $projectName
-     *
      * @return bool
      */
     public function removeProjectLock(string $projectName): bool
@@ -187,9 +170,17 @@ class Locker
     }
 
     /**
-     * @return bool
+     * @return array
      */
-    private function loadLockData(): bool
+    public function lockData(): array
+    {
+        return $this->lockedData;
+    }
+
+    /**
+     * @return void
+     */
+    private function loadLockData(): void
     {
         try {
             if (!$this->file->exists()) {
@@ -199,7 +190,7 @@ class Locker
                     IOInterface::VERBOSE
                 );
 
-                return false;
+                return;
             }
 
             $this->lockedData = $this->file->read();
@@ -209,24 +200,47 @@ class Locker
                 true,
                 IOInterface::VERBOSE
             );
-
-            return true;
         } catch (\Throwable $exception) {
             $this->io->write(
                 $exception->getMessage(),
                 true,
                 IOInterface::VERBOSE
             );
-
-            return false;
         }
     }
 
     /**
-     * @return array
+     * A project with a given language is locked when:
+     * - locked "last updated" is greater or equal to Translation's "last updated"
+     * - locked "version" is greater or equal to Translation's version
+     *
+     * @param array $lockedData
+     * @param ProjectTranslation $translation
+     * @return bool
      */
-    public function lockData(): array
+    private function isLockedTranslation(array $lockedData, ProjectTranslation $translation): bool
     {
-        return $this->lockedData;
+        $lockedLastUpdated = $lockedData['updated'] ?? null;
+        is_string($lockedLastUpdated) or $lockedLastUpdated = null;
+
+        $lockedVersion = $lockedData['version'] ?? null;
+        is_string($lockedVersion) or $lockedVersion = null;
+
+        if (($lockedLastUpdated === null) && ($lockedVersion === null)) {
+            return false;
+        }
+
+        $lastUpdated = $translation->lastUpdated();
+        $version = $translation->version();
+
+        $wasNotUpdatedRecently = ($lockedLastUpdated !== null)
+            && ($lastUpdated !== '')
+            && (strtotime($lockedLastUpdated) >= strtotime($lastUpdated));
+
+        $isNotNewVersion = ($lockedVersion !== null)
+            && ($version !== null)
+            && version_compare($lockedVersion, $version, '>=');
+
+        return $wasNotUpdatedRecently && $isNotNewVersion;
     }
 }

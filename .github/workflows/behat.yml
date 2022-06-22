@@ -1,22 +1,58 @@
 name: Behat Tests
-on: [push]
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '**/behat.yml'
+      - 'composer.*'
+      - 'behat.*'
+      - 'src/**'
+      - 'resources/**'
+      - 'tests/Behat/**'
+      - 'tests/fixtures/**'
+  push:
+    paths:
+      - '**/behat.yml'
+      - 'composer.*'
+      - 'behat.*'
+      - 'src/**'
+      - 'resources/**'
+      - 'tests/Behat/**'
+      - 'tests/fixtures/**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  build:
+  run-tests:
     runs-on: ubuntu-latest
-    if: "!contains(github.event.head_commit.message, 'ci skip')"
+    if: ${{ !contains(github.event.head_commit.message, 'ci skip') }}
+
     strategy:
+      fail-fast: false
       matrix:
-        php-versions: [ '7.2', '7.3', '7.4', '8.0', '8.1' ]
+        php-version: [ '7.2', '7.3', '7.4', '8.0' ]
+        composer-version: [ 'v2.0', 'v2.1', 'v2.2', 'v2.3' ]
+        include:
+          -   php-version: '8.1'
+              composer-version: 'v2'
+
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v3
+
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: ${{ matrix.php-versions }}
-          tools: composer:v2
+          php-version: ${{ matrix.php-version }}
+          tools: composer:${{ matrix.composer-version }}
+          coverage: none
+          ini-values: zend.assertions=1, error_reporting=-1, display_errors=On
+
       - name: Install Composer dependencies
-        uses: ramsey/composer-install@v1
-        with:
-          composer-options: "--prefer-dist"
+        uses: ramsey/composer-install@v2
+
       - name: Run Behat
         run: ./vendor/bin/behat --colors
