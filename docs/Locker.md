@@ -27,7 +27,7 @@ In fact, WP Translation Downloader will:
 2. if so, check the locked package data contains info for the target language
 3. If so, check:
     - locked `version` is greater or equal to current package's version
-    - locked `updated` is greater or equal to translation's `lastUpdated` info coming from Glotpress
+    - locked `updated` is greater or equal to translation's `lastUpdated` info coming from GlotPress
 
 If **all** the above checks pass, the package is considered locked and not installed/updated, 
 otherwise will be downloaded as usual.

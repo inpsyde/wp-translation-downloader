@@ -7,8 +7,8 @@ The following configuration properties are available:
 | `auto-run`          | `bool`         |          | By default `true`. If `false`, the plugin will not run on Composer install/update command |
 | `languages`         | `list<string>` | x        | The languages ISO codes to download                                                       |
 | `excludes`          | `list<string>` |          | Array of excluded package names                                                           |
-| `api.names`         | `array`        |          | Array of package names mapped to a Glotpress API endpoint                                 |
-| `api.types`         | `array`        |          | Array of package types mapped to a Glotpress API endpoint                                 |
+| `api.names`         | `array`        |          | Array of package names mapped to a GlotPress API endpoint                                 |
+| `api.types`         | `array`        |          | Array of package types mapped to a GlotPress API endpoint                                 |
 | `directory`         | `string`       |          | :warning: **deprecated:** The relative path to the `languages` directory.                 |
 | `languageRootDir`   | `string`       | x        | The relative path to the `languages` directory. Replaces deprecated `directory`.          |
 | `directories.names` | `array`        | x        | Array of package names mapped to `language` sub-folders.                                  |
@@ -108,13 +108,13 @@ The behavior of the above configuration is summarized in the following matrix:
 | `inpsyde/google-tag-manager`        | `wordpress-plugin` | No: matching `"exclude"`     |
 | `wpackagist-plugin/wordpress-seo`   | `wordpress-plugin` | Yes                          |
 
-## API - Custom Glotpress API endpoints
+## API - Custom GlotPress API endpoints
 
-WP Translation Downloader supports custom [Glotpress](https://github.com/GlotPress/GlotPress-WP) 
+WP Translation Downloader supports custom [GlotPress](https://github.com/GlotPress/GlotPress-WP) 
 installations. That's useful to install _private_ plugins or themes which can't use "official" 
 wp.org translation channels.
 
-Custom Glotpress API endpoints are "resolved" from package names or types by the mean of the 
+Custom GlotPress API endpoints are "resolved" from package names or types by the mean of the 
 `"api.names"` and `"api.types"` configurations.
 
 In those configurations, is possible to define custom endpoint URLs leveraging following placeholders:
