@@ -5,7 +5,7 @@
 [![Downloads](https://img.shields.io/packagist/dt/inpsyde/wp-translation-downloader.svg)](https://packagist.org/packages/inpsyde/wp-translation-downloader)
 [![License](https://img.shields.io/packagist/l/inpsyde/wp-translation-downloader.svg)](https://packagist.org/packages/inpsyde/wp-translation-downloader)
 
-A Composer plugin to download translations from the WordPress.org API or from custom Glotpress installations.
+A Composer plugin to download translations from the WordPress.org API or from custom GlotPress installations.
 
 ## Composer v1 and v2
 
