@@ -238,6 +238,7 @@ final class Plugin implements
             $collector->packages++;
         }
 
+        /** @psalm-suppress ArgumentTypeCoercion */
         $this->printOverallStats($collector);
 
         $this->locker->writeLockFile();

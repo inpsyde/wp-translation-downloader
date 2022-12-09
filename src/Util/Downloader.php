@@ -83,6 +83,7 @@ class Downloader
         $directory = $this->filesystem->normalizePath($transPackage->languageDirectory());
 
         foreach ($translations as $translation) {
+            /** @psalm-suppress ArgumentTypeCoercion */
             $this->downloadTranslation($translation, $directory, $collector);
         }
 
