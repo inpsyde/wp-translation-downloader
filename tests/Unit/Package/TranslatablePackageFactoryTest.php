@@ -191,7 +191,9 @@ class TranslatablePackageFactoryTest extends TestCase
         $expectedDistReference = 'f06d02db5ffdef92e6bf96c1b8852c22c5f3248f';
         $expectedDistSha1Checksum = sha1($expectedDistReference);
         $expectedSourceReference = '1.0';
-        // @see \Composer\Package\BasePackage::getUniqueName()
+        /**
+         * @see \Composer\Package\BasePackage::getUniqueName()
+         */
         $expectedUniqueName = $expectedPackageName . '-' . $expectedVersion;
 
         $expectedUrl = sprintf(
