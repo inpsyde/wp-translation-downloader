@@ -5,13 +5,16 @@ their `types` and `names` sub-keys.
 
 Here's the summary of all supported placeholders:
 
-| Placeholder        | Description                                                                                          |
-|--------------------|------------------------------------------------------------------------------------------------------|
-| `%projectName%`    | Project name, e.g. `"wp-translation-downloader"` for the package `inpsyde/wp-translation-downloader` |
-| `%vendorName%`     | Vendor name, e.g. `"inpsyde"` for the package `inpsyde/wp-translation-downloader`                    |
-| `%packageName%`    | Full package name, e.g. `"inpsyde/wp-translation-downloader"`                                        |
-| `%packageType%`    | Package type, e.g. `"wordpress-plugin"`                                                              |
-| `%packageVersion%` | Package version, e.g. `"13.0"`                                                                       |
+| Placeholder                | Description                                                                                          |
+|----------------------------|------------------------------------------------------------------------------------------------------|
+| `%projectName%`            | Project name, e.g. `"wp-translation-downloader"` for the package `inpsyde/wp-translation-downloader` |
+| `%vendorName%`             | Vendor name, e.g. `"inpsyde"` for the package `inpsyde/wp-translation-downloader`                    |
+| `%packageName%`            | Full package name, e.g. `"inpsyde/wp-translation-downloader"`                                        |
+| `%packageType%`            | Package type, e.g. `"wordpress-plugin"`                                                              |
+| `%packageVersion%`         | Package version, e.g. `"13.0"`                                                                       |
+| `%packageDistReference%`   | The reference of the distribution archive. E.g. master, 1.0.0 or a commit hash                       |
+| `%packageSourceReference%` | The repository reference. E.g. master, 1.0.0 or a commit hash                                        |
+| `%packageUniqueName%`      | The package unique name, constructed from name and version                                           |
 
 :information_source: **Notes:**
 

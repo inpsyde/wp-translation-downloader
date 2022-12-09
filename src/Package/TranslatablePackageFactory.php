@@ -189,6 +189,10 @@ class TranslatablePackageFactory
             '%packageName%' => $package->getName(),
             '%packageType%' => $package->getType(),
             '%packageVersion%' => $version,
+            '%packageDistReference%' => $package->getDistReference(),
+            '%packageDistSha1Checksum%' => $package->getDistSha1Checksum(),
+            '%packageSourceReference%' => $package->getSourceReference(),
+            '%packageUniqueName%' => $package->getUniqueName(),
         ];
 
         return strtr($input, $replacements);
