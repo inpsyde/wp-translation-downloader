@@ -92,7 +92,7 @@ class Downloader
         $globalCollector->locked += $collector->locked;
         /** @psalm-suppress MixedOperand */
         $globalCollector->errors += $collector->errors;
-
+        /** @psalm-suppress ArgumentTypeCoercion */
         $this->printStatsMessage($collector);
     }
 

@@ -232,10 +232,9 @@ final class Plugin implements
             if ($translatablePackage === null) {
                 continue;
             }
-
+            /** @psalm-suppress ArgumentTypeCoercion */
             $downloader->download($translatablePackage, $allowedLanguages, $collector);
             $processedPackages[$packageName] = true;
-            /** @psalm-suppress MixedOperand */
             $collector->packages++;
         }
 
