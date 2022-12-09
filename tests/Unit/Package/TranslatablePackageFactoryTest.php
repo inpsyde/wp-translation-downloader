@@ -174,7 +174,11 @@ class TranslatablePackageFactoryTest extends TestCase
                         . '-%projectName%'
                         . '-%packageName%'
                         . '-%packageType%'
-                        . '-%packageVersion%',
+                        . '-%packageVersion%'
+                        . '-%packageDistReference%'
+                        . '-%packageDistSha1Checksum%'
+                        . '-%packageSourceReference%'
+                        . '-%packageUniqueName%',
                 ],
             ],
         ];
@@ -184,18 +188,30 @@ class TranslatablePackageFactoryTest extends TestCase
         $expectedPackageName = 'inpsyde/google-tag-manager';
         $expectedType = TranslatablePackageInterface::TYPE_PLUGIN;
         $expectedVersion = '1.0';
+        $expectedDistReference = 'f06d02db5ffdef92e6bf96c1b8852c22c5f3248f';
+        $expectedDistSha1Checksum = sha1($expectedDistReference);
+        $expectedSourceReference = '1.0';
+        // @see \Composer\Package\BasePackage::getUniqueName()
+        $expectedUniqueName = $expectedPackageName . '-' . $expectedVersion;
 
         $expectedUrl = sprintf(
-            "%s-%s-%s-%s-%s",
+            "%s-%s-%s-%s-%s-%s-%s-%s-%s",
             $expectedVendor,
             $expectedProjectName,
             $expectedPackageName,
             $expectedType,
-            $expectedVersion
+            $expectedVersion,
+            $expectedDistReference,
+            $expectedDistSha1Checksum,
+            $expectedSourceReference,
+            $expectedUniqueName
         );
 
         $package = new Package($expectedPackageName, $expectedVersion, $expectedVersion);
         $package->setType($expectedType);
+        $package->setDistReference($expectedDistReference);
+        $package->setDistSha1Checksum($expectedDistSha1Checksum);
+        $package->setSourceReference($expectedSourceReference);
 
         $pluginConfiguration = new PluginConfiguration($api);
 
