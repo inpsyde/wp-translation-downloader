@@ -1,0 +1,48 @@
+name: PHP QA
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '**/php-qa.yml'
+      - 'composer.*'
+      - 'phpcs*'
+      - 'psalm*'
+      - 'phpunit*'
+      - '**.php'
+  push:
+    paths:
+      - '**/php-qa.yml'
+      - 'composer.*'
+      - 'phpcs*'
+      - 'psalm*'
+      - 'phpunit*'
+      - '**.php'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint-php:
+    uses: inpsyde/reusable-workflows/.github/workflows/lint-php.yml@main
+    with:
+      PHP_MATRIX: >-
+        ["8.0", "8.1", "8.2"]
+  coding-standards-analysis-php:
+    needs: lint-php
+    uses: inpsyde/reusable-workflows/.github/workflows/coding-standards-php.yml@main
+  static-code-analysis-php:
+    needs: lint-php
+    uses: inpsyde/reusable-workflows/.github/workflows/static-analysis-php.yml@main
+    with:
+      PSALM_ARGS: '--output-format=github --no-cache --find-unused-psalm-suppress'
+  tests-unit-php:
+    needs: [ static-code-analysis-php, coding-standards-analysis-php ]
+    uses: inpsyde/reusable-workflows/.github/workflows/tests-unit-php.yml@main
+    secrets:
+      COMPOSER_AUTH_JSON: ${{ secrets.COMPOSER_AUTH_JSON }}
+    with:
+      PHPUNIT_ARGS: '--testsuite=Unit --coverage-text'
+      PHP_MATRIX: >-
+        ["7.2", "7.3", "7.4", "8.0", "8.1", "8.2"]
