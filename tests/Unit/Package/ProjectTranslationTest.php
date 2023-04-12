@@ -6,7 +6,6 @@ namespace Inpsyde\WpTranslationDownloader\Tests\Unit\Package;
 
 use Composer\Package\CompletePackage;
 use Composer\Package\Package;
-use Inpsyde\WpTranslationDownloader\Package\ProjectTranslation;
 use Inpsyde\WpTranslationDownloader\Package\TranslatablePackage;
 use PHPUnit\Framework\TestCase;
 
@@ -30,15 +29,9 @@ class ProjectTranslationTest extends TestCase
                     new CompletePackage('test/test', '1.0.0.0', '1.0'),
                     __DIR__,
                     'https://example.com/test/test/translations',
-                    $endpointFileType
+                    $endpointFileType,
+                    [$this->data]
                 );
-            }
-
-            protected function loadTranslations(): bool
-            {
-                $this->translations = $this->parseTranslations([$this->data]);
-
-                return true;
             }
         };
 
@@ -215,6 +208,7 @@ class ProjectTranslationTest extends TestCase
 	]
 }
 JSON;
+
         $translatablePackage = new class ($json) extends TranslatablePackage
         {
             private $json;
@@ -224,15 +218,19 @@ JSON;
                 parent::__construct(
                     new Package('test/test', '2.0.5.0', '1.2.0.5'),
                     __DIR__,
-                    'https://example.com'
+                    'https://example.com',
+                    null,
+                    $this->readEndpointContent('')['translations'] ?? []
                 );
             }
 
-            protected function readEndpointContent(string $apiUrl): ?array
+            protected function readEndpointContent(string $apiUrl): array
             {
                 $result = json_decode($this->json, true);
 
-                return is_array($result) ? $result : null;
+                return is_array($result)
+                    ? $result
+                    : [];
             }
         };
 

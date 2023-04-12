@@ -16,6 +16,7 @@ namespace Inpsyde\WpTranslationDownloader;
 use Composer\Command\BaseCommand;
 use Composer\Composer;
 use Composer\EventDispatcher\EventSubscriberInterface;
+use Composer\Factory;
 use Composer\Installer\PackageEvent;
 use Composer\IO\IOInterface;
 use Composer\Package\CompletePackage;
@@ -147,7 +148,11 @@ final class Plugin implements
             return;
         }
 
-        $this->translatablePackageFactory = new TranslatablePackageFactory($this->pluginConfig);
+        $this->translatablePackageFactory = new TranslatablePackageFactory(
+            $this->pluginConfig,
+            Factory::createHttpDownloader($io, $composer->getConfig()),
+            $this->io
+        );
 
         $this->translationsDownloader = new TranslationPackageDownloader(
             $composer->getLoop(),

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Inpsyde\WpTranslationDownloader\Tests\Unit\Package;
 
 use Composer\Package\Package;
-use Composer\Package\PackageInterface;
 use Inpsyde\WpTranslationDownloader\Package\TranslatablePackage;
 use PHPUnit\Framework\TestCase;
 
@@ -18,7 +17,13 @@ class TranslatablePackageTest extends TestCase
     public function testProjectName(string $input, string $expected): void
     {
         $package = new Package($input, '1.0.0.0', '1.0.0');
-        $translatablePackage = new TranslatablePackage($package, __DIR__, 'https://example.com');
+        $translatablePackage = new TranslatablePackage(
+            $package,
+            __DIR__,
+            'https://example.com',
+            null,
+            []
+        );
 
         static::assertSame($expected, $translatablePackage->projectName());
     }
