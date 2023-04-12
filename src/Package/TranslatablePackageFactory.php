@@ -98,17 +98,20 @@ class TranslatablePackageFactory
             [$endpoint, $endpointType] = $endpointData;
 
             $jsonFile = new JsonFile($endpoint, $this->downloader, $this->io);
+            /** @var array|null $translations */
             $translations = $jsonFile->read();
             if (! $translations) {
                 return null;
             }
+
+            $translations = (array) ($translations['translations'] ?? []);
 
             return new TranslatablePackage(
                 $package,
                 $directory,
                 $endpoint,
                 $endpointType,
-                (array) ($translations['translations'] ?? [])
+                $translations
             );
         } catch (\Throwable $exception) {
             $this->io->error($exception->getMessage());

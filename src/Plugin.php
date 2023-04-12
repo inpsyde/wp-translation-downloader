@@ -31,7 +31,6 @@ use Inpsyde\WpTranslationDownloader\Command\CleanUpCommand;
 use Inpsyde\WpTranslationDownloader\Command\DownloadCommand;
 use Inpsyde\WpTranslationDownloader\Config\PluginConfiguration;
 use Inpsyde\WpTranslationDownloader\Config\PluginConfigurationBuilder;
-use Inpsyde\WpTranslationDownloader\Util\ArchiveDownloaderFactory;
 use Inpsyde\WpTranslationDownloader\Util\Downloader;
 use Inpsyde\WpTranslationDownloader\Package\TranslatablePackageFactory;
 use Inpsyde\WpTranslationDownloader\Util\Locker;
