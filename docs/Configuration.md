@@ -249,8 +249,6 @@ By using the above configuration, the package `my/package-name` will have transl
 The `directories` configuration, both by name and by type, supports 
 [dynamic resolving via placeholders](./Dynamic%20resolving%20api%20and%20directories.md).
 
-
-
 ## Virtual Packages
 
 It might be desirable to install translations for packages that are *not* required in Composer.
@@ -291,3 +289,11 @@ passed, assuming latest version, if none is passed.
 
 In any case, all three properties (if defined and not empty), will be used when building the
 API endpoint (no matter if default or customized by name/type).
+
+## Authentication for privately hosted translations
+
+Your private GlotPress system is probably secured with one or more authentication options. In order to allow your project to have access to these endpoints and translations file archives you will have to tell Composer how to authenticate with the server that hosts them.
+
+`inpsyde/wp-translation-downloader` makes use of the full Composer PHP API and therefor uses the `Composer\Util\HttpDownloader`. This implementation accesses internally the configured Composer defined credentials.
+
+Credentials can be stored on 4 different places; in an `auth.json` for the project, a global `auth.json`, in the `composer.json` itself or in the `COMPOSER_AUTH` environment variable. Read more about configuration of authentication in Composer here: https://getcomposer.org/doc/articles/authentication-for-private-packages.md

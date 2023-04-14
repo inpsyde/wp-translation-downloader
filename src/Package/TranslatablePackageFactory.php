@@ -17,8 +17,10 @@ use Composer\DependencyResolver\Operation\InstallOperation;
 use Composer\DependencyResolver\Operation\OperationInterface;
 use Composer\DependencyResolver\Operation\UninstallOperation;
 use Composer\DependencyResolver\Operation\UpdateOperation;
+use Composer\IO\IOInterface;
+use Composer\Json\JsonFile;
 use Composer\Package\PackageInterface;
-use Composer\Package\Version\VersionParser;
+use Composer\Util\HttpDownloader;
 use Inpsyde\WpTranslationDownloader\Config\PluginConfiguration;
 use Inpsyde\WpTranslationDownloader\Util\FnMatcher;
 
@@ -32,15 +34,32 @@ class TranslatablePackageFactory
     protected $pluginConfiguration;
 
     /**
+     * @var HttpDownloader
+     */
+    protected $downloader;
+
+    /**
+     * @var IOInterface
+     */
+    protected $io;
+
+    /**
      * @param PluginConfiguration $pluginConfiguration
      */
-    public function __construct(PluginConfiguration $pluginConfiguration)
-    {
+    public function __construct(
+        PluginConfiguration $pluginConfiguration,
+        HttpDownloader $downloader,
+        IOInterface $io
+    ) {
+
         $this->pluginConfiguration = $pluginConfiguration;
+        $this->downloader = $downloader;
+        $this->io = $io;
     }
 
     /**
      * @param UninstallOperation|UpdateOperation|InstallOperation|OperationInterface $operation
+     *
      * @return null|TranslatablePackageInterface
      * @throws \InvalidArgumentException
      */
@@ -65,19 +84,40 @@ class TranslatablePackageFactory
      */
     public function create(PackageInterface $package): ?TranslatablePackageInterface
     {
-        $directory = $this->resolveDirectory($package);
-        if (!$directory) {
+        try {
+            $directory = $this->resolveDirectory($package);
+            if (! $directory) {
+                return null;
+            }
+
+            $endpointData = $this->resolveEndpoint($package);
+            if ($endpointData === null) {
+                return null;
+            }
+
+            [$endpoint, $endpointType] = $endpointData;
+
+            $jsonFile = new JsonFile($endpoint, $this->downloader, $this->io);
+            /** @var array|null $translations */
+            $translations = $jsonFile->read();
+            if (! $translations) {
+                return null;
+            }
+
+            $translations = (array) ($translations['translations'] ?? []);
+
+            return new TranslatablePackage(
+                $package,
+                $directory,
+                $endpoint,
+                $endpointType,
+                $translations
+            );
+        } catch (\Throwable $exception) {
+            $this->io->error($exception->getMessage());
+
             return null;
         }
-
-        $endpointData = $this->resolveEndpoint($package);
-        if ($endpointData === null) {
-            return null;
-        }
-
-        [$endpoint, $endpointType] = $endpointData;
-
-        return new TranslatablePackage($package, $directory, $endpoint, $endpointType);
     }
 
     /**

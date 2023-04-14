@@ -5,8 +5,11 @@ declare(strict_types=1);
 namespace Inpsyde\WpTranslationDownloader\Tests\Unit\Package;
 
 use Composer\DependencyResolver\Operation\InstallOperation;
+use Composer\IO\IOInterface;
 use Composer\Package\Loader\ArrayLoader;
 use Composer\Package\Package;
+use Composer\Util\Http\Response;
+use Composer\Util\HttpDownloader;
 use Inpsyde\WpTranslationDownloader\Config\PluginConfiguration;
 use Inpsyde\WpTranslationDownloader\Package\TranslatablePackageFactory;
 use Inpsyde\WpTranslationDownloader\Package\TranslatablePackageInterface;
@@ -20,7 +23,21 @@ class TranslatablePackageFactoryTest extends TestCase
     public function testCreateFromOperation(): void
     {
         $pluginConfiguration = new PluginConfiguration([]);
-        $packageFactory = new TranslatablePackageFactory($pluginConfiguration);
+
+        $responseStub = \Mockery::mock(Response::class);
+        $responseStub->expects('getBody')->andReturn('{"translations":{}}');
+
+        $downloaderStub = \Mockery::mock(HttpDownloader::class);
+        $downloaderStub->expects('get')->andReturn($responseStub);
+
+        $ioStub = \Mockery::mock(IOInterface::class);
+        $ioStub->allows('error');
+
+        $packageFactory = new TranslatablePackageFactory(
+            $pluginConfiguration,
+            $downloaderStub,
+            $ioStub
+        );
 
         $expectedName = 'inpsyde/google-tag-manager';
         $expectedType = 'wordpress-plugin';
@@ -49,7 +66,11 @@ class TranslatablePackageFactoryTest extends TestCase
         $loader = new ArrayLoader();
         $pluginConfiguration = new PluginConfiguration($expectedApi);
 
-        $packageFactory = new TranslatablePackageFactory($pluginConfiguration);
+        $packageFactory = new TranslatablePackageFactory(
+            $pluginConfiguration,
+            \Mockery::mock(HttpDownloader::class),
+            \Mockery::mock(IOInterface::class)
+        );
         $package = $loader->load($packageData);
 
         static::assertSame($expected, $packageFactory->resolveEndpoint($package));
@@ -217,7 +238,11 @@ class TranslatablePackageFactoryTest extends TestCase
 
         $pluginConfiguration = new PluginConfiguration($api);
 
-        $packageFactory = new TranslatablePackageFactory($pluginConfiguration);
+        $packageFactory = new TranslatablePackageFactory(
+            $pluginConfiguration,
+            \Mockery::mock(HttpDownloader::class),
+            \Mockery::mock(IOInterface::class)
+        );
 
         static::assertSame([$expectedUrl, null], $packageFactory->resolveEndpoint($package));
     }
@@ -230,7 +255,11 @@ class TranslatablePackageFactoryTest extends TestCase
     {
         $pluginConfiguration = new PluginConfiguration($input);
 
-        $packageFactory = new TranslatablePackageFactory($pluginConfiguration);
+        $packageFactory = new TranslatablePackageFactory(
+            $pluginConfiguration,
+            \Mockery::mock(HttpDownloader::class),
+            \Mockery::mock(IOInterface::class)
+        );
         foreach ($packages as $packageData) {
             $version = $packageData['version'] ?? '1.0';
             $package = new Package($packageData['name'], $version, $version);

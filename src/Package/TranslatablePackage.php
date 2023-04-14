@@ -43,11 +43,6 @@ class TranslatablePackage extends Package implements TranslatablePackageInterfac
     protected $endpoint;
 
     /**
-     * @var bool
-     */
-    private $translationLoaded = false;
-
-    /**
      * @var string|null
      */
     private $endpointFileType;
@@ -57,12 +52,14 @@ class TranslatablePackage extends Package implements TranslatablePackageInterfac
      * @param string $directory
      * @param string $endpoint
      * @param string|null $endpointFileType
+     * @param array $translations
      */
     public function __construct(
         PackageInterface $package,
         string $directory,
         string $endpoint,
-        ?string $endpointFileType = null
+        ?string $endpointFileType,
+        array $translations
     ) {
 
         parent::__construct(
@@ -78,6 +75,7 @@ class TranslatablePackage extends Package implements TranslatablePackageInterfac
         $this->endpoint = $endpoint;
         $this->languageDirectory = $directory;
         $this->endpointFileType = $endpointFileType;
+        $this->translations = $this->parseTranslations($translations);
     }
 
     /**
@@ -85,8 +83,6 @@ class TranslatablePackage extends Package implements TranslatablePackageInterfac
      */
     public function translations(array $allowedLanguages = []): array
     {
-        $this->loadTranslations();
-
         if (count($allowedLanguages) === 0) {
             return $this->translations;
         }
@@ -99,32 +95,6 @@ class TranslatablePackage extends Package implements TranslatablePackageInterfac
         }
 
         return $filtered;
-    }
-
-    /**
-     * @return bool
-     */
-    protected function loadTranslations(): bool
-    {
-        if ($this->translationLoaded) {
-            return false;
-        }
-        $this->translationLoaded = true;
-
-        $apiUrl = $this->apiEndpoint();
-        if ($apiUrl === '') {
-            return false;
-        }
-
-        $result = $this->readEndpointContent($apiUrl);
-        $translations = is_array($result) ? ($result['translations'] ?? null) : null;
-        if (!is_array($translations) || (count($translations) < 1)) {
-            return false;
-        }
-
-        $this->translations = $this->parseTranslations($translations);
-
-        return true;
     }
 
     /**
@@ -154,22 +124,6 @@ class TranslatablePackage extends Package implements TranslatablePackageInterfac
     public function languageDirectory(): string
     {
         return $this->languageDirectory;
-    }
-
-    /**
-     * @param string $apiUrl
-     * @return array|null
-     */
-    protected function readEndpointContent(string $apiUrl): ?array
-    {
-        $result = @file_get_contents($apiUrl);
-        if (!$result) {
-            return null;
-        }
-
-        $result = json_decode($result, true);
-
-        return is_array($result) ? $result : null;
     }
 
     /**
