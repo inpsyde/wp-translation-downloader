@@ -17,8 +17,6 @@ on:
       - 'psalm*'
       - 'phpunit*'
       - '**.php'
-env:
-  PHP_VERSION_MATRIX: '["7.2", "7.3", "7.4", "8.0", "8.1", "8.2"]'
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -26,7 +24,7 @@ jobs:
   lint-php:
     strategy:
       matrix:
-        php: ${{ fromJSON(env.PHP_VERSION_MATRIX) }}
+        php: ["7.2", "7.3", "7.4", "8.0", "8.1", "8.2"]
     uses: inpsyde/reusable-workflows/.github/workflows/lint-php.yml@main
     with:
       PHP_VERSION: ${{ matrix.php }}
@@ -42,7 +40,7 @@ jobs:
     needs: [ static-code-analysis-php, coding-standards-analysis-php ]
     strategy:
       matrix:
-        php: ${{ fromJSON(env.PHP_VERSION_MATRIX) }}
+        php: ["7.2", "7.3", "7.4", "8.0", "8.1", "8.2"]
     uses: inpsyde/reusable-workflows/.github/workflows/tests-unit-php.yml@main
     secrets:
       COMPOSER_AUTH_JSON: ${{ secrets.COMPOSER_AUTH_JSON }}
