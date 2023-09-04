@@ -19,16 +19,21 @@ on:
       - 'phpunit*'
       - '**.php'
 
+env:
+  PHP_VERSION_MATRIX: '["7.2", "7.3", "7.4", "8.0", "8.1", "8.2"]'
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   lint-php:
+    strategy:
+      matrix:
+        php: ${{ fromJSON(env.PHP_VERSION_MATRIX) }}
     uses: inpsyde/reusable-workflows/.github/workflows/lint-php.yml@main
     with:
-      PHP_MATRIX: >-
-        ["8.0", "8.1", "8.2"]
+      PHP_VERSION: ${{ matrix.php }}
   coding-standards-analysis-php:
     needs: lint-php
     uses: inpsyde/reusable-workflows/.github/workflows/coding-standards-php.yml@main
@@ -39,10 +44,12 @@ jobs:
       PSALM_ARGS: '--output-format=github --no-cache --find-unused-psalm-suppress'
   tests-unit-php:
     needs: [ static-code-analysis-php, coding-standards-analysis-php ]
+    strategy:
+      matrix:
+        php: ${{ fromJSON(env.PHP_VERSION_MATRIX) }}
     uses: inpsyde/reusable-workflows/.github/workflows/tests-unit-php.yml@main
     secrets:
       COMPOSER_AUTH_JSON: ${{ secrets.COMPOSER_AUTH_JSON }}
     with:
       PHPUNIT_ARGS: '--testsuite=Unit --coverage-text'
-      PHP_MATRIX: >-
-        ["7.2", "7.3", "7.4", "8.0", "8.1", "8.2"]
+      PHP_VERSION: ${{ matrix.php }}
