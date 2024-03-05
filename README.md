@@ -33,4 +33,4 @@ composer require inpsyde/wp-translation-downloader
 
 ## License
 
-Copyright (c) Inpsyde GmbH
+This repository is a free software, and is released under the terms of the MIT license. See [LICENSE](./LICENSE) for complete license.
