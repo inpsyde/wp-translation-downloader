@@ -107,11 +107,11 @@ class PluginConfigurationTest extends TestCase
         ];
 
         yield 'Exclude specific and wildcard' => [
-            ['inpsyde/google-tag-manager', 'wpackagist-plugins/*'],
+            ['inpsyde/google-tag-manager', 'wpackagist-plugin/*'],
             [
                 'inpsyde/google-tag-manager' => true,
-                'wpackagist-plugins/wordpress-seo' => true,
-                'wpackagist-themes/twentytwenty' => false,
+                'wpackagist-plugin/wordpress-seo' => true,
+                'wpackagist-theme/twentytwenty' => false,
                 'inpsyde/multilingualpress' => false,
             ],
         ];
