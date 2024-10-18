@@ -24,7 +24,7 @@ jobs:
   lint-php:
     strategy:
       matrix:
-        php: ["7.2", "7.3", "7.4", "8.0", "8.1", "8.2", "8.3"]
+        php: ["7.4", "8.0", "8.1", "8.2", "8.3"]
     uses: inpsyde/reusable-workflows/.github/workflows/lint-php.yml@main
     with:
       PHP_VERSION: ${{ matrix.php }}
@@ -37,7 +37,7 @@ jobs:
   tests-unit-php:
     strategy:
       matrix:
-        php: ["7.2", "7.3", "7.4", "8.0", "8.1", "8.2", "8.3"]
+        php: ["7.4", "8.0", "8.1", "8.2", "8.3"]
     uses: inpsyde/reusable-workflows/.github/workflows/tests-unit-php.yml@main
     secrets:
       COMPOSER_AUTH_JSON: ${{ secrets.COMPOSER_AUTH_JSON }}

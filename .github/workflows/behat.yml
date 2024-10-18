@@ -33,7 +33,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        php-version: [ '7.2', '7.3', '7.4', '8.0', '8.1', '8.2' ]
+        php-version: [ '7.4', '8.0', '8.1', '8.2', '8.3' ]
         composer-version: [ 'v2.1', 'v2.2', 'v2.3', 'v2.4', 'v2.5' ]
         include:
           -   php-version: '8.1'

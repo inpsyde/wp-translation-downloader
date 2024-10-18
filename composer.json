@@ -21,7 +21,7 @@
         "mikey179/vfsstream": "^v1.6.10",
         "composer/composer": "^2.3.7",
         "inpsyde/php-coding-standards": "^1.0.0",
-        "phpunit/phpunit": "^8.5.26",
+        "phpunit/phpunit": "^9.6.0",
         "vimeo/psalm": "^4.23.0",
         "ondram/ci-detector": "^4.1.0"
     },
@@ -48,7 +48,10 @@
         "behat": "@php ./vendor/bin/behat",
         "cs": "@php ./vendor/squizlabs/php_codesniffer/bin/phpcs",
         "psalm": "@php ./vendor/vimeo/psalm/psalm --no-cache --output-format=compact --find-unused-psalm-suppress",
-        "tests": "@php ./vendor/phpunit/phpunit/phpunit --coverage-text",
+        "tests": [
+            "@putenv XDEBUG_MODE=coverage",
+            "@php ./vendor/phpunit/phpunit/phpunit --coverage-text"
+        ],
         "tests:no-coverage": "@php ./vendor/phpunit/phpunit/phpunit --no-coverage",
         "tests:unit": "@php ./vendor/phpunit/phpunit/phpunit --testsuite Unit",
         "qa": [
