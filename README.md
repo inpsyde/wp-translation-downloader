@@ -31,6 +31,7 @@ composer require inpsyde/wp-translation-downloader
 4. [Locker](./docs/Locker.md)
 5. [Commands](./docs/Commands.md)
 
-## License
+## Copyright and License
 
-This repository is a free software, and is released under the terms of the MIT license. See [LICENSE](./LICENSE) for complete license.
+Good news, this library is free for everyone! Since it's released under the MIT License you can use it free of charge on your personal or commercial website.
+
