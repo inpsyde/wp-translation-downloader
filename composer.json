@@ -5,6 +5,12 @@
     "license": "MIT",
     "authors": [
         {
+            "name": "Syde GmbH",
+            "homepage": "https://syde.com/",
+            "email": "hello@syde.com",
+            "role": "Company"
+        },
+        {
             "name": "Christian Leucht",
             "email": "c.leucht@inpsyde.com"
         }
