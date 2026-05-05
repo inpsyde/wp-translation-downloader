@@ -16,7 +16,7 @@
             "languages": [
                 "de_DE"
             ],
-            "directory": "languages"
+            "languageRootDir": "languages"
         }
     },
     "config": {
