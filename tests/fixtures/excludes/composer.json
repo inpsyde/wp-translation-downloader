@@ -20,7 +20,7 @@
             "excludes": [
                 "johnpbloch/*"
             ],
-            "directory": "languages"
+            "languageRootDir": "languages"
         }
     },
     "config": {
