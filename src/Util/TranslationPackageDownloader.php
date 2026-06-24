@@ -158,8 +158,10 @@ class TranslationPackageDownloader
         $this->io->debug("Copying unpacked files from temp dir '{$tempDir}' to '{$targetPath}'.");
 
         $errors = 0;
+        $installedRelativePaths = [];
         foreach ($finder as $item) {
             $relative = $item->getRelativePathname();
+            $installedRelativePaths[] = $relative;
             $fullTargetPath = $this->filesystem->normalizePath("{$targetPath}/{$relative}");
             $this->ensureDirectoryExists(dirname($fullTargetPath));
             $sourcePath = $item->getPathname();
@@ -171,7 +173,53 @@ class TranslationPackageDownloader
             $this->filesystem->copy($sourcePath, $fullTargetPath) or $errors++;
         }
 
+        $this->removeStaleL10nPhpFiles($installedRelativePaths, $targetPath);
+
         return $errors === 0;
+    }
+
+    /**
+     * WordPress 6.5+ (and the performant-translations plugin) prefer a compiled
+     * `<name>.l10n.php` over the `<name>.mo` without comparing their freshness. A pack
+     * generally ships only `.mo`/`.po`/`.json` files, so a `.l10n.php` left over from a
+     * previous install keeps winning and the site serves outdated translations. Removing the
+     * stale sibling forces WordPress to regenerate it from the freshly installed `.mo`. A
+     * `.l10n.php` shipped by the pack itself is left untouched: it is part of this install and
+     * therefore fresh.
+     *
+     * @param list<string> $installedRelativePaths
+     * @param string $targetPath
+     * @return void
+     */
+    private function removeStaleL10nPhpFiles(
+        array $installedRelativePaths,
+        string $targetPath
+    ): void {
+        $providedL10nPhp = [];
+        $moRelativePaths = [];
+        foreach ($installedRelativePaths as $relative) {
+            $lower = strtolower($relative);
+            if (substr($lower, -9) === '.l10n.php') {
+                $providedL10nPhp[$relative] = true;
+                continue;
+            }
+            if (substr($lower, -3) === '.mo') {
+                $moRelativePaths[] = $relative;
+            }
+        }
+
+        foreach ($moRelativePaths as $moRelative) {
+            $l10nPhpRelative = substr($moRelative, 0, -3) . '.l10n.php';
+            if (isset($providedL10nPhp[$l10nPhpRelative])) {
+                continue;
+            }
+            $fullPath = $this->filesystem->normalizePath("{$targetPath}/{$l10nPhpRelative}");
+            if (!file_exists($fullPath)) {
+                continue;
+            }
+            $this->debug(" - removing stale '{$fullPath}'...");
+            $this->filesystem->remove($fullPath);
+        }
     }
 
     /**
