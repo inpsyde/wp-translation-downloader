@@ -7,30 +7,18 @@ namespace Inpsyde\WpTranslationDownloader\Util;
 use Composer\IO\IOInterface;
 use Composer\Package\CompletePackage;
 use Composer\Util\Filesystem;
-use Inpsyde\WpTranslationDownloader\Package\TranslatablePackageInterface;
 use Inpsyde\WpTranslationDownloader\Package\ProjectTranslation;
+use Inpsyde\WpTranslationDownloader\Package\TranslatablePackageInterface;
 
 class Downloader
 {
-    /**
-     * @var IOInterface
-     */
-    private $io;
+    private IOInterface $io;
 
-    /**
-     * @var Locker
-     */
-    private $locker;
+    private Locker $locker;
 
-    /**
-     * @var TranslationPackageDownloader
-     */
-    private $downloader;
+    private TranslationPackageDownloader $downloader;
 
-    /**
-     * @var Filesystem
-     */
-    private $filesystem;
+    private Filesystem $filesystem;
 
     /**
      * @param IOInterface $io
@@ -70,7 +58,7 @@ class Downloader
             return;
         }
 
-        $collector = (object)['downloaded' => 0, 'locked' => 0, 'errors' => 0];
+        $collector = (object) ['downloaded' => 0, 'locked' => 0, 'errors' => 0];
         $directory = $this->filesystem->normalizePath($transPackage->languageDirectory());
 
         foreach ($translations as $translation) {
@@ -243,9 +231,9 @@ class Downloader
             sprintf(
                 "    <options=bold>Package's translations stats</>:" .
                 " %d downloaded, %d locked, %d failed.\n",
-                (int)$collector->downloaded,
-                (int)$collector->locked,
-                (int)$collector->errors
+                (int) $collector->downloaded,
+                (int) $collector->locked,
+                (int) $collector->errors
             ),
             true,
             IOInterface::VERBOSE

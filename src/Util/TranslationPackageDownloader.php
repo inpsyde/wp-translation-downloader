@@ -14,30 +14,18 @@ use Symfony\Component\Finder\Finder;
 
 class TranslationPackageDownloader
 {
-    /**
-     * @var IOInterface
-     */
-    private $io;
+    private IOInterface $io;
 
-    /**
-     * @var Filesystem
-     */
-    private $filesystem;
+    private Filesystem $filesystem;
 
     /**
      * @var array<string, bool>
      */
-    private $directories = [];
+    private array $directories = [];
 
-    /**
-     * @var Loop
-     */
-    private $loop;
+    private Loop $loop;
 
-    /**
-     * @var DownloadManager
-     */
-    private $downloaderManager;
+    private DownloadManager $downloaderManager;
 
     /**
      * @param Loop $loop

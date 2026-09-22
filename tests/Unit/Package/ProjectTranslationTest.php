@@ -6,6 +6,7 @@ namespace Inpsyde\WpTranslationDownloader\Tests\Unit\Package;
 
 use Composer\Package\CompletePackage;
 use Composer\Package\Package;
+use Inpsyde\WpTranslationDownloader\Package\ProjectTranslation;
 use Inpsyde\WpTranslationDownloader\Package\TranslatablePackage;
 use PHPUnit\Framework\TestCase;
 
@@ -19,8 +20,8 @@ class ProjectTranslationTest extends TestCase
     {
         $translatable = new class ($fileType, $data) extends TranslatablePackage
         {
-            /** @var array */
-            protected $data;
+            /** @var list<ProjectTranslation> $data */
+            protected array $data;
 
             public function __construct(?string $endpointFileType, array $data)
             {
@@ -211,7 +212,8 @@ JSON;
 
         $translatablePackage = new class ($json) extends TranslatablePackage
         {
-            private $json;
+            private string $json;
+
             public function __construct(string $json)
             {
                 $this->json = $json;

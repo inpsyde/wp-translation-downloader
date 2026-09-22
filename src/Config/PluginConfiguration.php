@@ -78,12 +78,9 @@ final class PluginConfiguration
      *  virtual-packages: list<PackageInterface>
      * }
      */
-    private $config;
+    private array $config;
 
-    /**
-     * @var Filesystem
-     */
-    private $filesystem;
+    private Filesystem $filesystem;
 
     /**
      * @param array $config
@@ -243,7 +240,7 @@ final class PluginConfiguration
         $loaded = [];
         foreach ($packages as $packageData) {
             $prettyVersion = $packageData['version'] ?? '';
-            $version = (string)$prettyVersion;
+            $version = (string) $prettyVersion;
 
             $package = new CompletePackage($packageData['name'], $version, $version);
             $package->setType($packageData['type']);

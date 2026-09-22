@@ -1,26 +1,34 @@
 <?xml version="1.0"?>
 <ruleset>
+    <config name="testVersion" value="8.3-" />
 
     <file>./src</file>
     <file>./tests/Unit</file>
 
-    <arg value="sp"/>
+    <!-- Use colors, and show sniff error codes and progress. -->
+    <arg name="colors" />
+    <arg value="sp" />
 
-    <rule ref="Inpsyde"/>
+    <!-- Recommended Syde PHP Coding Standard rules. -->
+    <!-- Recommended Syde PHP Coding Standard rules. -->
+    <rule ref="Syde-Extra">
+        <exclude name="WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents" />
+        <exclude name="WordPress.WP.AlternativeFunctions.file_system_operations_mkdir" />
+        <exclude name="WordPress.Security.EscapeOutput.ExceptionNotEscaped" />
+    </rule>
 
-    <rule ref="Inpsyde.CodeQuality.Psr4">
+    <!-- Do not report on function length for tests. -->
+    <rule ref="Syde.Functions.FunctionLength">
+        <exclude-pattern>*/tests/*</exclude-pattern>
+    </rule>
+
+    <!-- PSR-4 namespace configuration. -->
+    <rule ref="SlevomatCodingStandard.Files.TypeNameMatchesFileName">
         <properties>
-            <property
-                    name="psr4"
-                    type="array"
-                    value="
-                        Inpsyde\WpTranslationDownloader=>src,
-                        Inpsyde\WpTranslationDownloader\Tests=>tests"/>
+            <property name="rootNamespaces" type="array">
+                <element key="src" value="Inpsyde\WpTranslationDownloader" />
+                <element key="tests" value="Inpsyde\WpTranslationDownloader\Tests" />
+            </property>
         </properties>
     </rule>
-
-    <rule ref="Inpsyde.CodeQuality.FunctionLength">
-        <exclude-pattern>tests/Unit/**</exclude-pattern>
-    </rule>
-
 </ruleset>

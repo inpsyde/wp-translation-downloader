@@ -12,20 +12,11 @@ use Symfony\Component\Finder\SplFileInfo;
 
 class Remover
 {
-    /**
-     * @var IOInterface
-     */
-    private $io;
+    private IOInterface $io;
 
-    /**
-     * @var Filesystem
-     */
-    private $filesystem;
+    private Filesystem $filesystem;
 
-    /**
-     * @var Locker
-     */
-    private $locker;
+    private Locker $locker;
 
     /**
      * @param IOInterface $io

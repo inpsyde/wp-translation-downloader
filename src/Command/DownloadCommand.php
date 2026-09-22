@@ -102,7 +102,7 @@ class DownloadCommand extends BaseCommand
      */
     private function optionPackagesToProcess(InputInterface $input): array
     {
-        $packageNames = trim((string)$input->getOption(self::OPTION_PACKAGES));
+        $packageNames = trim((string) $input->getOption(self::OPTION_PACKAGES));
         if (!$packageNames) {
             return [];
         }

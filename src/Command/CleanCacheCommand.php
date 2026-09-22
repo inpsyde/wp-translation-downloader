@@ -30,7 +30,7 @@ class CleanCacheCommand extends BaseCommand
      *
      * phpcs:disable Inpsyde.CodeQuality.ReturnTypeDeclaration
      */
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         try {
             $this->getIO()->write(

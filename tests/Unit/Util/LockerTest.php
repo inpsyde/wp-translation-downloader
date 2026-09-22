@@ -7,16 +7,13 @@ namespace Inpsyde\WpTranslationDownloader\Tests\Unit\Util;
 use Composer\IO\NullIO;
 use Inpsyde\WpTranslationDownloader\Package\ProjectTranslation;
 use Inpsyde\WpTranslationDownloader\Util\Locker;
-use PHPUnit\Framework\TestCase;
 use org\bovigo\vfs\vfsStream;
 use org\bovigo\vfs\vfsStreamDirectory;
+use PHPUnit\Framework\TestCase;
 
 class LockerTest extends TestCase
 {
-    /**
-     * @var vfsStreamDirectory
-     */
-    private $root;
+    private vfsStreamDirectory $root;
 
     /**
      * @return void

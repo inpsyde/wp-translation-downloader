@@ -16,40 +16,19 @@ class ProjectTranslation
         'tar.bz2' => 'tar',
     ];
 
-    /**
-     * @var string
-     */
-    private $projectName;
+    private string $projectName;
 
-    /**
-     * @var string|null
-     */
-    private $language;
+    private ?string $language = null;
 
-    /**
-     * @var string|null
-     */
-    private $version;
+    private ?string $version = null;
 
-    /**
-     * @var string|null
-     */
-    private $packageUrl;
+    private ?string $packageUrl = null;
 
-    /**
-     * @var string
-     */
-    private $lastUpdated;
+    private string $lastUpdated;
 
-    /**
-     * @var string|null
-     */
-    private $fileType = null;
+    private ?string $fileType = null;
 
-    /**
-     * @var bool
-     */
-    private $valid;
+    private bool $valid;
 
     /**
      * @param array $translation
@@ -191,7 +170,7 @@ class ProjectTranslation
             return '';
         }
 
-        return (string)preg_replace(
+        return (string) preg_replace(
             '~[^a-zA-Z0-9_/]~',
             '-',
             sprintf(
