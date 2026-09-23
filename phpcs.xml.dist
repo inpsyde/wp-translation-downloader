@@ -10,7 +10,6 @@
     <arg value="sp" />
 
     <!-- Recommended Syde PHP Coding Standard rules. -->
-    <!-- Recommended Syde PHP Coding Standard rules. -->
     <rule ref="Syde-Extra">
         <exclude name="WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents" />
         <exclude name="WordPress.WP.AlternativeFunctions.file_system_operations_mkdir" />
