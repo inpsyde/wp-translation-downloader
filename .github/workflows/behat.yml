@@ -34,10 +34,7 @@ jobs:
       fail-fast: false
       matrix:
         php-version: [ '8.3', '8.4', '8.5' ]
-        composer-version: [ 'v2.5', 'v2.6', 'v2.7', 'v2.8', 'v2.9', 'v2.10' ]
-        include:
-          -   php-version: '8.3'
-              composer-version: 'v2'
+        composer-version: [ 'v2.8', 'v2.9', 'v2.10' ]
 
     steps:
       - name: Checkout
