@@ -24,20 +24,23 @@ jobs:
   lint-php:
     strategy:
       matrix:
-        php: ["7.4", "8.0", "8.1", "8.2", "8.3"]
+        php: ["8.3", "8.4", "8.5"]
     uses: inpsyde/reusable-workflows/.github/workflows/lint-php.yml@main
     with:
       PHP_VERSION: ${{ matrix.php }}
   coding-standards-analysis-php:
     uses: inpsyde/reusable-workflows/.github/workflows/coding-standards-php.yml@main
+    with:
+      PHP_VERSION: '8.5'
   static-code-analysis-php:
     uses: inpsyde/reusable-workflows/.github/workflows/static-analysis-php.yml@main
     with:
+      PHP_VERSION: '8.3'
       PSALM_ARGS: '--output-format=github --no-cache --find-unused-psalm-suppress'
   tests-unit-php:
     strategy:
       matrix:
-        php: ["7.4", "8.0", "8.1", "8.2", "8.3"]
+        php: ["8.3", "8.4", "8.5"]
     uses: inpsyde/reusable-workflows/.github/workflows/tests-unit-php.yml@main
     secrets:
       COMPOSER_AUTH_JSON: ${{ secrets.COMPOSER_AUTH_JSON }}

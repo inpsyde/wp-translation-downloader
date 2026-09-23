@@ -12,15 +12,9 @@ final class PluginConfigurationBuilder
 {
     public const KEY = 'wp-translation-downloader';
 
-    /**
-     * @var IOInterface
-     */
-    private $io;
+    private IOInterface $io;
 
-    /**
-     * @var string
-     */
-    private $schemaFile;
+    private string $schemaFile;
 
     /**
      * @param IOInterface $io
@@ -91,7 +85,7 @@ final class PluginConfigurationBuilder
 
         $validator->validate($input, $schema);
 
-        $isValid = (bool)$validator->isValid();
+        $isValid = $validator->isValid();
 
         if (!$isValid) {
             // phpcs:disable Inpsyde.CodeQuality.LineLength.TooLong

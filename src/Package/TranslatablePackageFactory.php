@@ -19,20 +19,11 @@ class TranslatablePackageFactory
 {
     use NameResolverTrait;
 
-    /**
-     * @var PluginConfiguration
-     */
-    protected $pluginConfiguration;
+    protected PluginConfiguration $pluginConfiguration;
 
-    /**
-     * @var HttpDownloader
-     */
-    protected $downloader;
+    protected HttpDownloader $downloader;
 
-    /**
-     * @var IOInterface
-     */
-    protected $io;
+    protected IOInterface $io;
 
     /**
      * @param PluginConfiguration $pluginConfiguration
@@ -77,7 +68,7 @@ class TranslatablePackageFactory
     {
         try {
             $directory = $this->resolveDirectory($package);
-            if (! $directory) {
+            if (!$directory) {
                 return null;
             }
 
@@ -91,7 +82,7 @@ class TranslatablePackageFactory
             $jsonFile = new JsonFile($endpoint, $this->downloader, $this->io);
             /** @var array|null $translations */
             $translations = $jsonFile->read();
-            if (! $translations) {
+            if (!$translations) {
                 return null;
             }
 
@@ -243,7 +234,7 @@ class TranslatablePackageFactory
             if (is_string($value)) {
                 return ['url' => $value, 'type' => null];
             }
-            is_object($value) and $value = (array)$value;
+            is_object($value) and $value = (array) $value;
             if (!is_array($value) || !is_string($value['url'] ?? null)) {
                 continue;
             }
@@ -270,7 +261,7 @@ class TranslatablePackageFactory
             return ['url' => $value, 'type' => null];
         }
 
-        is_object($value) and $value = (array)$value;
+        is_object($value) and $value = (array) $value;
         if (!is_array($value) || !is_string($value['url'] ?? null)) {
             return null;
         }

@@ -16,27 +16,15 @@ class TranslatablePackage extends Package implements TranslatablePackageInterfac
      *
      * @var list<ProjectTranslation>
      */
-    protected $translations = [];
+    protected array $translations = [];
 
-    /**
-     * @var string|null
-     */
-    protected $projectName = null;
+    protected ?string $projectName = null;
 
-    /**
-     * @var string
-     */
-    protected $languageDirectory;
+    protected string $languageDirectory;
 
-    /**
-     * @var string
-     */
-    protected $endpoint;
+    protected string $endpoint;
 
-    /**
-     * @var string|null
-     */
-    private $endpointFileType;
+    private ?string $endpointFileType = null;
 
     /**
      * @param PackageInterface $package

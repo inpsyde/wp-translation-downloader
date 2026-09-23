@@ -13,15 +13,9 @@ class Locker
 {
     public const LOCK_FILE = 'wp-translation-downloader.lock';
 
-    /**
-     * @var IOInterface
-     */
-    private $io;
+    private IOInterface $io;
 
-    /**
-     * @var JsonFile
-     */
-    private $file;
+    private JsonFile $file;
 
     /**
      * @var array<
@@ -29,7 +23,7 @@ class Locker
      *  array<string, array<string, array{'updated': 'string', 'version': 'string'}>>
      * >
      */
-    private $lockedData = [];
+    private array $lockedData = [];
 
     /**
      * Locker constructor.

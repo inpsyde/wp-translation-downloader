@@ -1,5 +1,9 @@
 <?php
 
+/**
+ * @phpcs:disable Syde.Classes.DisallowGetterSetter.GetterFound
+ */
+
 declare(strict_types=1);
 
 namespace Inpsyde\WpTranslationDownloader;
@@ -22,8 +26,8 @@ use Inpsyde\WpTranslationDownloader\Command\CleanUpCommand;
 use Inpsyde\WpTranslationDownloader\Command\DownloadCommand;
 use Inpsyde\WpTranslationDownloader\Config\PluginConfiguration;
 use Inpsyde\WpTranslationDownloader\Config\PluginConfigurationBuilder;
-use Inpsyde\WpTranslationDownloader\Util\Downloader;
 use Inpsyde\WpTranslationDownloader\Package\TranslatablePackageFactory;
+use Inpsyde\WpTranslationDownloader\Util\Downloader;
 use Inpsyde\WpTranslationDownloader\Util\Locker;
 use Inpsyde\WpTranslationDownloader\Util\Remover;
 use Inpsyde\WpTranslationDownloader\Util\TranslationPackageDownloader;
@@ -34,48 +38,25 @@ final class Plugin implements
     Capable,
     CommandProvider
 {
-    /**
-     * @var IOInterface|null
-     */
-    private $io = null;
+    private ?IOInterface $io = null;
 
-    /**
-     * @var PluginConfiguration|null
-     */
-    private $pluginConfig = null;
+    private ?PluginConfiguration $pluginConfig = null;
 
-    /**
-     * @var TranslatablePackageFactory|null
-     */
-    private $translatablePackageFactory = null;
+    private ?TranslatablePackageFactory $translatablePackageFactory = null;
 
-    /**
-     * @var Filesystem|null
-     */
-    private $filesystem = null;
+    private ?Filesystem $filesystem = null;
 
-    /**
-     * @var Locker|null
-     */
-    private $locker = null;
+    private ?Locker $locker = null;
 
-    /**
-     * @var TranslationPackageDownloader|null
-     */
-    private $translationsDownloader = null;
+    private ?TranslationPackageDownloader $translationsDownloader = null;
 
     /**
      * Subscribe to Composer events.
      *
      * @return array<string, list<array{string, int}>> The events and callbacks.
-     *
-     * phpcs:disable Inpsyde.CodeQuality.NoAccessors
-     * phpcs:disable Inpsyde.CodeQuality.ReturnTypeDeclaration
      */
-    public static function getSubscribedEvents()
+    public static function getSubscribedEvents(): array
     {
-        // phpcs:enable Inpsyde.CodeQuality.NoAccessors
-        // phpcs:enable Inpsyde.CodeQuality.ReturnTypeDeclaration
         return [
             "post-install-cmd" => [
                 ['onPostInstallAndUpdate', 0],
@@ -92,22 +73,18 @@ final class Plugin implements
     /**
      * @return array<class-string, class-string>
      *
-     * phpcs:disable Inpsyde.CodeQuality.NoAccessors
      */
     public function getCapabilities(): array
     {
-        // phpcs:enable Inpsyde.CodeQuality.NoAccessors
         return [CommandProvider::class => __CLASS__];
     }
 
     /**
      * @return non-empty-list<BaseCommand>
      *
-     * phpcs:disable Inpsyde.CodeQuality.NoAccessors
      */
     public function getCommands(): array
     {
-        // phpcs:enable Inpsyde.CodeQuality.NoAccessors
         return [
             new DownloadCommand(),
             new CleanUpCommand(),
@@ -121,7 +98,7 @@ final class Plugin implements
      *
      * @throws \RuntimeException
      */
-    public function activate(Composer $composer, IOInterface $io)
+    public function activate(Composer $composer, IOInterface $io): void
     {
         $this->io = $io;
         $this->filesystem = new Filesystem();
@@ -212,7 +189,7 @@ final class Plugin implements
             $this->filesystem
         );
 
-        $collector = (object)['downloaded' => 0, 'locked' => 0, 'errors' => 0, 'packages' => 0];
+        $collector = (object) ['downloaded' => 0, 'locked' => 0, 'errors' => 0, 'packages' => 0];
 
         foreach ($packages as $package) {
             $packageName = $package->getName();
@@ -377,13 +354,13 @@ final class Plugin implements
             "   - %d translation%s downloaded\n" .
             "   - %d translation%s locked\n" .
             "   - %d translation%s failed",
-            (int)$collector->packages,
+            (int) $collector->packages,
             $collector->packages === 1 ? '' : 's',
-            (int)$collector->downloaded,
+            (int) $collector->downloaded,
             $collector->downloaded === 1 ? '' : 's',
-            (int)$collector->locked,
+            (int) $collector->locked,
             $collector->locked === 1 ? '' : 's',
-            (int)$collector->errors,
+            (int) $collector->errors,
             $collector->errors === 1 ? '' : 's'
         );
 
@@ -401,8 +378,8 @@ final class Plugin implements
         $catchline = 'WP Translation Downloader';
         $length = strlen($catchline);
         $padding = ($length - strlen($logo)) / 2;
-        $paddingLeft = str_repeat(' ', (int)floor($padding));
-        $paddingRight = str_repeat(' ', (int)ceil($padding));
+        $paddingLeft = str_repeat(' ', (int) floor($padding));
+        $paddingRight = str_repeat(' ', (int) ceil($padding));
 
         $lines = [
             '',

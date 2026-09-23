@@ -20,7 +20,7 @@ class FnMatcher
         }
 
         foreach ($patterns as $pattern) {
-            if (is_string($pattern) && FnMatcher::isMatching($pattern, $subject)) {
+            if (is_string($pattern) && self::isMatching($pattern, $subject)) {
                 return true;
             }
         }
